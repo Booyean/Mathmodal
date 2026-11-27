@@ -80,6 +80,7 @@ def rf_envelope_coarse_lag(x_sig: np.ndarray, y_ref: np.ndarray) -> int:
 
 def run_closed_loop_example(
     common_shift_a: float = 0.0,
+    nonlinear_dispersion: bool = False,
 ) -> dict[str, float]:
     """Run 2-RX closed-loop calibration, DW suppression, and DAS ranging."""
     _, s_f, freqs = make_reference_signal()
@@ -102,6 +103,13 @@ def run_closed_loop_example(
     g2_true = 1.25
     psi2_true = 0.30
     h1_all = np.exp(-1j * 2.0 * np.pi * f_r_all * common_shift_a)
+    if nonlinear_dispersion:
+        f_c = 0.5 * (F_START + F_STOP)
+        u = (freqs - f_c) / (0.5 * (F_STOP - F_START))
+        # Strong asymmetric amplitude tilt + linear/quadratic/cubic dispersion
+        g_common = 1.0 + 0.45 * u
+        phi_common = -2.0 * np.pi * freqs * 0.40e-9 + 2.5 * (u ** 2) + 1.5 * (u ** 3)
+        h1_all = h1_all * g_common * np.exp(1j * phi_common)
     h2_all = g2_true * np.exp(-1j * 2.0 * np.pi * freqs * dtau2_true + 1j * psi2_true) * h1_all
 
     t0_air = 120.25 * TS + common_shift_a
@@ -173,26 +181,45 @@ def run_closed_loop_example(
     anc_scores = np.abs(dw_comp @ np.exp(-1j * 2.0 * np.pi * np.outer(f_r_b, t_anc_grid)))
     t0_eff_tgt_est = float(t_anc_grid[int(np.argmax(anc_scores))])
 
+    # 4b. Explicit dispersive effective template S_eff_hat(f_D) = H_ref * S * exp(j2pi fR t0)
+    dw_weights = np.ones(2, dtype=np.float64)
+    s_eff_num = np.sum(
+        (dw_weights[:, None] / r_dir[:, None])
+        * x_air_aligned_b
+        * np.exp(-1j * 2.0 * np.pi * np.outer(tau_dir, f_r_b)),
+        axis=0,
+    )
+    s_eff_den = float(np.sum(dw_weights / (r_dir ** 2)))
+    s_eff_b = s_eff_num / s_eff_den
+
     # 5. Profile search on [0.55, 0.65] m with 10 um step (matching review grid)
     d_grid = np.linspace(0.55, 0.65, 10001)
     r_d = np.sqrt(r_dir[:, None] ** 2 + (2.0 * d_grid[None, :]) ** 2)  # (2, D)
     tau_d = r_d / C0 + t0_eff_tgt_est
+    tau_d_raw = r_d / C0
 
     # Unnormalized legacy heuristic (to verify +2.0 cm bias)
     p_unnorm = np.zeros_like(d_grid)
     # Normalized GLRT matched statistic |a^H W y|^2 / (a^H W a), w_i = 1
     p_norm = np.zeros_like(d_grid)
+    # Explicit S_eff dispersive matched statistic
+    p_norm_eff = np.zeros_like(d_grid)
     # Normalized non-coherent envelope DAS
     p_env = np.zeros_like(d_grid)
     s2_sum = float(np.sum(np.abs(s_b) ** 2))
+    seff2_sum = float(np.sum(np.abs(s_eff_b) ** 2))
 
     y_sconj = x_echo_b * np.conj(s_b)[None, :]  # (2, F)
+    y_seff_conj = x_echo_b * np.conj(s_eff_b)[None, :]
     for idx_d in range(d_grid.size):
         exp_neg = np.exp(-1j * 2.0 * np.pi * np.outer(tau_d[:, idx_d], f_r_b))
+        exp_neg_raw = np.exp(-1j * 2.0 * np.pi * np.outer(tau_d_raw[:, idx_d], f_r_b))
         z_ch = np.sum(y_sconj * exp_neg, axis=1)  # (2,)
+        z_ch_eff = np.sum(y_seff_conj * exp_neg_raw, axis=1)
         p_unnorm[idx_d] = abs(np.sum(r_d[:, idx_d] * z_ch))
         denom = float(np.sum(1.0 / (r_d[:, idx_d] ** 2)))
         p_norm[idx_d] = (abs(np.sum(z_ch / r_d[:, idx_d])) ** 2) / (denom * s2_sum)
+        p_norm_eff[idx_d] = (abs(np.sum(z_ch_eff / r_d[:, idx_d])) ** 2) / (denom * seff2_sum)
         p_env[idx_d] = (float(np.sum(np.abs(z_ch) / r_d[:, idx_d])) ** 2) / denom
 
     return {
@@ -212,6 +239,7 @@ def run_closed_loop_example(
         "t0_eff_tgt_samples": t0_eff_tgt_est / TS,
         "d_est_unnorm_m": float(d_grid[int(np.argmax(p_unnorm))]),
         "d_est_norm_m": float(d_grid[int(np.argmax(p_norm))]),
+        "d_est_norm_eff_m": float(d_grid[int(np.argmax(p_norm_eff))]),
         "d_est_env_m": float(d_grid[int(np.argmax(p_env))]),
         "x_air": x_air,
         "x_tgt": x_tgt,
@@ -259,6 +287,14 @@ def main() -> int:
         f"d_norm'={res_shift['d_est_norm_m']:.6f} m"
     )
 
+    # Counterexample C: general nonlinear common dispersion in H_ref
+    res_disp = run_closed_loop_example(common_shift_a=0.10e-9, nonlinear_dispersion=True)
+    print(
+        f"Boundary C (general nonlinear H_ref dispersion): "
+        f"scalar-shift d_norm={res_disp['d_est_norm_m']:.6f} m, "
+        f"explicit S_eff d_norm_eff={res_disp['d_est_norm_eff_m']:.6f} m"
+    )
+
     # Assertions
     assert abs(res0["dtau2_est_ns"] - 0.500000) < 1e-6
     assert abs(res0["g2_est"] - 1.250000) < 1e-6
@@ -267,10 +303,12 @@ def main() -> int:
     assert abs(res0["t0_eff_tgt_samples"] - 250.40) < 1e-3
     assert abs(res0["d_est_unnorm_m"] - 0.620000) < 1e-5
     assert abs(res0["d_est_norm_m"] - 0.600000) < 1e-5
+    assert abs(res0["d_est_norm_eff_m"] - 0.600000) < 1e-5
     assert abs(res0["d_est_env_m"] - 0.600000) < 1e-5
     assert diff_gauge_a < 1e-13
     assert rel_obs_air < 1e-12 and rel_obs_tgt < 1e-12
     assert abs(res_shift["d_est_norm_m"] - 0.600000) < 1e-5
+    assert abs(res_disp["d_est_norm_eff_m"] - 0.600000) < 1e-5
     print("ALL M0 CLOSED-LOOP CHECKS PASSED.")
     return 0
 

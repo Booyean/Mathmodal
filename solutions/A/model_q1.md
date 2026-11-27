@@ -99,9 +99,10 @@ $$X_i^{(g)}(f_D) = H_i(f_D)\, S(f_D)\, e^{+j 2\pi f_R (t_0^{(g)} + \delta t_{g,r
    若对所有通道与所有测量组作如下公共规范变换（任意 $a \in \mathbb{R}$）：
    $$H_i'(f_D) = H_i(f_D)\, e^{-j 2\pi f_R a}, \qquad (t_0^{(g)})' = t_0^{(g)} + a \quad (\forall i, \forall g),$$
    则所有相对通道比 $H_i'(f_D)/H_{i_{\text{ref}}}'(f_D) = H_i(f_D)/H_{i_{\text{ref}}}(f_D)$ 与全部观测频谱 $X_i^{(g)}(f_D)$ **保持完全不变**。因此，**仅靠观测数据无法分别唯一识别参考通道的绝对硬件群时延与物理绝对起始时刻 $t_0^{(g)}$**。
-   - **闭环消去证明（有效参考零点与差分测距不变性）**：定义吸收了公共参考相位因子后的**有效参考频谱与有效时间零点** $t_{0,\text{eff}}^{(g)}$：
-     $$S_{\text{eff}}^{(g)}(f_D) \triangleq H_{i_{\text{ref}}}(f_D)\, S(f_D)\, e^{+j 2\pi f_R t_0^{(g)}}, \qquad t_{0,\text{eff}}^{(g)} \triangleq t_0^{(g)} + \tau_{\text{ref}}^{\text{hw}}.$$
-     在相对校准 $X_i^{(g,\text{cal})}(f_D) = X_i^{(g)}(f_D) / H_i^{\text{rel}}(f_D)$ 后，同一组 $g$（或通过空场对齐模板 $\bar{X}^{\text{air,cal}}$）得到的**直射波有效到达时刻**与**目标回波有效到达时刻**共享同一公共因子 $H_{i_{\text{ref}}}(f_D) e^{+j 2\pi f_R t_0^{(g)}}$。在 $(H_i, t_0^{(g)}) \mapsto (H_i e^{-j2\pi f_R a}, t_0^{(g)} + a)$ 变换下，$t_{0,\text{eff}}^{(g)}$ 严格不变；若存在更一般的公共带内色散 $H_{i_{\text{ref}}}(f_D)$，采用由空场直射波反推的有效参考频谱做匹配（或将公共参考时延吸收进 $t_{0,\text{eff}}^{(g)}$）后，测距目标函数仅依赖净传播路径差 $\tau_i^{\text{tgt}}(d_g) - \tau_{i_{\text{ref}}}^{\text{dir}}$，因而平面距离 $d_g$ 对公共规范移位**严格不变**。
+   - **闭环消去证明与“纯时延 vs 一般色散”边界**：定义吸收了公共参考频响与异步触发偏移后的**有效参考频谱** $S_{\text{eff}}^{(g)}(f_D)$：
+     $$S_{\text{eff}}^{(g)}(f_D) \triangleq H_{i_{\text{ref}}}(f_D)\, S(f_D)\, e^{+j 2\pi f_R t_0^{(g)}}.$$
+     1. **当公共参考通道仅为纯时延移位**（即 $H_{i_{\text{ref}}}(f_D) \propto e^{-j 2\pi f_R \tau_{\text{ref}}^{\text{hw}}}$）时，可将 $\tau_{\text{ref}}^{\text{hw}}$ 吸收进标量**有效时间零点** $t_{0,\text{eff}}^{(g)} \triangleq t_0^{(g)} + \tau_{\text{ref}}^{\text{hw}}$；在规范变换 $(H_i, t_0^{(g)}) \mapsto (H_i e^{-j2\pi f_R a}, t_0^{(g)} + a)$ 下，$t_{0,\text{eff}}^{(g)}$ 严格不变。
+     2. **当存在一般公共频率色散**（如 $|H_{i_{\text{ref}}}(f_D)|$ 非平坦倾斜或含有非线性相位色散 $\psi_{\text{ref}}(f_D) \neq 0$）时，**仅靠单一标量时间平移 $\hat{t}_{0,\text{eff}}^{(g)}$ 无法消去该公共频率色散**；必须显式由已对齐的校准空场直达波重构含色散有效参考模板 $\hat{S}_{\text{eff}}^{(g)}(f_D)$（见第 5.3 节）用于目标导向矢量匹配，方能在带内完整抵消一般公共频响 $H_{i_{\text{ref}}}(f_D)$ 的影响（前提是空场直射波耦合 $E_i^{\text{dir}}$ 已知或已校平）。在此条件下，测距目标函数仅依赖净传播路径差 $\tau_i^{\text{tgt}}(d_g) - \tau_{i_{\text{ref}}}^{\text{dir}}$，距离反演对公共规范移位严格不变。
 
 2. **不可识别自由度 B — 相对传递函数 $H_i^{\text{rel}}(f_D)$ 内部 $(\Delta\tau_i, \psi_i(f_D))$ 的共线性**：
    固定参考通道规范约束 $H_{i_{\text{ref}}}^{\text{rel}}(f_D) \equiv 1$ 后，仅能确定复比值 $H_i^{\text{rel}}(f_D) = H_i(f_D)/H_{i_{\text{ref}}}(f_D)$。若 $\psi_i(f_D)$ 为不受约束的任意逐频点函数，则对任意 $\delta \in \mathbb{R}$，变换
@@ -154,17 +155,23 @@ $$X_i^{(g)}(f_D) = H_i(f_D)\, S(f_D)\, e^{+j 2\pi f_R (t_0^{(g)} + \delta t_{g,r
 
 ### 5.3 问题 1.3：金属板与墙体测距
 
-#### 经典基线（`M0-Rng-Base`：有效零点锚定 + 归一化 GLRT 相干/包络 DAS 剖面）
-1. **有效参考时间零点锚定**：通过已对齐至当前组的校准空场直达波模板，补偿各通道已知直射波路径 $R_i^{\text{dir}}$ 与时延 $\tau_i^{\text{dir}}$，最大化与数字发射参考 $S(f_D)$ 的相干匹配相关，得到第 $g$ 组有效异步零点 $\hat{t}_{0,\text{eff}}^{(g)}$（吸收任何未知公共参考时延）：
-   $$\hat{t}_{0,\text{eff}}^{(g)} = \arg\max_{t_0 \in [0, T_p)} \left| \sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i^{\text{dw}}}{R_i^{\text{dir}}} \sum_{f_D \in \mathcal{B}} \big(\bar{X}_i^{\text{air,cal}}(f_D) e^{+j 2\pi f_R \Delta\hat{t}_0^{(g)}}\big) \, S^*(f_D)\, e^{-j 2\pi f_R (\tau_i^{\text{dir}} + t_0)} \right|.$$
-2. **归一化多通道延迟叠加（GLRT / Cauchy-Schwarz 无偏统计量）**：
-   设模型期望回波导向矢量为 $a_{i,f_D}^{(g)}(d) = \dfrac{1}{R_i^{\text{tgt}}(d)}\, S(f_D)\, e^{+j 2\pi f_R (\tau_i^{\text{tgt}}(d) + \hat{t}_{0,\text{eff}}^{(g)})}$，通道权重矩阵 $W$ 对角元为 $w_i > 0$（第一轮经典基线统一取等权 $w_i \equiv 1$；其余权重须经消融对照后启用）。
-   - **归一化相干匹配统计量（主基线 `P_norm`）**：
-     $$P_{\text{norm}}^{(g)}(d) = \frac{\big|a^{(g)}(d)^H W \tilde{X}^{(g)}\big|^2}{a^{(g)}(d)^H W a^{(g)}(d)} = \frac{\left|\sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i}{R_i^{\text{tgt}}(d)} \sum_{f_D \in \mathcal{B}} \tilde{X}_i^{(g)}(f_D)\, S^*(f_D)\, e^{-j 2\pi f_R (\tau_i^{\text{tgt}}(d) + \hat{t}_{0,\text{eff}}^{(g)})}\right|^2}{\left(\sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i}{\big(R_i^{\text{tgt}}(d)\big)^2}\right)\left(\sum_{f_D \in \mathcal{B}} |S(f_D)|^2\right)}.$$
-     在无噪理想镜面信号 $\tilde{X}_{i}^{(g)}(f_D) = \Gamma a_{i,f_D}^{(g)}(d_0)$ 下，由 Cauchy-Schwarz 不等式可知 $P_{\text{norm}}^{(g)}(d)$ 在 $d = d_0$ 处**严格唯一达到全局最大值** $|\Gamma|^2 \sum_i \frac{w_i}{(R_i^{\text{tgt}}(d_0))^2} \sum_{f_D\in\mathcal{B}} |S(f_D)|^2$，**零估计偏差**。
-     > **关于旧版未归一化形式的偏差说明**：若在分子错乘 $R_i^{\text{tgt}}(d)$ 而分母不归一化，真值 $d_0$ 处的一阶导数存在正偏项 $\sum_i (R_i^{\text{tgt}})'(d_0) / R_i^{\text{tgt}}(d_0) > 0$，会导致小算例峰值从 `0.600000 m` 偏移至 `0.620000 m`（已由 `verify_q1_spec.py` 复现验证）。
-   - **归一化非相干包络叠加（对照基线 `P_env`）**：令 $z_i^{(g)}(\tau) = \sum_{f_D \in \mathcal{B}} \tilde{X}_i^{(g)}(f_D)\, S^*(f_D)\, e^{-j 2\pi f_R \tau}$ 为第 $i$ 路去直达波后的复匹配滤波响应，定义同样经几何归一化消偏的包络剖面：
-     $$P_{\text{env}}^{(g)}(d) = \frac{\left(\sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i}{R_i^{\text{tgt}}(d)}\, \big|z_i^{(g)}\big(\tau_i^{\text{tgt}}(d) + \hat{t}_{0,\text{eff}}^{(g)}\big)\big|\right)^2}{\sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i}{\big(R_i^{\text{tgt}}(d)\big)^2}}.$$
+#### 经典基线（`M0-Rng-Base`：有效零点/显式参考模板 + 归一化 GLRT 相干/包络 DAS 剖面）
+1. **有效参考零点锚定与显式色散模板重构**：
+   - **纯时延假设下的标量零点 $\hat{t}_{0,\text{eff}}^{(g)}$**：若公共参考通道接近无色散纯时延，通过补偿已知直射波路径 $R_i^{\text{dir}}$ 与 $\tau_i^{\text{dir}}$ 并与理想参考 $S(f_D)$ 做相干匹配，确定标量有效异步零点：
+     $$\hat{t}_{0,\text{eff}}^{(g)} = \arg\max_{t_0 \in [0, T_p)} \left| \sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i^{\text{dw}}}{R_i^{\text{dir}}} \sum_{f_D \in \mathcal{B}} \big(\bar{X}_i^{\text{air,cal}}(f_D) e^{+j 2\pi f_R \Delta\hat{t}_0^{(g)}}\big) \, S^*(f_D)\, e^{-j 2\pi f_R (\tau_i^{\text{dir}} + t_0)} \right|.$$
+   - **一般公共频率色散下的显式模板 $\hat{S}_{\text{eff}}^{(g)}(f_D)$**：当公共参考通道 $H_{i_{\text{ref}}}(f_D)$ 含有幅度滚降或非线性相位色散时，直接利用对齐后的校准空场直达波重构有效发射参考频谱（已同时吸收 $H_{i_{\text{ref}}}(f_D)$ 与 $t_0^{(g)}$）：
+     $$\hat{S}_{\text{eff}}^{(g)}(f_D) = \frac{\sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i^{\text{dw}}}{R_i^{\text{dir}}} \big(\bar{X}_i^{\text{air,cal}}(f_D) e^{+j 2\pi f_R \Delta\hat{t}_0^{(g)}}\big)\, e^{-j 2\pi f_R \tau_i^{\text{dir}}}}{\sum_{i \in \mathcal{I}_{\text{rx}}} w_i^{\text{dw}} \big(R_i^{\text{dir}}\big)^{-2}}, \quad f_D \in \mathcal{B}.$$
+2. **归一化多通道延迟叠加（GLRT / Cauchy-Schwarz 匹配统计量）**：
+   在标量零点模式下取导向矢量 $a_{i,f_D}^{(g)}(d) = \dfrac{1}{R_i^{\text{tgt}}(d)}\, S(f_D)\, e^{+j 2\pi f_R (\tau_i^{\text{tgt}}(d) + \hat{t}_{0,\text{eff}}^{(g)})}$；在一般公共色散显式模板模式下取 $a_{i,f_D}^{\text{eff},(g)}(d) = \dfrac{1}{R_i^{\text{tgt}}(d)}\, \hat{S}_{\text{eff}}^{(g)}(f_D)\, e^{+j 2\pi f_R \tau_i^{\text{tgt}}(d)}$。通道权重矩阵 $W$ 对角元为 $w_i > 0$（第一轮经典基线统一取等权 $w_i \equiv 1$）。
+   - **归一化相干匹配统计量（主基线 `P_norm` 与色散形式 `P_norm,eff`）**：
+     $$P_{\text{norm}}^{(g)}(d) = \frac{\big|a^{(g)}(d)^H W \tilde{X}^{(g)}\big|^2}{a^{(g)}(d)^H W a^{(g)}(d)} = \frac{\left|\sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i}{R_i^{\text{tgt}}(d)} \sum_{f_D \in \mathcal{B}} \tilde{X}_i^{(g)}(f_D)\, S_{\text{tpl}}^*(f_D)\, e^{-j 2\pi f_R (\tau_i^{\text{tgt}}(d) + t_{\text{anc}})}\right|^2}{\left(\sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i}{\big(R_i^{\text{tgt}}(d)\big)^2}\right)\left(\sum_{f_D \in \mathcal{B}} |S_{\text{tpl}}(f_D)|^2\right)},$$
+     其中纯时延模式取 $(S_{\text{tpl}}, t_{\text{anc}}) = (S, \hat{t}_{0,\text{eff}}^{(g)})$，显式色散模式取 $(S_{\text{tpl}}, t_{\text{anc}}) = (\hat{S}_{\text{eff}}^{(g)}, 0)$。
+     > **严格唯一性与有噪适用边界说明**：
+     > 1. **达到上界与严格唯一的条件**：Cauchy-Schwarz 不等式首先保证真值 $d_0$ 达到全局上界；要使全局最大值在搜索区间 $[d_{\min}, d_{\max}]$ 上**严格唯一**，还须满足：**理想无噪纯镜面模型成立**（$\tilde{X}^{(g)} = \Gamma a^{(g)}(d_0)$）、**非零回波**（$\Gamma \neq 0$）、**非零有效带宽与带内信号能量**（使得在 $d_{\max} < c_0 T_p/2$ 下导向矢量族 $\{a^{(g)}(d) : d \in [d_{\min}, d_{\max}]\}$ 在搜索区间内**互不共线**，即对任意 $d \neq d_0$ 不存在复标量 $\kappa$ 满足 $a^{(g)}(d) = \kappa a^{(g)}(d_0)$）。
+     > 2. **理想恢复与有噪统计性质之区分**：上述“精确恢复（无几何加权偏置）”仅在**理想无噪纯镜面回波与不共线条件下**成立，**不能**写成一般噪声、直射波残余泄露或频变目标散射 $\Gamma_g(f_D)$ 下的“有限样本统计无偏性”。
+     > 3. **旧版未归一化形式的偏差来源**：若在分子错乘 $R_i^{\text{tgt}}(d)$ 而分母不归一化，真值 $d_0$ 处的一阶导数存在正偏项 $\sum_i (R_i^{\text{tgt}})'(d_0) / R_i^{\text{tgt}}(d_0) > 0$，会导致小算例峰值从 `0.600000 m` 偏移至 `0.620000 m`（已由 `verify_q1_spec.py` 复现验证）。
+   - **归一化非相干包络叠加（对照基线 `P_env`）**：令 $z_i^{(g)}(\tau) = \sum_{f_D \in \mathcal{B}} \tilde{X}_i^{(g)}(f_D)\, S_{\text{tpl}}^*(f_D)\, e^{-j 2\pi f_R \tau}$ 为去直达波后的复匹配滤波响应，定义同样经几何归一化去除 $1/R_i$ 加权偏置的包络剖面（精确恢复同样限定于理想无噪与非共线条件）：
+     $$P_{\text{env}}^{(g)}(d) = \frac{\left(\sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i}{R_i^{\text{tgt}}(d)}\, \big|z_i^{(g)}\big(\tau_i^{\text{tgt}}(d) + t_{\text{anc}}\big)\big|\right)^2}{\sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i}{\big(R_i^{\text{tgt}}(d)\big)^2}}.$$
 3. **峰值提取与墙体多次回波甄别**：$\hat{d}_g = \arg\max_{d \in [d_{\min}, d_{\max}]} P^{(g)}(d)$；墙体工况在先导试验中核对前表面主峰与后界面弱回波的分离门限。
 
 #### 改进候选（`M0-Rng-WLS`：宽带鲁棒加权非线性最小二乘）
@@ -234,9 +241,10 @@ python solutions/A/verify_q1_spec.py
 | 相对校准（投影约定还原） | $\Delta\hat{\tau}_2 = 0.500000\text{ ns},\ \hat{G}_2 = 1.250000,\ \hat{\psi}_2 = 0.300000\text{ rad}$ | `dtau2=0.500000 ns, G2=1.250000, psi2=0.300000 rad` |
 | 射频对齐与有效零点 | $\Delta\hat{t}_0 = 130.1500\,T_s,\ \hat{t}_{0,\text{eff}}^{\text{tgt}} = 250.4000\,T_s$ | `dt0=130.1500 Ts, t0_eff_tgt=250.4000 Ts` |
 | 旧版未归一化 DAS 偏差对照 | $> 0.60\text{ m}$（存在正一阶导数偏项） | `0.620000 m`（复现 $+2.0\text{ cm}$ 偏差） |
-| 归一化 `P_norm` 与 `P_env` 测距（$[0.55, 0.65]\text{ m}$, $10\,\mu\text{m}$ 步长） | `0.600000 m`（零偏差闭环） | `P_norm = 0.600000 m`，`P_env = 0.600000 m` |
+| 归一化 `P_norm`、`P_norm_eff` 与 `P_env` 测距（$[0.55, 0.65]\text{ m}$, $10\,\mu\text{m}$ 步长） | `0.600000 m`（理想无噪且导向矢量不共线条件下精确恢复） | `P_norm = 0.600000 m`, `P_norm_eff = 0.600000 m`, `P_env = 0.600000 m` |
 | 反例 A（自由 $\psi$ 移位 $\delta = 0.25\text{ ns}$） | $\max|H_2 - H_2'| \approx 0$ | `max|H - H'| = 2.445e-15`（加权投影唯一固定 $\Delta\hat{\tau}_2$） |
-| 反例 B（公共 $H_{\text{ref}}$ 与 $t_0$ 移位 $a = 0.35\text{ ns}$） | 相对观测不变，且有效零点消去后 $\hat{d}' = 0.600000\text{ m}$ | `rel\|X_air-X'\|=1.017e-13, rel\|X_tgt-X'\|=2.051e-13, d_norm'=0.600000 m` |
+| 反例 B（公共纯时延规范移位 $a = 0.35\text{ ns}$） | 相对观测不变，且有效零点消去后 $\hat{d}' = 0.600000\text{ m}$ | `rel\|X_air-X'\|=1.017e-13, rel\|X_tgt-X'\|=2.051e-13, d_norm'=0.600000 m` |
+| 边界 C（一般非线性公共色散 $H_{\text{ref}}$） | 纯时间平移 `t0_eff` 存在色散残差；显式 $\hat{S}_{\text{eff}}$ 严格消去并回到 `0.600000 m` | `scalar-shift d_norm=0.600010 m`, `explicit S_eff d_norm_eff=0.600000 m` |
 
 ---
 
