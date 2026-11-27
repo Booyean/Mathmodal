@@ -1,0 +1,13 @@
+﻿file,sheet,rows,n_melt_nonnull,n_distinct,n_dup_rows,dup_examples,melting_no_format
+1#LF.xlsx,LF精炼位1信息数据,471,471,450,21,26AD6934;26AD6918;26AD6895,##AD##BD##CD
+1#RH.xlsx,RH精炼位1信息数据,336,336,336,0,,##AD##BD##CD
+1#连铸.xlsx,连铸A信息数据,448,448,447,1,26AD6602,##AD##BD##CD
+2#RH.xlsx,RH精炼位2信息数据,314,314,312,2,26AD6701;26AD6504,##AD##BD##CD
+2#连铸.xlsx,连铸B信息数据,349,349,348,1,26BD6269,##AD##BD##CD
+3#LF.xlsx,LF精炼位3信息数据,446,446,422,24,26AD6932;26AD6928;26AD6921,##AD##BD##CD
+3#连铸.xlsx,连铸C信息数据,379,379,378,1,26CD5046,##AD##BD##CD
+A炉.xlsx,转炉A信息数据,445,445,445,0,,##AD
+B炉.xlsx,转炉B信息数据,471,471,471,0,,##BD
+C炉.xlsx,转炉C信息数据,423,423,423,0,,##CD
+出钢计划表单.xls,steel_tapping_plan_info(2),1321,1321,1267,54,-2,##AD##BD##CD
+工序时间信息.xlsx,工序信息数据,1355,1350,1278,72,26AD6934;26AD6928;26AD6921,##AD##BD##CD

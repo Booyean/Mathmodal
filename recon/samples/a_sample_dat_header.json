@@ -1,0 +1,40 @@
+{
+  "file": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_0.dat",
+  "size_bytes": 768084,
+  "raw_first_64_bytes_hex": "00b20e0014e8030066000000000000004f000000803e00001000000034fca4fd340108017c00b80094ff5cfd84ffc401bcfe44fed0fc68ffc8048c006c02f404",
+  "packets": [
+    {
+      "offset": 0,
+      "total_len": 256020,
+      "type": 102,
+      "freq": 0.0,
+      "sync": 79,
+      "num": 16000,
+      "len": 16,
+      "bytes": 256000,
+      "hdr_ok": true
+    },
+    {
+      "offset": 256028,
+      "total_len": 256020,
+      "type": 102,
+      "freq": 0.0,
+      "sync": 80,
+      "num": 16000,
+      "len": 16,
+      "bytes": 256000,
+      "hdr_ok": true
+    },
+    {
+      "offset": 512056,
+      "total_len": 256020,
+      "type": 102,
+      "freq": 0.0,
+      "sync": 81,
+      "num": 16000,
+      "len": 16,
+      "bytes": 256000,
+      "hdr_ok": true
+    }
+  ]
+}
