@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "approval_id": "A-Q1-SPLIT0",
+  "status": "frozen",
+  "approved_by": "codex",
+  "date": "2026-11-27",
+  "raw_commit": "d8ee44021dd7acec18e7fd608e50835b0f7e8dd9",
+  "source_spec_commit": "0f521a4427fb979694f2e542920ab946cec150fb",
+  "independent_review_commit": "0fa2efba4661425dcf87bc88d548c29997ecf5d1",
+  "groups": {
+    "wall_cal": [
+      "data1-42cm",
+      "data16-46cm",
+      "data13-56cm",
+      "data4-62cm",
+      "data2-71cm",
+      "data11-76cm",
+      "data8-78cm",
+      "data10-82cm",
+      "data19-93cm",
+      "data7-106cm"
+    ],
+    "wall_test": [
+      "data5-44cm",
+      "data14-48cm",
+      "data15-57cm",
+      "data12-65cm",
+      "data20-73cm",
+      "data3-77cm",
+      "data17-81cm",
+      "data9-91cm",
+      "data18-105cm",
+      "data6-121cm"
+    ],
+    "metal_cal": [
+      "data2-48cm",
+      "data13-52cm",
+      "data3-54cm",
+      "data16-59cm",
+      "data11-62cm",
+      "data20-68cm",
+      "data1-69cm",
+      "data19-74cm",
+      "data8-83cm",
+      "data7-91cm"
+    ],
+    "metal_test": [
+      "data14-48cm",
+      "data15-53cm",
+      "data12-55cm",
+      "data5-60cm",
+      "data17-65cm",
+      "data10-70cm",
+      "data18-70cm",
+      "data9-76cm",
+      "data4-87cm",
+      "data6-99cm"
+    ]
+  },
+  "air_template_groups": [
+    "data1",
+    "data2",
+    "data3",
+    "data4",
+    "data5",
+    "data6",
+    "data7",
+    "data8",
+    "data9",
+    "data10"
+  ],
+  "policy": [
+    "Calibration/model selection/hyperparameters use cal groups only.",
+    "Test labels are evaluation-only; freeze changes require a versioned coordinator decision.",
+    "Freeze approval does not approve a scientific model or an experiment."
+  ],
+  "limitations": {
+    "wall_extrapolation_test_cm_above": 106,
+    "metal_extrapolation_test_cm_above": 91,
+    "test_max_cm": {
+      "wall": 121,
+      "metal": 99
+    }
+  },
+  "explored_target_groups": [
+    "wall/data1-42cm",
+    "metal/data1-69cm"
+  ]
+}
