@@ -1,0 +1,175 @@
+{
+  "tool": "checks/A/verify_split0.py",
+  "data_root": "C:\\Users\\30461\\.openagents\\agents\\codex\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题\\附件",
+  "split": "coordination\\A_Q1_SPLIT.json",
+  "manifest": "C:\\Users\\30461\\.openagents\\agents\\my_deepseek\\_tmp\\a_dat_manifest.csv",
+  "real_groups": {
+    "空场数据": [
+      "data1",
+      "data10",
+      "data2",
+      "data3",
+      "data4",
+      "data5",
+      "data6",
+      "data7",
+      "data8",
+      "data9"
+    ],
+    "墙体数据": [
+      "data1-42cm",
+      "data10-82cm",
+      "data11-76cm",
+      "data12-65cm",
+      "data13-56cm",
+      "data14-48cm",
+      "data15-57cm",
+      "data16-46cm",
+      "data17-81cm",
+      "data18-105cm",
+      "data19-93cm",
+      "data2-71cm",
+      "data20-73cm",
+      "data3-77cm",
+      "data4-62cm",
+      "data5-44cm",
+      "data6-121cm",
+      "data7-106cm",
+      "data8-78cm",
+      "data9-91cm"
+    ],
+    "金属板数据": [
+      "data1-69cm",
+      "data10-70cm",
+      "data11-62cm",
+      "data12-55cm",
+      "data13-52cm",
+      "data14-48cm",
+      "data15-53cm",
+      "data16-59cm",
+      "data17-65cm",
+      "data18-70cm",
+      "data19-74cm",
+      "data2-48cm",
+      "data20-68cm",
+      "data3-54cm",
+      "data4-87cm",
+      "data5-60cm",
+      "data6-99cm",
+      "data7-91cm",
+      "data8-83cm",
+      "data9-76cm"
+    ]
+  },
+  "n_checks": 15,
+  "n_pass": 15,
+  "n_fail": 0,
+  "all_pass": true,
+  "checks": [
+    {
+      "id": "S0-01",
+      "title": "冻结记录字段",
+      "status": "PASS",
+      "expected": "schema_version=1, approval_id=A-Q1-SPLIT0, status=frozen",
+      "actual": "schema=1, id=A-Q1-SPLIT0, status=frozen"
+    },
+    {
+      "id": "S0-02",
+      "title": "四组各 10 项且组内唯一",
+      "status": "PASS",
+      "expected": "wall_cal/wall_test/metal_cal/metal_test 各 10 且无重复",
+      "actual": "wall_cal=10 (uniq 10), wall_test=10 (uniq 10), metal_cal=10 (uniq 10), metal_test=10 (uniq 10)"
+    },
+    {
+      "id": "S0-03",
+      "title": "10/10 拆分索引覆盖与互斥",
+      "status": "PASS",
+      "expected": "墙体、金属板各自 1..20 全覆盖且 cal/test 无交集",
+      "actual": "wall_idx=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], metal_idx=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], wall_overlap=[], metal_overlap=[]"
+    },
+    {
+      "id": "S0-04",
+      "title": "空场模板组清单",
+      "status": "PASS",
+      "expected": "data1..data10 升序",
+      "actual": "10 项: ['data1', 'data2', 'data3']...['data10']"
+    },
+    {
+      "id": "S0-05",
+      "title": "清单中 50 个组真实存在且 8 行齐全",
+      "status": "PASS",
+      "expected": "50/50 组目录存在，每组 8 个 *_16000_0..7.dat",
+      "actual": "missing=[], bad_rows=[]"
+    },
+    {
+      "id": "S0-06",
+      "title": "无 0 字节数据文件",
+      "status": "PASS",
+      "expected": "0 个 0 字节文件",
+      "actual": "0 个: []"
+    },
+    {
+      "id": "S0-07",
+      "title": "真实目录与清单一致（无漏登记/无多余）",
+      "status": "PASS",
+      "expected": "墙体 20、金属板 20、空场 10 与清单集合完全相等",
+      "actual": "extra={'墙体数据': [], '金属板数据': [], '空场数据': []}, missing={'墙体数据': [], '金属板数据': [], '空场数据': []}, real_counts={空场数据:10, 墙体数据:20, 金属板数据:20}"
+    },
+    {
+      "id": "S0-08",
+      "title": "距离标签与 limitations 一致",
+      "status": "PASS",
+      "expected": "墙体校准 max=106、检验 max=121；金属板校准 max=91、检验 max=99",
+      "actual": "wall_cal=[42, 46, 56, 62, 71, 76, 78, 82, 93, 106], wall_test_max=121, metal_cal=[48, 52, 54, 59, 62, 68, 69, 74, 83, 91], metal_test_max=99, limitations={'wall_extrapolation_test_cm_above': 106, 'metal_extrapolation_test_cm_above': 91, 'test_max_cm': {'wall': 121, 'metal': 99}}"
+    },
+    {
+      "id": "S0-09",
+      "title": "校准/检验距离区间交错",
+      "status": "PASS",
+      "expected": "两组数据 cal 与 test 距离区间均重叠",
+      "actual": "wall cal=[42,106] test=[44,121]; metal cal=[48,91] test=[48,99]"
+    },
+    {
+      "id": "S0-10",
+      "title": "E0 引用组的拆分归属与内插区间",
+      "status": "PASS",
+      "expected": "data1-42cm∈wall_cal、data1-69cm∈metal_cal、data20-73cm∈wall_test、data5-60cm∈metal_test；73∈墙体校准区间、60∈金属板校准区间",
+      "actual": "错配=[]; 73∈[42,106]=True; 60∈[48,91]=True"
+    },
+    {
+      "id": "S0-11",
+      "title": "每组文件同一采集前缀",
+      "status": "PASS",
+      "expected": "50/50 组内 8 个文件共享同一 <timestamp>_16000_ 前缀",
+      "actual": "前缀不唯一的组={}"
+    },
+    {
+      "id": "S0-12",
+      "title": "逐文件 size/SHA256 与 R0 清单一致",
+      "status": "PASS",
+      "expected": "400/400 文件与 a_dat_manifest.csv 的 size、sha256 相同",
+      "actual": "核对 400 个，不一致 0: []"
+    },
+    {
+      "id": "S0-13",
+      "title": "全语料文件数与总字节",
+      "status": "PASS",
+      "expected": "881 文件 / 801,111,612 B",
+      "actual": "881 文件 / 801111612 B"
+    },
+    {
+      "id": "S0-14",
+      "title": "冻结文件 LF 归一 SHA256",
+      "status": "PASS",
+      "expected": "d623da4ea186f372f2be094121c202c55dae0e236f4683005ab88d220a248b3a",
+      "actual": "d623da4ea186f372f2be094121c202c55dae0e236f4683005ab88d220a248b3a"
+    },
+    {
+      "id": "S0-15",
+      "title": "目标距离落在 0.15–2.00 m 搜索区间",
+      "status": "PASS",
+      "expected": "40 个目标距离均 ∈ [15, 200] cm",
+      "actual": "min=42 cm, max=121 cm"
+    }
+  ]
+}
