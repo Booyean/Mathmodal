@@ -1,0 +1,387 @@
+{
+  "probe": "D1-PREREG-1",
+  "generated_at": "2026-11-27T16:44:27+00:00",
+  "target": "A-Q1-D1 data/a-q1-fold-gate（M0 §7.2 折叠 + 一致性门控）",
+  "input_anchor": {
+    "main": "4a210601041e842de361c8b08b398343d2fc934a",
+    "d0_reader_blob": "58fbcd6fa231（D0 读取器 blob，合并后未变）"
+  },
+  "metric_definitions": {
+    "rho": "同包第 q 段(q=1..3)与第 0 段的 Pearson 相关（去均值）",
+    "dphi_deg": "同包第 q 段与第 0 段在 k=1000 的 DFT 相位差，卷绕 (-180,180]",
+    "dphi_ns": "dphi 按 -360*k*d/Np 换算的时延（ns），Ts=0.25 ns",
+    "coh": "|sum_q c_q| / sum_q |c_q|，k=1000",
+    "fold_rms_ratio": "rms(4 段均值)/mean(rms(各段))；均值折叠应为 ~1，求和折叠为 ~4"
+  },
+  "synthetic": [
+    {
+      "id": "S1",
+      "name": "理想周期：4 段完全相同 → 折叠=原段、rho=1、dphi=0、coh=1",
+      "status": "PASS",
+      "checks": {
+        "rho": {
+          "expected": 1.0,
+          "actual": 0.9999999999999999,
+          "pass": true
+        },
+        "dphi_deg": {
+          "expected": 0.0,
+          "actual": 0.0,
+          "pass": true
+        },
+        "coh": {
+          "expected": 1.0,
+          "actual": 1.0,
+          "pass": true
+        },
+        "fold_maxdiff": {
+          "expected": 0.0,
+          "actual": 0.0,
+          "pass": true
+        }
+      }
+    },
+    {
+      "id": "S2",
+      "name": "单段移 2 样本 @k=100 → rho=cos18°、dphi=-18°、coh=|3+e^-j18°|/4",
+      "status": "PASS",
+      "checks": {
+        "rho": {
+          "expected": 0.9510565162951535,
+          "actual": 0.951056516295162,
+          "pass": true
+        },
+        "dphi_deg": {
+          "expected": -18.0,
+          "actual": -18.000000000000256,
+          "pass": true
+        },
+        "coh": {
+          "expected": 0.9907805981198272,
+          "actual": 0.990780598119827,
+          "pass": true
+        }
+      }
+    },
+    {
+      "id": "S3",
+      "name": "线性相位斜坡 9°/段 → rho_q=cos(9q°)、dphi_q3=-27°、coh=sin36°/(4sin9°)",
+      "status": "PASS",
+      "checks": {
+        "rho_q1": {
+          "expected": 0.9876883405951378,
+          "actual": 0.9876883405951606,
+          "pass": true
+        },
+        "rho_q2": {
+          "expected": 0.9510565162951535,
+          "actual": 0.951056516295162,
+          "pass": true
+        },
+        "dphi_q3": {
+          "expected": -27.0,
+          "actual": -26.999999999999602,
+          "pass": true
+        },
+        "coh": {
+          "expected": 0.9846436270654022,
+          "actual": 0.9846436270654025,
+          "pass": true
+        }
+      }
+    },
+    {
+      "id": "S4",
+      "name": "一段全 0 → rho=nan（必须拒绝该段）；只用其余 3 段折叠=原段",
+      "status": "PASS",
+      "checks": {
+        "rho_zero": {
+          "expected": null,
+          "actual": null,
+          "pass": true
+        },
+        "fold_maxdiff": {
+          "expected": 0.0,
+          "actual": 5.684341886080802e-14,
+          "pass": true
+        }
+      }
+    },
+    {
+      "id": "S5",
+      "name": "包间 30° 公共相位 → rho=cos30°、dphi=+30°",
+      "status": "PASS",
+      "checks": {
+        "rho": {
+          "expected": 0.8660254037844387,
+          "actual": 0.8660254037845407,
+          "pass": true
+        },
+        "dphi_deg": {
+          "expected": 30.0,
+          "actual": 29.99999999998829,
+          "pass": true
+        }
+      }
+    },
+    {
+      "id": "S6",
+      "name": "幅值 30000 的 4 段均值折叠：不溢出、不回绕（int16 之和会回绕）",
+      "status": "PASS",
+      "checks": {
+        "fold_max": {
+          "expected": 30000.0,
+          "actual": 30000.0,
+          "pass": true
+        },
+        "fold_max_abs": {
+          "expected": 30000.0,
+          "actual": 30000.0,
+          "pass": true
+        },
+        "fold_maxdiff": {
+          "expected": 0.0,
+          "actual": 0.0,
+          "pass": true
+        }
+      }
+    }
+  ],
+  "synthetic_all_pass": true,
+  "real": {
+    "group": "竞赛题目/A 题：单发多收下的雷达信号处理及成像问题/附件/附件2-测距数据/空场数据/data1",
+    "row_files": [
+      {
+        "row": 0,
+        "file": "2026-11-12-15-40-36_16000_0.dat",
+        "size": 1024112,
+        "n_packets": 4,
+        "syncs": [
+          114,
+          115,
+          116,
+          117
+        ],
+        "problems": [],
+        "rejected_shapes": []
+      },
+      {
+        "row": 1,
+        "file": "2026-11-12-15-40-36_16000_1.dat",
+        "size": 1024112,
+        "n_packets": 4,
+        "syncs": [
+          114,
+          115,
+          116,
+          117
+        ],
+        "problems": [],
+        "rejected_shapes": []
+      },
+      {
+        "row": 2,
+        "file": "2026-11-12-15-40-36_16000_2.dat",
+        "size": 1024112,
+        "n_packets": 4,
+        "syncs": [
+          114,
+          115,
+          116,
+          117
+        ],
+        "problems": [],
+        "rejected_shapes": []
+      },
+      {
+        "row": 3,
+        "file": "2026-11-12-15-40-36_16000_3.dat",
+        "size": 1024112,
+        "n_packets": 4,
+        "syncs": [
+          114,
+          115,
+          116,
+          117
+        ],
+        "problems": [],
+        "rejected_shapes": []
+      },
+      {
+        "row": 4,
+        "file": "2026-11-12-15-40-36_16000_4.dat",
+        "size": 1024112,
+        "n_packets": 4,
+        "syncs": [
+          114,
+          115,
+          116,
+          117
+        ],
+        "problems": [],
+        "rejected_shapes": []
+      },
+      {
+        "row": 5,
+        "file": "2026-11-12-15-40-36_16000_5.dat",
+        "size": 1024112,
+        "n_packets": 4,
+        "syncs": [
+          114,
+          115,
+          116,
+          117
+        ],
+        "problems": [],
+        "rejected_shapes": []
+      },
+      {
+        "row": 6,
+        "file": "2026-11-12-15-40-36_16000_6.dat",
+        "size": 1024112,
+        "n_packets": 4,
+        "syncs": [
+          114,
+          115,
+          116,
+          117
+        ],
+        "problems": [],
+        "rejected_shapes": []
+      },
+      {
+        "row": 7,
+        "file": "2026-11-12-15-40-36_16000_7.dat",
+        "size": 1024112,
+        "n_packets": 4,
+        "syncs": [
+          114,
+          115,
+          116,
+          117
+        ],
+        "problems": [],
+        "rejected_shapes": []
+      }
+    ],
+    "summary": {
+      "phase_bin": 1000,
+      "phase_bin_hz": 1000000000.0,
+      "n_packets": 4,
+      "syncs": [
+        114,
+        115,
+        116,
+        117
+      ],
+      "n_rx_channels": 63,
+      "n_segment_pairs": 756,
+      "rho_min": 0.9438026221790315,
+      "rho_p01": 0.9769301440155123,
+      "rho_median": 0.9992085119687657,
+      "rho_max": 0.9999757035722663,
+      "abs_dphi_deg_max": 39.55440347595962,
+      "abs_dphi_deg_p99": 8.553353497565695,
+      "abs_dphi_deg_median": 0.6144824545027632,
+      "abs_dphi_ns_max": 0.10987334298877673,
+      "coh_min": 0.9538053455759802,
+      "coh_median": 0.9999669565317965,
+      "fold_rms_ratio_min": 0.9818135999217751,
+      "fold_rms_ratio_median": 0.9997052786745411,
+      "threshold_scan_fraction": {
+        "rho_lt_0.900": 0.0,
+        "rho_lt_0.950": 0.0013227513227513227,
+        "rho_lt_0.980": 0.01984126984126984,
+        "rho_lt_0.990": 0.06349206349206349,
+        "rho_lt_0.995": 0.1283068783068783,
+        "rho_lt_0.999": 0.43783068783068785,
+        "absdphi_gt_1deg": 0.3055555555555556,
+        "absdphi_gt_2deg": 0.09523809523809523,
+        "absdphi_gt_5deg": 0.0291005291005291,
+        "absdphi_gt_10deg": 0.010582010582010581,
+        "absdphi_gt_20deg": 0.003968253968253968,
+        "absdphi_gt_45deg": 0.0
+      }
+    },
+    "per_packet": {
+      "114": {
+        "n_segments": 189,
+        "rho_min": 0.9438026221790315,
+        "rho_median": 0.9988065166575867,
+        "abs_dphi_max_deg": 39.55440347595962,
+        "coh_min": 0.9538053455759802,
+        "coh_median": 0.9999673425898545
+      },
+      "115": {
+        "n_segments": 189,
+        "rho_min": 0.9798827760401743,
+        "rho_median": 0.999511577198977,
+        "abs_dphi_max_deg": 17.085070610227888,
+        "coh_min": 0.994590079480753,
+        "coh_median": 0.9999753331168245
+      },
+      "116": {
+        "n_segments": 189,
+        "rho_min": 0.9759026372286541,
+        "rho_median": 0.9995095903195342,
+        "abs_dphi_max_deg": 13.050254225041243,
+        "coh_min": 0.9942083070440623,
+        "coh_median": 0.9999686032727519
+      },
+      "117": {
+        "n_segments": 189,
+        "rho_min": 0.9768762682070079,
+        "rho_median": 0.9983880625862183,
+        "abs_dphi_max_deg": 27.450052053191285,
+        "coh_min": 0.984779067448609,
+        "coh_median": 0.9999613219134945
+      }
+    },
+    "cross_packet": {
+      "ref_115_vs_114": {
+        "rho": 0.9999131527052979,
+        "dphi_deg": 0.02519627676639402,
+        "dphi_ns": -6.998965768442784e-05
+      },
+      "ref_116_vs_114": {
+        "rho": 0.999936607570931,
+        "dphi_deg": 0.2779733388263139,
+        "dphi_ns": -0.0007721481634064277
+      },
+      "ref_117_vs_114": {
+        "rho": 0.9994870944127802,
+        "dphi_deg": -1.6962704372251096,
+        "dphi_ns": 0.004711862325625304
+      },
+      "all_channels": {
+        "rho_min": 0.9675082329106733,
+        "rho_median": 0.9984640675746914,
+        "abs_dphi_deg_max": 13.133145767754456,
+        "abs_dphi_deg_median": 0.8650066625722275,
+        "abs_dphi_ns_max": 0.036480960465984605
+      }
+    },
+    "worst_channels_min_rho": [
+      [
+        63,
+        0.9438026221790315
+      ],
+      [
+        62,
+        0.9721074190082593
+      ],
+      [
+        0,
+        0.9800085498446542
+      ],
+      [
+        61,
+        0.9844473598679352
+      ],
+      [
+        47,
+        0.9847873629117835
+      ]
+    ]
+  }
+}

@@ -1,0 +1,555 @@
+{
+  "env": {
+    "python": "3.11.5",
+    "numpy": "1.26.4"
+  },
+  "results": [
+    {
+      "name": "B1a 恒等 gamma=1",
+      "status": "PASS",
+      "expected": 1.0,
+      "actual": 1.0
+    },
+    {
+      "name": "B1b 折叠==原段",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "B1c 两包都接受",
+      "status": "PASS",
+      "expected": [
+        true,
+        true
+      ],
+      "actual": [
+        true,
+        true
+      ]
+    },
+    {
+      "name": "B2a 段间失相 -> 全拒",
+      "status": "PASS",
+      "expected": "FoldGateError",
+      "actual": "group 'synthetic/d1': 没有任何包通过 D1 一致性门控（1 个包全部被拒）"
+    },
+    {
+      "name": "B2b gamma_ref 解析 0",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 4.4968913416385124e-66
+    },
+    {
+      "name": "B2c 拒绝原因",
+      "status": "PASS",
+      "expected": "{'intra_segment_low_gamma_median', 'intra_segment_low_gamma_ref'}",
+      "actual": "{'intra_segment_low_gamma_median', 'intra_segment_low_gamma_ref'}"
+    },
+    {
+      "name": "B3a rho 闭式",
+      "status": "PASS",
+      "expected": 0.9948421174533585,
+      "actual": 0.9948417268098083
+    },
+    {
+      "name": "B3b delta=40 ps",
+      "status": "PASS",
+      "expected": 40.0,
+      "actual": 40.00151131363936
+    },
+    {
+      "name": "B3c phi~0",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 9.065732430408362e-06
+    },
+    {
+      "name": "B3d 两包接受",
+      "status": "PASS",
+      "expected": [
+        true,
+        true
+      ],
+      "actual": [
+        true,
+        true
+      ]
+    },
+    {
+      "name": "B3e 折叠==双重平均",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "B4a rho=1",
+      "status": "PASS",
+      "expected": 1.0,
+      "actual": 1.0
+    },
+    {
+      "name": "B4b |phi|=pi",
+      "status": "PASS",
+      "expected": 3.141592653589793,
+      "actual": 3.141592653589793
+    },
+    {
+      "name": "B4c 仅相位原因",
+      "status": "PASS",
+      "expected": [
+        "inter_packet_phase_offset"
+      ],
+      "actual": [
+        "inter_packet_phase_offset"
+      ]
+    },
+    {
+      "name": "B4d 折叠未被抵消",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "B5a gain=-12.04 dB",
+      "status": "PASS",
+      "expected": -12.0412,
+      "actual": -12.041236737155327
+    },
+    {
+      "name": "B5b 增益跳变被拒",
+      "status": "PASS",
+      "expected": [
+        "inter_packet_gain_jump"
+      ],
+      "actual": [
+        "inter_packet_gain_jump"
+      ]
+    },
+    {
+      "name": "B6 P=0 -> FoldGateError",
+      "status": "PASS",
+      "expected": "FoldGateError",
+      "actual": "group 'synthetic/d1': 组内没有共同 sync 包（P=0），无法折迭"
+    },
+    {
+      "name": "B7 参考零能量 -> 全拒",
+      "status": "PASS",
+      "expected": "FoldGateError",
+      "actual": "group 'synthetic/d1': 没有任何包通过 D1 一致性门控（1 个包全部被拒）"
+    },
+    {
+      "name": "B8a 无效通道折叠为 0",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "B8b channel_valid 透传",
+      "status": "PASS",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "name": "B8c 有效通道不受影响",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "B9a Q=2 折叠==双重平均",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "B9b Q=2 meta",
+      "status": "PASS",
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "B10 int16 大幅值不回绕",
+      "status": "PASS",
+      "expected": 32700.0,
+      "actual": 32700.0
+    },
+    {
+      "name": "B11a gamma_ref_min=0 拒绝",
+      "status": "PASS",
+      "expected": "ValueError",
+      "actual": "gamma_ref_min 必须在 (0,1]，实际 0.0"
+    },
+    {
+      "name": "B11b rho_min>1 拒绝",
+      "status": "PASS",
+      "expected": "ValueError",
+      "actual": "rho_min 必须在 (0,1]，实际 1.5"
+    },
+    {
+      "name": "B11c phase_max_rad>pi 拒绝",
+      "status": "PASS",
+      "expected": "ValueError",
+      "actual": "phase_max_rad 必须在 (0, pi]，实际 4.0"
+    },
+    {
+      "name": "B12a gamma 与 |sum e^{jphi}|^2/Q^2 一致",
+      "status": "PASS",
+      "expected": 0.9875602675802709,
+      "actual": 0.9875601632447801
+    },
+    {
+      "name": "B12b gamma ≈ 1 - sigma_phi^2（阈值依据）",
+      "status": "PASS",
+      "expected": 0.9875,
+      "actual": 0.9875601632447801
+    },
+    {
+      "name": "B13 rho(55 ps)=0.9902",
+      "status": "PASS",
+      "expected": 0.9902,
+      "actual": 0.9902618302138301
+    },
+    {
+      "name": "C1a 锚包=0（翻转包，rho 并列取小）",
+      "status": "PASS",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "C1b 仅接受翻转包",
+      "status": "PASS",
+      "expected": [
+        true,
+        false,
+        false,
+        false
+      ],
+      "actual": [
+        true,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "name": "C1c 其余包按相位拒绝",
+      "status": "PASS",
+      "expected": [
+        "inter_packet_phase_offset"
+      ],
+      "actual": [
+        "inter_packet_phase_offset"
+      ]
+    },
+    {
+      "name": "C1x 顺序改变接受集",
+      "status": "PASS",
+      "expected": [
+        true,
+        false,
+        true,
+        true
+      ],
+      "actual": [
+        true,
+        false,
+        true,
+        true
+      ]
+    },
+    {
+      "name": "C1y 恒等包折叠一致",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "C3 原因码在契约白名单内",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "C4 meta gate 默认值",
+      "status": "PASS",
+      "expected": [
+        0.99,
+        0.95,
+        0.99,
+        50.0,
+        0.1,
+        3.0
+      ],
+      "actual": [
+        0.99,
+        0.95,
+        0.99,
+        50.0,
+        0.1,
+        3.0
+      ]
+    },
+    {
+      "name": "C5a 单包接受",
+      "status": "PASS",
+      "expected": [
+        true
+      ],
+      "actual": [
+        true
+      ]
+    },
+    {
+      "name": "C5b 单包折叠==原段",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "C6 全拒抛异常且带日志",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "C6b meta n_accepted=0",
+      "status": "PASS",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "A1 segment_coherence 形状",
+      "status": "PASS",
+      "expected": [
+        4,
+        64
+      ],
+      "actual": [
+        4,
+        64
+      ]
+    },
+    {
+      "name": "A2 gamma 矩阵与独立重算一致",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "A3.0 gamma_ref 独立一致",
+      "status": "PASS",
+      "expected": 0.9998911891706548,
+      "actual": 0.9998911891706548
+    },
+    {
+      "name": "A4.0 gamma_median_rx 独立一致",
+      "status": "PASS",
+      "expected": 0.9997313112997176,
+      "actual": 0.9997313112997176
+    },
+    {
+      "name": "A3.1 gamma_ref 独立一致",
+      "status": "PASS",
+      "expected": 0.9999831671367838,
+      "actual": 0.9999831671367838
+    },
+    {
+      "name": "A4.1 gamma_median_rx 独立一致",
+      "status": "PASS",
+      "expected": 0.9997328511911887,
+      "actual": 0.9997328511911887
+    },
+    {
+      "name": "A3.2 gamma_ref 独立一致",
+      "status": "PASS",
+      "expected": 0.9999140541712424,
+      "actual": 0.9999140541712424
+    },
+    {
+      "name": "A4.2 gamma_median_rx 独立一致",
+      "status": "PASS",
+      "expected": 0.9997290244070117,
+      "actual": 0.9997290244070117
+    },
+    {
+      "name": "A3.3 gamma_ref 独立一致",
+      "status": "PASS",
+      "expected": 0.9998761413517958,
+      "actual": 0.9998761413517958
+    },
+    {
+      "name": "A4.3 gamma_median_rx 独立一致",
+      "status": "PASS",
+      "expected": 0.9990242245843878,
+      "actual": 0.9990242245843878
+    },
+    {
+      "name": "A5.0 rho 独立一致",
+      "status": "PASS",
+      "expected": 0.9999955622822503,
+      "actual": 0.9999955622822503
+    },
+    {
+      "name": "A6.0 delta_ps 独立一致",
+      "status": "PASS",
+      "expected": -0.2526491393523265,
+      "actual": -0.2526491393523265
+    },
+    {
+      "name": "A7.0 phi_rad 独立一致",
+      "status": "PASS",
+      "expected": -0.00800349483001961,
+      "actual": -0.00800349483001961
+    },
+    {
+      "name": "A5.2 rho 独立一致",
+      "status": "PASS",
+      "expected": 0.9999963394047059,
+      "actual": 0.9999963394047059
+    },
+    {
+      "name": "A6.2 delta_ps 独立一致",
+      "status": "PASS",
+      "expected": -0.2066450349837699,
+      "actual": -0.2066450349837699
+    },
+    {
+      "name": "A7.2 phi_rad 独立一致",
+      "status": "PASS",
+      "expected": 0.0010550650169413856,
+      "actual": 0.0010550650169413856
+    },
+    {
+      "name": "A5.3 rho 独立一致",
+      "status": "PASS",
+      "expected": 0.999979055153107,
+      "actual": 0.999979055153107
+    },
+    {
+      "name": "A6.3 delta_ps 独立一致",
+      "status": "PASS",
+      "expected": -2.2713682584886965,
+      "actual": -2.2713682584886965
+    },
+    {
+      "name": "A7.3 phi_rad 独立一致",
+      "status": "PASS",
+      "expected": -0.02538488152268246,
+      "actual": -0.02538488152268246
+    },
+    {
+      "name": "A8 锚包独立重算",
+      "status": "PASS",
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "A9 折叠==接受包双重平均",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "A10 形状/dtype",
+      "status": "PASS",
+      "expected": [
+        [
+          64,
+          4000
+        ],
+        "float64"
+      ],
+      "actual": [
+        [
+          64,
+          4000
+        ],
+        "float64"
+      ]
+    },
+    {
+      "name": "A11 全有限",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "A12 未接受包不进入折叠",
+      "status": "PASS",
+      "expected": "{114, 115, 116, 117}",
+      "actual": "{114, 115, 116, 117}"
+    },
+    {
+      "name": "A13 逐包日志字段齐全",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "A14 接受/拒绝账本闭合",
+      "status": "PASS",
+      "expected": 4,
+      "actual": 4
+    },
+    {
+      "name": "A15 接受包无拒绝原因",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "A16 发射通道不参与接收",
+      "status": "PASS",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "name": "A17 有效接收通道数",
+      "status": "PASS",
+      "expected": 63,
+      "actual": 63
+    },
+    {
+      "name": "A18 ch28 折叠 RMS 与契约一致",
+      "status": "PASS",
+      "expected": 9700.9,
+      "actual": 9700.9
+    },
+    {
+      "name": "A19 ch27 标记 rx=False",
+      "status": "PASS",
+      "expected": false,
+      "actual": false
+    },
+    {
+      "name": "A20 重复运行逐位一致",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "A21 输入 packets 未被修改",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "medium",
+      "text": "锚包选择只用 rho 中位数，极性翻转使 rho=1 并列，翻转包排第一时被选为锚包，3 个正常包被相位门控拒绝（n_accepted=1，输出=翻转包）。折叠本身仍自洽，但结果依赖包顺序且丢弃多数正常包；建议锚包评分加入 phi 一致性（如通过相位门控的同伴数），或先按 |phi| 聚类再取最大簇。非阻断：默认数据无极性翻转。"
+    },
+    {
+      "id": "F2",
+      "severity": "low",
+      "text": "非参考通道出现 NaN 时，gamma 把该通道排除出中位数，但折叠仍把它纳入均值，signals_folded 出现 NaN 且无报错（契约 §4.1/§7 要求全有限）。D0 输入为 int16，实际数据不可达；建议返回前加 np.isfinite 断言或剔除该通道。"
+    },
+    {
+      "id": "N1",
+      "severity": "info",
+      "text": "data1: 预登记段相关最小 0.9438（ch63）、1 GHz 相位漂移中位 0.61°；被测实现 gamma_ref≥0.99988、seg_delta≤2.84 ps，两者不矛盾（度量不同）。"
+    }
+  ]
+}
