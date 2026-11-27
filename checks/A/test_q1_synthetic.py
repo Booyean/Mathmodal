@@ -40,7 +40,7 @@ TP = NP * TS                # 1 us
 F0 = 0.3e9                  # digital sweep start, Hz
 F1 = 1.7e9                  # digital sweep stop, Hz
 B = F1 - F0                 # 1.4 GHz
-K = B / TP                  # 1.4e12 Hz/s
+K = B / TP                  # 1.4e15 Hz/s
 AMP = 30000.0               # digital amplitude
 MAGIC = 963072              # packet magic, little-endian uint32
 TYPE_SAMPLES = 102
@@ -115,6 +115,23 @@ def circular_lag(a: np.ndarray, b: np.ndarray) -> tuple[int, float]:
         lag -= a.shape[0]
     denom = math.sqrt(float(np.sum(a * a)) * float(np.sum(b * b)))
     return lag, float(r.max() / denom) if denom else 0.0
+
+
+def analytic_lag(a: np.ndarray, b: np.ndarray) -> tuple[int, float]:
+    """Signed circular lag of the analytic signals of ``a`` relative to ``b``.
+
+    Uses the same convention as :func:`circular_lag` (positive = ``a`` later),
+    but removes the carrier phase first.  This is the group-delay diagnostic;
+    a real-valued correlation is phase-sensitive and can move by one sample.
+    """
+    aa, ba = analytic(a), analytic(b)
+    r = np.fft.ifft(np.fft.fft(aa) * np.conj(np.fft.fft(ba)))
+    lag = int(np.argmax(np.abs(r)))
+    if lag > a.shape[0] // 2:
+        lag -= a.shape[0]
+    denom = math.sqrt(float(np.sum(np.abs(aa) ** 2)) *
+                      float(np.sum(np.abs(ba) ** 2)))
+    return lag, float(np.abs(r).max() / denom) if denom else 0.0
 
 
 def linear_corr(x: np.ndarray, y: np.ndarray) -> np.ndarray:
@@ -382,6 +399,36 @@ def check_period_shift(rep: Report) -> None:
               close(one_period_m, 149.8962, rel=1e-4))
 
 
+def check_lag_diagnostic(rep: Report) -> None:
+    """A non-zero template-correlation lag does not prove t0 != 0.
+
+    The lag measured against the ideal template is a composite of the
+    acquisition start, the hardware/propagation delay and multipath.  The
+    counterexample below uses t0 = 0 with a non-zero hardware delay only.
+    """
+    s = reference_waveform()
+    d_hw = 12.4                       # samples; e.g. 3.1 ns of hardware delay
+    y = rf_delayed(d_hw * TS)
+    lag, corr = analytic_lag(y, s)
+    rep.check("LG-01", "t0 = 0 with a non-zero hardware delay has a non-zero lag",
+              f"t0 = 0; delay {d_hw:.1f} samples -> observed lag +{int(round(d_hw))}, not 0",
+              f"lag = {lag:+d}, normalised |peak| = {corr:.4f}",
+              lag == int(round(d_hw)) and lag != 0,
+              "lag = observed template-correlation / alignment diagnostic, "
+              "not an acquisition-start estimate")
+
+    y_split = np.roll(rf_delayed(0.4 * TS), 12)   # offset 12 + hw 0.4 samples
+    y_total = rf_delayed(12.4 * TS)               # offset 0 + hw 12.4 samples
+    rel = float(np.max(np.abs(y_total - y_split)) / AMP)
+    lag_a, _ = analytic_lag(y_total, s)
+    lag_b, _ = analytic_lag(y_split, s)
+    rep.check("LG-02", "same lag from two different (start, hardware) splits",
+              "(offset 0, hw 12.4) and (offset 12, hw 0.4) give the same record and lag",
+              f"max|diff|/A = {rel:.2e}, lags = {lag_a:+d} / {lag_b:+d}",
+              rel < 1e-9 and lag_a == lag_b == int(round(12.4)),
+              "the split is not identifiable from the correlation lag alone")
+
+
 def check_tx_channel(rep: Report) -> None:
     all_pos = []
     for row in range(1, 9):
@@ -608,12 +655,13 @@ def check_real_data(rep: Report, root: Path | None, verbose: bool) -> None:
 
     if all_lags:
         zero_aligned = [name for name, lag in all_lags if lag == 0]
-        rep.check("RD-04", "acquisition start is not assumed period-aligned",
-                  "at least one sample group has a non-zero start lag",
+        rep.check("RD-04", "observed template lag is not assumed zero",
+                  "at least one sample group has a non-zero observed lag",
                   f"lags = {all_lags}",
                   len(zero_aligned) < len(all_lags),
-                  "the start phase is an unknown per group; it must be recovered, "
-                  "not assumed to be 0")
+                  "this is a composite observed-template correlation lag (start + "
+                  "hardware + propagation + multipath), not a measured physical "
+                  "acquisition start")
     if tx_ratios:
         rep.check("RD-05", "TX suppression is consistent across sample groups",
                   "max TX/other RMS ratio < 0.05",
@@ -636,6 +684,7 @@ def main(argv: list[str] | None = None) -> int:
     check_delay_phase(rep)
     check_geometry_units(rep)
     check_period_shift(rep)
+    check_lag_diagnostic(rep)
     check_tx_channel(rep)
     check_int16(rep)
     check_packet_layout(rep)
