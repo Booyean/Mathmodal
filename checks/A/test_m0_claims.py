@@ -546,7 +546,7 @@ def main(argv: list[str] | None = None) -> int:
         rep.skip("M0-17", "effective-zero sign bookkeeping", f"spec not found: {args.spec}")
     else:
         text = args.spec.read_text(encoding="utf-8")
-        m_h = re.search(r"propto\s*e\^\{([+-])j\s*2\\pi\s*f_R\s*\\tau_", text)
+        m_h = re.search(r"(?:propto|=\s*H_0\s*\\,?)\s*e\^\{([+-])j\s*2\\pi\s*f_R\s*\\tau_", text)
         m_t = re.search(
             r"t_\{0,\\text\{eff\}\}\^\{\(g\)\}\s*\\triangleq\s*"
             r"t_0\^\{\(g\)\}\s*([+-])\s*\\tau_", text)
