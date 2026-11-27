@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "experiment_id": "A-Q1-E0",
+  "problem": "A-Q1",
+  "phase": "pilot_baseline_verification",
+  "status": "pending_approval",
+  "approvals_required": [
+    "A-Q1-E0"
+  ],
+  "dependencies": {
+    "approved": [
+      "A-Q1-P0",
+      "A-Q1-SPLIT0",
+      "A-Q1-M0"
+    ],
+    "blocking_before_execution": [
+      "D0_merged (PR #7)",
+      "D1_accepted (folding and consistency gating)",
+      "A-Q1-E0_approved"
+    ]
+  },
+  "version_anchors": {
+    "raw_data_commit": "d8ee44021dd7acec18e7fd608e50835b0f7e8dd9",
+    "a_dat_manifest_overall_sha256": "86305548ac35e44bf07f15fbbfa2e10c30713d0e64721e7ec81d37939f3cfa06",
+    "a_dat_manifest_blob_sha256": "d5013e9330ded4464d2d6214b382b9436fc53d1436b0442048a61b25cbade8d4",
+    "main_baseline_commit": "b40e15b227602fbf1ff65984b0f6c9f8188f1d39",
+    "m0_spec_commit": "098e17de9f42c843ab48923547d07b80883cf47c",
+    "split_file": "coordination/A_Q1_SPLIT.json",
+    "split_blob_sha256_lf": "d623da4ea186f372f2be094121c202c55dae0e236f4683005ab88d220a248b3a",
+    "rollback_commit": "b40e15b227602fbf1ff65984b0f6c9f8188f1d39"
+  },
+  "physical_constants": {
+    "c0_m_s": 299792458.0,
+    "fs_hz": 4000000000.0,
+    "np_samples": 4000,
+    "f_start_hz": 300000000.0,
+    "f_stop_hz": 1700000000.0,
+    "core_band_hz": [
+      400000000.0,
+      1600000000.0
+    ],
+    "tx_amplitude": 30000.0,
+    "tx_idx": 27,
+    "ref_idx": 28,
+    "n_channels_total": 64,
+    "n_channels_rx": 63,
+    "rayleigh_range_resolution_cm": 10.7068735,
+    "sample_two_way_step_cm": 3.747405725
+  },
+  "methods_classic_baseline_only": {
+    "n0_improvements_enabled": false,
+    "calibration": {
+      "id": "M0-Cal-Base",
+      "air_reference_origin": "空场数据/data1",
+      "air_groups_used": [
+        "data1",
+        "data2",
+        "data3",
+        "data4",
+        "data5",
+        "data6",
+        "data7",
+        "data8",
+        "data9",
+        "data10"
+      ],
+      "lambda_cal_default": 0.001,
+      "lambda_inv_default": 0.001,
+      "lambda_cal_grid_cal_only": [
+        0.0001,
+        0.001,
+        0.01
+      ],
+      "lambda_inv_grid_cal_only": [
+        0.0001,
+        0.001,
+        0.01
+      ],
+      "phase_projection_weights": "abs(S_ref_band)^2",
+      "freeze_before_holdout": true
+    },
+    "direct_wave_suppression": {
+      "id": "M0-DW-Base",
+      "alignment_operator": "2nd_nyquist_rf_shift_exp_pos_j2pi_fR_dt0",
+      "dw_channel_weights": "uniform_over_rx",
+      "fine_search_half_window_samples": 1.0,
+      "fine_search_step_samples": 0.001,
+      "alpha_mode_primary": "fixed_1.0",
+      "alpha_mode_diagnostic": "global_real_scalar_ls"
+    },
+    "ranging": {
+      "id": "M0-Rng-Base",
+      "channel_weights": "equal_w_i_1.0",
+      "search_range_m": [
+        0.15,
+        2.0
+      ],
+      "coarse_step_m": 0.001,
+      "fine_step_m": 0.0001,
+      "primary_statistic": "P_norm",
+      "comparison_statistics": [
+        "P_norm_eff",
+        "P_env"
+      ],
+      "wall_first_peak_threshold_mode": "cal_only_fixed_before_holdout"
+    }
+  },
+  "pilot_datasets": {
+    "phase_s_synthetic": [
+      {
+        "case_id": "E0-S1",
+        "description": "2-RX closed-loop analytical verification (M0 §8)",
+        "d_true_m": 0.6,
+        "noise_snr_db": null,
+        "seed": null
+      },
+      {
+        "case_id": "E0-S2",
+        "description": "63-RX full-array synthetic closed loop with AWGN",
+        "d_true_m_list": [
+          0.42,
+          0.69
+        ],
+        "noise_snr_db": 25.0,
+        "seed": 20261128
+      }
+    ],
+    "phase_c_calibration_pilot": {
+      "air_groups": [
+        "空场数据/data1",
+        "空场数据/data2",
+        "空场数据/data3",
+        "空场数据/data4",
+        "空场数据/data5",
+        "空场数据/data6",
+        "空场数据/data7",
+        "空场数据/data8",
+        "空场数据/data9",
+        "空场数据/data10"
+      ],
+      "target_groups": [
+        {
+          "group": "墙体数据/data1-42cm",
+          "target_type": "wall",
+          "d_true_cm": 42.0,
+          "in_split": "wall_cal",
+          "note": "already_explored_in_V0_M0"
+        },
+        {
+          "group": "金属板数据/data1-69cm",
+          "target_type": "metal",
+          "d_true_cm": 69.0,
+          "in_split": "metal_cal",
+          "note": "already_explored_in_V0_M0"
+        }
+      ],
+      "optional_cal_expansion_allowed_only_after_pilot_pass": "remaining wall_cal & metal_cal in A_Q1_SPLIT.json"
+    },
+    "phase_t_holdout_single_shot_eval": {
+      "requires_frozen_config": true,
+      "label_usage_policy": "evaluation_only_never_used_for_calibration_or_tuning",
+      "target_groups": [
+        {
+          "group": "墙体数据/data20-73cm",
+          "target_type": "wall",
+          "d_true_cm": 73.0,
+          "in_split": "wall_test",
+          "regime": "interpolation_inside_42_106cm"
+        },
+        {
+          "group": "金属板数据/data5-60cm",
+          "target_type": "metal",
+          "d_true_cm": 60.0,
+          "in_split": "metal_test",
+          "regime": "interpolation_inside_48_91cm"
+        }
+      ],
+      "untouched_remaining_holdout_groups_count": 16
+    }
+  },
+  "gates_and_thresholds": {
+    "synthetic_noiseless_max_range_err_cm": 0.05,
+    "synthetic_noiseless_max_dtau_err_ns": 0.001,
+    "synthetic_noisy_max_range_err_cm": 1.0,
+    "synthetic_noisy_min_dw_suppression_db": 20.0,
+    "d1_min_valid_rx_channels": 63,
+    "air_leave_one_out_min_suppression_db": 10.0,
+    "air_leave_one_out_hard_stop_db": 6.0,
+    "target_echo_min_pslr_db": 3.0,
+    "cal_pilot_pass_max_range_err_cm": 5.0,
+    "cal_pilot_hard_stop_range_err_cm": 10.71
+  },
+  "resource_budget": {
+    "single_process_cpu_only": true,
+    "env_threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "max_wall_time_sec": 600,
+    "max_peak_rss_mib": 4096
+  }
+}
