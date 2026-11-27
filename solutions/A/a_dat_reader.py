@@ -77,7 +77,7 @@ INT16_POS_MAX = 32767
 INT16_NEG_MIN = -32768
 INT16_MASK = 0xFFFFFFFF
 
-CONTRACT_VERSION = "D0-1"
+CONTRACT_VERSION = "D0-2"
 
 _ROW_FILE_RE = re.compile(r"^(?P<prefix>.+)_(?P<row>[0-7])\.dat$", re.IGNORECASE)
 _GROUP_DIR_RE = re.compile(r"^data\d+(?:-\d+cm)?$", re.IGNORECASE)
@@ -311,14 +311,9 @@ def parse_bytes(buf: bytes) -> Tuple[List[PacketHeader], List[Problem], int, int
             problems.append(Problem("zero_length_packet", "num=%d len=%d" % (num, length), pos))
             pos = data_offset
             continue
-        if n_values % N_CHANNELS_PER_FILE != 0:
-            # MATLAB reshape(data, 8, []) 会直接报错，这里记录并跳过该包
-            problems.append(
-                Problem("sample_count_not_multiple_of_8", "num*len/2=%d 不是 8 的整数倍" % n_values, pos)
-            )
-            pos = data_offset + data_bytes
-            continue
         if data_offset + data_bytes > n:
+            # 先判截断：否则 num*len/2 同时不是 8 的倍数时会被误记为
+            # sample_count_not_multiple_of_8 并静默跳过文件尾部。
             problems.append(
                 Problem(
                     "truncated_samples",
@@ -328,6 +323,13 @@ def parse_bytes(buf: bytes) -> Tuple[List[PacketHeader], List[Problem], int, int
             )
             pos = n
             break
+        if n_values % N_CHANNELS_PER_FILE != 0:
+            # MATLAB reshape(data, 8, []) 会直接报错，这里记录并跳过该包
+            problems.append(
+                Problem("sample_count_not_multiple_of_8", "num*len/2=%d 不是 8 的整数倍" % n_values, pos)
+            )
+            pos = data_offset + data_bytes
+            continue
 
         packets.append(
             PacketHeader(

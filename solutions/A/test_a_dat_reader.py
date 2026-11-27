@@ -266,6 +266,33 @@ def synthetic_tests(tmp: Path) -> None:
     _, probs13 = R.discover_groups(root12)
     check("S13 非法文件名被记录", ["unexpected_dat_name"], [p.code for p in probs13])
 
+    # S14 截断优先：num*len/2 同时不是 8 的倍数时，必须记 truncated_samples 而不是
+    # sample_count_not_multiple_of_8（后者会静默跳过文件尾部，掩盖截断）。
+    f14 = tmp / "truncated_mod8.dat"
+    f14.write_bytes(
+        struct.pack("<III", MAGIC, 23, TYPE_DATA)
+        + struct.pack("<fIII", 0.0, 91, 1, 3)  # num=1, len=3 -> n_values=1, data_bytes=3
+        + b"\x00"  # 只剩 1 字节，不足 3 字节
+    )
+    df14 = R.read_dat(f14)
+    codes14 = [p.code for p in df14.problems]
+    check(
+        "S14a 截断优先于 8 倍数检查",
+        True,
+        "truncated_samples" in codes14 and "sample_count_not_multiple_of_8" not in codes14,
+        note=str(codes14),
+    )
+    check("S14b 截断包不进入读取结果", 0, len(df14.packets))
+
+    # S15 8 行齐全但 sync 无交集：P=0；channel_valid 仍按通道给 64 项，不随包数塌缩。
+    root15 = tmp / "附件15"
+    rows15 = {r: [packet_bytes(10 + r, np.full((8, 16000), r, dtype="<i2"))] for r in range(8)}
+    write_group(root15, "附件2-测距数据/墙体数据/data4-62cm", "2026-01-01-00-00-05_16000", rows15)
+    g15 = R.load_group(R.discover_groups(root15)[0][0])
+    check("S15a 空交集 P", (0, []), (int(g15.meta["n_packets"]), g15.sync.tolist()))
+    check("S15b 空交集形状", (0, 64, 16000), tuple(g15.packets.shape))
+    check("S15c 空交集仍给 64 项通道有效性", (64, True), (len(g15.channel_valid), bool(g15.channel_valid.all())))
+
 
 # ---------------------------------------------------------------- 真实数据独立核对片段
 def independent_syncs_and_values(path: Path) -> Dict[int, np.ndarray]:
