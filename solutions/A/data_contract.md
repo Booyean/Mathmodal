@@ -2,8 +2,8 @@
 
 - **任务 / 分支**：D0 / `data/a-q1-reader`
 - **主责**：`dsh`（数据与求解）；接口审阅：`codex`；公式/坐标待 `A-Q1-M0` 批复
-- **输入基线**：`main` = `44c778ead3c3ebd14ab701befbebac22c7480c02`；原始数据基线 = `d8ee44021dd7acec18e7fd608e50835b0f7e8dd9`
-- **契约版本**：`D0-2`（读取器常量 `CONTRACT_VERSION = "D0-2"`）
+- **输入基线**：D0 起点 `main` = `44c778ead3c3ebd14ab701befbebac22c7480c02`；合并核验目标 `main` = `2486358…`（PR #3 合并后主线，PR #7 已开）；原始数据基线 = `d8ee44021dd7acec18e7fd608e50835b0f7e8dd9`
+- **契约版本**：`D0-3`（读取器常量 `CONTRACT_VERSION = "D0-3"`）
 - **实现**：`solutions/A/a_dat_reader.py`；测试：`solutions/A/test_a_dat_reader.py`
 - **依据**：`附件1-数据读取函数/get_data_iq.m`（同版本原件）；`coordination/A_Q1_PLAN.md` 的 D0 行；`solutions/A/model_q1.md`（PR #3，`0f521a4…`）§1、§2.1、§7.1（**A-Q1-M0 待批复**，本契约只借用其字段与坐标提案）
 
@@ -101,10 +101,10 @@ D0 采用**同一语义**（不假定 `num` 就是点数、`len` 就是字节数
 
 | 字段 | 类型 | 形状 | 单位 | 来源 | 缺失/异常规则 |
 |---|---|---|---|---|---|
-| `packets` | `int16` | `(P, 64, 16000)` | ADC 原始计数（**未标定**，见 §2.4） | 共同 `sync` 包逐行拼接 | 默认要求 8 行齐全；`require_all_rows=False` 时缺行通道填 0 且 `channel_valid=False` |
-| `sync` | `int64` | `(P,)` | 无量纲（设备包号） | 升序排列的共同 `sync_packet_cnt` | 交集为空时 `P=0` |
+| `packets` | `int16` | `(P, 64, 16000)` | ADC 原始计数（**未标定**，见 §2.4） | 共同 `sync` 包逐行拼接 | 默认要求 8 行齐全且每行至少 1 个契约形状包；`require_all_rows=False` 时缺行/整行无有效包的通道填 0 且 `channel_valid=False` |
+| `sync` | `int64` | `(P,)` | 无量纲（设备包号） | 升序排列的共同 `sync_packet_cnt`（`--max-packets` 时只保留前 N 个） | 交集为空时 `P=0` |
 | `rx_mask` | `bool` | `(64,)` | — | 仅 `rx_mask[27]=False` | 恒 64 项，实测 63 个 True |
-| `channel_valid` | `bool` | `(64,)` | — | 该通道所属行是否存在且已参与配对 | 恒 64 项（描述通道有效性，不随包数变化）；8 行齐全时全 True；缺行且 `require_all_rows=False` 时对应 8 个通道 False；`P=0` 时仍为 64 项 |
+| `channel_valid` | `bool` | `(64,)` | — | 该通道所属行是否存在且已参与配对 | 恒 64 项（描述通道有效性，不随包数变化）；8 行齐全且每行有契约形状包时全 True；缺行/整行无有效包且 `require_all_rows=False` 时对应 8 个通道 False；`P=0` 时仍为 64 项 |
 | `tx_idx` | `int` | 标量 | — | 27（第 4 行第 4 列，0-based `row=3, col=3`） | 常量 |
 | `ref_idx` | `int` | 标量 | — | 28（第 4 行第 5 列，0-based `row=3, col=4`） | 常量 |
 | `positions_m` | `float64` | `(64, 3)` | m | `channel_positions()`，依 **M0 §2.1 提案** | **待 A-Q1-M0 批复**；坐标变更不影响读取/配对 |
@@ -117,18 +117,21 @@ D0 采用**同一语义**（不假定 `num` 就是点数、`len` 就是字节数
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `contract_version` | str | `D0-2` |
+| `contract_version` | str | `D0-3` |
 | `group_key` / `dataset` / `name` / `dir_rel` / `prefix` | str | 组标识（§1.2） |
-| `n_files_expected` / `n_files_used` | int | 恒 8 / 实际可用行数 |
+| `n_files_expected` / `n_files_used` | int | 恒 8 / 实际**参与配对**的行数（不含缺行、空行、整行无契约形状包的行） |
 | `missing_rows` | int[] | 缺文件的行（0-based） |
 | `empty_or_unreadable_rows` | int[] | 文件存在但 0 包或读取失败的行 |
+| `rows_without_valid_packet` | int[] | 文件存在、有包，但**全部包形状不是 8×16000** 的行（整行不参与配对） |
 | `duplicate_row_files` | int[] | 同行多文件冲突（实测 0） |
-| `sync_common` | int[] | 共同 `sync` 升序列表；`len` 即 `P` |
-| `n_packets` | int | `P` |
+| `sync_common` | int[] | 共同 `sync` 升序列表；`len` 即 `P`（`--max-packets` 时被截断） |
+| `sync_common_all` | int[] | **完整**共同 `sync` 交集（不受 `--max-packets` 影响） |
+| `n_packets` / `n_packets_common_all` | int | `P` / 完整交集包数（二者只在 `--max-packets` 时不等） |
+| `max_packets_applied` | int \| null | 实际生效的 `--max-packets`；默认 `null` |
 | `n_channels` / `samples_per_packet` / `n_period_samples` | int | 64 / 16000 / 4000（`Np` 仅登记，D0 不折迭） |
 | `fs_hz` / `ts_s` | float | `4.0e9` / `2.5e-10`（题面配置，非文件字段） |
 | `tx_idx` / `ref_idx` / `rx_mask_true_count` | int | 27 / 28 / 63 |
-| `row_files` | dict[str → obj] | 每个已读行文件：`file`、`size_bytes`、`sha256`、`n_packets_total`、`syncs_total`、`n_packets_used`、`syncs_used`、`syncs_dropped_not_in_intersection`、`freq_values`、`endpoint_counts_all_packets`、`problems`、`skipped_bytes`、`trailing_bytes` |
+| `row_files` | dict[str → obj] | 每个已读行文件：`file`、`size_bytes`、`sha256`、`n_packets_total`、`syncs_total`、`n_packets_used`、`syncs_used`、`syncs_dropped_not_in_intersection`（只含不在完整交集内的 `sync`；被 `--max-packets` 截掉的不算丢包）、`freq_values`、`endpoint_counts_all_packets`、`problems`、`skipped_bytes`、`trailing_bytes` |
 | `excluded_packets` | list | 被排除的包：`row`、`sync`、`reason`（`samples_per_packet_mismatch` / `duplicate_sync_in_file`） |
 | `problems` | list | 组级问题（重复行文件等）；文件级问题在 `row_files[r].problems` |
 | `extremes` | obj | 端点统计，见 §4 |
@@ -162,6 +165,8 @@ D0 采用**同一语义**（不假定 `num` 就是点数、`len` 就是字节数
 | 缺行（0..7 中少文件） | 同上组缺 0..6 行 | 同上 | `missing_rows` |
 | 同一文件内 `sync` 重复 | 实测 0 例 | 保留第一个，其余 `excluded_packets` 记 `duplicate_sync_in_file` | `excluded_packets` |
 | 包形状不是 8×16000 | 实测 0 例 | 不参与配对，记 `samples_per_packet_mismatch` | `excluded_packets` |
+| 某行文件存在但**全部**包形状不是 8×16000 | 实测 0 例 | 该行整行不可用：`require_all_rows=True` 抛 `IncompleteGroupError`（**不静默丢行**）；`--allow-incomplete` 时该行不参与交集、8 个通道 `channel_valid=False`，交集按其余行计算 | `rows_without_valid_packet`、`excluded_packets` |
+| `--max-packets N` 只装载前 N 个共同包 | `--inspect … --max-packets 1` | 只截断 `packets`/`sync`/端点统计范围；完整交集另存 `sync_common_all`，被截掉的 `sync` **不记入** `syncs_dropped_not_in_intersection` | `sync_common`、`sync_common_all`、`max_packets_applied` |
 | `type != 102` 的包 | 实测 0 例 | 按 `.m` 跳过 `total_len-4` 字节 | `problems` 的 `non_data_packet` |
 | 包头前/包间非 magic 字节 | 实测 0 例 | 按 4 字节窗口搜索下一个 magic，计入 `skipped_bytes` | `problems`、`skipped_bytes` |
 | 采样区被截断 | 实测 0 例 | **先判截断**：丢弃该包及之后内容，记 `truncated_samples`；即使 `num*len/2` 同时不是 8 的倍数，也不改记 `sample_count_not_multiple_of_8`（避免静默跳过文件尾部） | `problems`、`trailing_bytes` |
@@ -169,7 +174,7 @@ D0 采用**同一语义**（不假定 `num` 就是点数、`len` 就是字节数
 | 文件名不符合 `<前缀>_<0..7>.dat` | 实测 0 例 | 不进入任何组，记 `unexpected_dat_name` | `--list-groups` 的 `scan_problems` |
 | 同行多文件 | 实测 0 例 | 保留字典序第一个，记 `duplicate_row_file` | `duplicate_row_files` |
 
-**不插补、不重采样、不裁齐、不修 `sync`。** 交集为空时返回 `P=0`，`meta` 保留全部证据；是否允许"只用部分行/部分包"由预处理阶段在实验登记中另行决定，D0 不默认放行。
+**不插补、不重采样、不裁齐、不修 `sync`。** 交集为空时返回 `P=0`，`meta` 保留全部证据；是否允许"只用部分行/部分包"由预处理阶段在实验登记中另行决定，D0 不默认放行（`--max-packets` 只是快速抽检开关，不作为数据选择依据）。
 
 ---
 
@@ -217,7 +222,7 @@ python solutions/A/a_dat_reader.py --verify-all --json out/verify_all.json
 python solutions/A/test_a_dat_reader.py
 ```
 
-验收口径：合成例覆盖协议分支与异常路径（预期值先写死、再与实现比对）；真实组覆盖 8 行齐全组、包数不等组、含 `-32768` 组、0 字节组；全量体检核对 111 组、110 完整、扫描问题 0。
+验收口径：合成例覆盖协议分支与异常路径（预期值先写死、再与实现比对）；真实组覆盖 8 行齐全组、包数不等组、含 `-32768` 组、0 字节组；全量体检核对 111 组、110 完整、扫描问题 0。`D0-3` 另要求 S16（整行无契约形状包：strict 拒绝 / allow-incomplete 时整行退出交集且通道无效）与 S17（`--max-packets` 截断不污染丢包记录、完整交集另存）通过。
 
 ---
 
@@ -227,3 +232,4 @@ python solutions/A/test_a_dat_reader.py
 |---|---|---|
 | D0-1 | 2026-11-27 | 首版：协议解析、64/63 路、共同 `sync` 配对、异常规则、双口径端点统计、坐标标注待批复 |
 | D0-2 | 2026-11-27 | 自审修正：截断包优先记 `truncated_samples`（原在 `num*len/2` 非 8 倍数且采样区不足时会误记 `sample_count_not_multiple_of_8` 并静默跳过尾部）；明确 `P=0` 时 `channel_valid` 仍为 64 项；新增 S14/S15 两个合成例 |
+| D0-3 | 2026-11-28 | 自审修正：某行全部包形状不符时不再让空 `sync` 集合把整组交集压成 `P=0`，strict 拒绝、`--allow-incomplete` 时整行退出配对并登记 `rows_without_valid_packet`；`--max-packets` 只截断装载，被截包不再误记为交集外丢包，完整交集另存 `sync_common_all`/`n_packets_common_all`/`max_packets_applied`；新增 S16/S17；契约基线更新到 PR #3 合并后的主线 |

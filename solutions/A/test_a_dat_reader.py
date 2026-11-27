@@ -293,6 +293,46 @@ def synthetic_tests(tmp: Path) -> None:
     check("S15b 空交集形状", (0, 64, 16000), tuple(g15.packets.shape))
     check("S15c 空交集仍给 64 项通道有效性", (64, True), (len(g15.channel_valid), bool(g15.channel_valid.all())))
 
+    # S16 整行包形状全部不符：strict 拒绝；allow-incomplete 时该行整行不参与配对，
+    # 不能用它的空 sync 集合把整组交集压成 P=0，也不能把 0 当真实样本。
+    root16 = tmp / "附件16"
+    rows16 = {r: [packet_bytes(100, np.full((8, 16000), 10 + r, dtype="<i2"))] for r in range(8)}
+    rows16[5] = [packet_bytes(100, np.full((8, 12000), 99, dtype="<i2"))]
+    write_group(root16, "附件2-测距数据/金属板数据/data5-73cm", "2026-01-01-00-00-06_16000", rows16)
+    g16ref = R.discover_groups(root16)[0][0]
+    check_raises(
+        "S16a 整行无契约形状包默认拒绝", R.IncompleteGroupError, lambda: R.load_group(g16ref), expected_rows=[]
+    )
+    g16 = R.load_group(g16ref, require_all_rows=False)
+    check("S16b 整行无有效包被登记", [5], g16.meta["rows_without_valid_packet"])
+    check("S16c 其余 7 行交集不塌缩", ([100], 1, 7), (g16.sync.tolist(), int(g16.meta["n_packets"]), int(g16.meta["n_files_used"])))
+    check("S16d 该行 8 通道无效", [False] * 8, g16.channel_valid[40:48].tolist())
+    check("S16e 其余通道有效", True, bool(g16.channel_valid[:40].all() and g16.channel_valid[48:].all()))
+    check("S16f 该行未写入伪造数据", 0, int(np.abs(g16.packets[:, 40:48, :]).max()))
+    check("S16g 形状不符包仍逐条记录", ["samples_per_packet_mismatch"], [e["reason"] for e in g16.meta["excluded_packets"]])
+
+    # S17 --max-packets 只截断"装载"，不改变"共同 sync"判定：
+    # 被截掉的 sync 不是"交集外丢包"，完整交集另存 sync_common_all。
+    root17 = tmp / "附件17"
+    write_group(root17, "附件2-测距数据/空场数据/data6", "2026-01-01-00-00-07_16000", flat(3, [201, 202, 203]))
+    g17ref = R.discover_groups(root17)[0][0]
+    g17 = R.load_group(g17ref, max_packets=2)
+    check("S17a 只装载前 2 包", [201, 202], g17.sync.tolist())
+    check("S17b 完整交集另存", ([201, 202, 203], 3), (g17.meta["sync_common_all"], int(g17.meta["n_packets_common_all"])))
+    check(
+        "S17c 截断不记为丢包",
+        [[] for _ in range(8)],
+        [g17.meta["row_files"][str(r)]["syncs_dropped_not_in_intersection"] for r in range(8)],
+    )
+    check(
+        "S17d 已装载 sync 逐行记录",
+        [[201, 202] for _ in range(8)],
+        [g17.meta["row_files"][str(r)]["syncs_used"] for r in range(8)],
+    )
+    check("S17e max_packets 登记", 2, g17.meta["max_packets_applied"])
+    g17full = R.load_group(g17ref)
+    check("S17f 默认不截断时登记 None", (None, [201, 202, 203]), (g17full.meta["max_packets_applied"], g17full.sync.tolist()))
+
 
 # ---------------------------------------------------------------- 真实数据独立核对片段
 def independent_syncs_and_values(path: Path) -> Dict[int, np.ndarray]:

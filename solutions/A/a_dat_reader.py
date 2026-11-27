@@ -77,7 +77,7 @@ INT16_POS_MAX = 32767
 INT16_NEG_MIN = -32768
 INT16_MASK = 0xFFFFFFFF
 
-CONTRACT_VERSION = "D0-2"
+CONTRACT_VERSION = "D0-3"
 
 _ROW_FILE_RE = re.compile(r"^(?P<prefix>.+)_(?P<row>[0-7])\.dat$", re.IGNORECASE)
 _GROUP_DIR_RE = re.compile(r"^data\d+(?:-\d+cm)?$", re.IGNORECASE)
@@ -528,11 +528,18 @@ def load_group(
 
     参数
       max_packets     只保留共同 ``sync`` 排序后的前 N 个包（None=全部；用于快速抽检）。
+                      截断只影响 ``packets``/``sync``/统计范围；``meta["sync_common_all"]``
+                      仍记录完整交集，被截掉的包不记入
+                      ``row_files[r].syncs_dropped_not_in_intersection``。
       require_all_rows
-                      True（默认）：8 个行文件必须齐全且各有 ≥1 个可解析包，
-                      否则抛 ``IncompleteGroupError``，避免用 0 填充"伪造"缺行数据。
-                      False：允许缺行，缺失通道在 ``packets`` 中置 0 且
-                      ``channel_valid`` 为 False（meta 明确记录）。
+                      True（默认）：8 个行文件必须齐全且各有 ≥1 个**契约形状**
+                      （8 x 16000）的包，否则抛 ``IncompleteGroupError``，
+                      避免用 0 填充"伪造"缺行数据。行文件存在但全部包形状不符
+                      同样按"整行不可用"处理，不静默丢行。
+                      False：允许缺行/整行无有效包，缺失通道在 ``packets`` 中置 0
+                      且 ``channel_valid`` 为 False（meta 明确记录
+                      ``missing_rows`` / ``empty_or_unreadable_rows`` /
+                      ``rows_without_valid_packet``）。
       compute_sha256  是否对每个文件计算 SHA256（默认是；用于版本锚定）。
     """
     group_key = ref.group_key
@@ -602,30 +609,41 @@ def load_group(
         per_row_packets[r] = by_sync
         per_row_syncs[r] = ordered
 
-    common: List[int] = []
-    if all(per_row_syncs[r] for r in usable_rows):
-        sets = [set(per_row_syncs[r]) for r in usable_rows]
-        common = sorted(set.intersection(*sets))
-    if max_packets is not None:
-        common = common[: int(max_packets)]
+    # 只有至少含 1 个契约形状包的行走入配对；某行全部包形状不符时，该行整行不可用，
+    # 不能让它的空 sync 集合把整组交集压成 P=0（也避免把 0 当真实样本交给下游）。
+    participating_rows = [r for r in usable_rows if per_row_syncs[r]]
+    rows_without_valid_packet = [r for r in usable_rows if not per_row_syncs[r]]
+    bad_rows = sorted(set(empty_rows + unreadable_rows + rows_without_valid_packet))
+    if rows_without_valid_packet and require_all_rows:
+        raise IncompleteGroupError(
+            group_key,
+            missing_rows,
+            bad_rows,
+            "行文件存在但没有任何 8x16000 采样包（strict 模式拒绝用 0 填充）",
+        )
+    if not participating_rows:
+        raise IncompleteGroupError(group_key, missing_rows, bad_rows, "没有任何可用行文件（均无 8x16000 采样包）")
+
+    common_all: List[int] = []
+    sets = [set(per_row_syncs[r]) for r in participating_rows]
+    common_all = sorted(set.intersection(*sets))
+    # max_packets 只截断"装载"，不改变"共同 sync"的判定；被截掉的包不是交集外的包。
+    common: List[int] = common_all[: int(max_packets)] if max_packets is not None else list(common_all)
+    common_set = set(common)
+    common_all_set = set(common_all)
 
     P = len(common)
     packets = np.zeros((P, N_CHANNELS, SAMPLES_PER_PACKET), dtype=np.int16)
     for pi, sync in enumerate(common):
-        for r in usable_rows:
+        for r in participating_rows:
             p = per_row_packets[r].get(sync)
             if p is None:
                 continue
             packets[pi, N_CHANNELS_PER_FILE * r : N_CHANNELS_PER_FILE * (r + 1), :] = rows[r].packet_matrix(p.index)
 
     row_ok = np.zeros(N_ROWS, dtype=bool)
-    for r in usable_rows:
+    for r in participating_rows:
         row_ok[r] = True
-    if not require_all_rows:
-        # 缺行/空行的通道标记为无效，避免下游把 0 当真实样本
-        for r in range(N_ROWS):
-            if r not in usable_rows:
-                row_ok[r] = False
     channel_valid = np.repeat(row_ok, N_CHANNELS_PER_FILE)
 
     rx_mask = np.ones(N_CHANNELS, dtype=bool)
@@ -646,8 +664,9 @@ def load_group(
     row_meta: Dict[str, Any] = {}
     for r in range(N_ROWS):
         if r in rows:
-            used = [s for s in per_row_syncs.get(r, []) if s in common]
-            dropped = [s for s in per_row_syncs.get(r, []) if s not in common]
+            used = [s for s in per_row_syncs.get(r, []) if s in common_set]
+            # 只把"不在共同 sync 交集"的包记入 dropped；被 --max-packets 截掉的不算丢包。
+            dropped = [s for s in per_row_syncs.get(r, []) if s not in common_all_set]
             row_meta[str(r)] = _row_stats(rows[r], used, dropped)
 
     all_pos = sum(row_meta[str(r)]["endpoint_counts_all_packets"]["pos_32767"] for r in row_meta)
@@ -663,13 +682,17 @@ def load_group(
         "dir_rel": ref.dir_rel,
         "prefix": ref.prefix,
         "n_files_expected": N_ROWS,
-        "n_files_used": len(usable_rows),
+        "n_files_used": len(participating_rows),
         "missing_rows": missing_rows,
         "empty_or_unreadable_rows": sorted(set(empty_rows + unreadable_rows)),
+        "rows_without_valid_packet": rows_without_valid_packet,
         "duplicate_row_files": list(ref.duplicate_rows),
         "row_files": row_meta,
         "sync_common": [int(s) for s in common],
+        "sync_common_all": [int(s) for s in common_all],
         "n_packets": int(P),
+        "n_packets_common_all": int(len(common_all)),
+        "max_packets_applied": (None if max_packets is None else int(max_packets)),
         "n_channels": N_CHANNELS,
         "samples_per_packet": SAMPLES_PER_PACKET,
         "n_period_samples": N_PERIOD_SAMPLES,
