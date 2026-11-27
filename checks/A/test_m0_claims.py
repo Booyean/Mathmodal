@@ -5,12 +5,19 @@
 Version history: V1 reviewed ``a9e2719`` (11 checks); V2 adds the PR #3
 second-review boundary checks on ``0f521a4`` (general common dispersion and
 strict-uniqueness conditions, checks M0-12..M0-16).  V3 adds M0-17, the
-effective-zero sign bookkeeping raised by the coordinator: section 4.1 writes
-``H_ref ∝ exp(-j2πf_R τ_hw)`` together with ``t0_eff = t0 + τ_hw``.  M0-17
-intentionally fails on ``0f521a4`` and passes after the one-character fix
-``H_ref -> exp(+j2πf_R τ_hw)`` (the delay convention derived in section 3.2).
-The V1 checks pass on all spec versions; M0-16 and M0-17 are wording/shape
-checks that distinguish the pre-fix texts from the fixed ones.
+effective-zero sign bookkeeping raised by the coordinator: section 4.1 wrote
+``H_ref ∝ exp(-j2πf_R τ_hw)`` together with ``t0_eff = t0 + τ_hw``, a pair that
+cannot both hold.  V4 (review of the 098e17d repair) accepts either repair the
+coordinator allowed in review 6090646875: keep the minus and write
+``t0_eff = t0 - τ_hw``, or keep the plus and write ``H_ref = H_0 exp(+j2πf_R
+τ_hw)`` with ``τ_hw' = τ_hw - a``.  M0-17 therefore tests the declared exponent
+signs against the observed effective zero and the gauge drift instead of one
+spelling of the fix, and prints the section 3.2 delay-convention caveat for the
+``(-,-)`` repair.  V4 also adds M0-18, which reconciles the frozen
+``coordination/A_Q1_SPLIT.json`` record with the reviewed 10/10 tables in the
+spec and reports its committed-blob SHA256.  The V1 checks pass on all spec
+versions; M0-16/M0-17 are wording/shape checks that distinguish pre-fix from
+fixed texts.
 
 This script is written from the formulas and claims in
 ``solutions/A/model_q1.md`` plus the PR #3 review, not from the production
@@ -30,6 +37,8 @@ passes.
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import math
 import re
 import sys
@@ -334,6 +343,8 @@ def anchor_peak(product: np.ndarray, f_r: np.ndarray, center: float,
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--spec", type=Path, default=Path("solutions/A/model_q1.md"))
+    parser.add_argument("--split-file", type=Path,
+                        default=Path("coordination/A_Q1_SPLIT.json"))
     args = parser.parse_args(argv)
     rep = Report()
 
@@ -540,8 +551,10 @@ def main(argv: list[str] | None = None) -> int:
     # Section 4.1 states H_ref ∝ exp(-j2πf_R τ_hw) and then t0_eff = t0 + τ_hw.
     # Since S_eff = H_ref S exp(+j2πf_R t0), a minus in H_ref and a plus in
     # t0_eff cannot both hold: the anchor lands at t0 - τ_hw, and the claimed
-    # gauge invariance fails by 2a.  Section 3.2 derives a positive delay as
-    # exp(+j2πf_R τ), so the physically consistent pairing is (+,+).
+    # gauge invariance fails by 2a.  Review 6090646875 allows two repairs:
+    # keep the minus with t0_eff = t0 - τ_hw, or write H_ref = H_0 e^{+j...}
+    # and keep t0_eff = t0 + τ_hw with τ_hw' = τ_hw - a.  Both pass here; an
+    # internally inconsistent pair fails.
     if not args.spec.is_file():
         rep.skip("M0-17", "effective-zero sign bookkeeping", f"spec not found: {args.spec}")
     else:
@@ -573,26 +586,120 @@ def main(argv: list[str] | None = None) -> int:
             declared_err = float("nan")
             gauge_drift = float("nan")
 
-        ok = (h_sign == 1 and t_sign == 1
+        pair_ok = h_sign in (+1, -1) and t_sign == h_sign
+        ok = (pair_ok
               and plus_err < 1e-12 and minus_err < 1e-12
               and declared_err < 1e-12 and abs(gauge_drift) < 1e-12)
+        if h_sign == 1 and t_sign == 1:
+            caveat = ("(+,+) matches the section 3.2 positive-delay convention; the "
+                      "parameter map must be τ_hw' = τ_hw - a for t0_eff to stay fixed")
+        elif h_sign == -1 and t_sign == -1:
+            caveat = ("(-,-) is internally consistent with the coordinator's second "
+                      "allowed repair, but section 3.2 derives a positive physical delay "
+                      "as exp(+j2πf_R τ), so τ_hw must then be declared a negative "
+                      "lag/advance, or section 3.2 restated")
+        else:
+            caveat = ("declared pair is not internally consistent: the anchor lands at "
+                      "t0 + s_H·τ_hw while the text claims t0 + s_t·τ_hw, so the gauge "
+                      "drift is a·(1 - s_t·s_H) = 2a")
         rep.check("M0-17", "effective-zero sign bookkeeping (H_ref delay vs t0_eff)",
-                  "declared pair is (+,+): H_ref = exp(+j2πf_R τ_hw), "
-                  "t0_eff = t0 + τ_hw; data anchor exact and gauge-invariant "
-                  "under (H_i, t0) -> (H_i e^{-j2πf_R a}, t0 + a)",
-                  f"declared H_ref sign={h_sign}, t0_eff sign={t_sign}; "
+                  "declared pair is internally consistent: either (+,+) or (-,-); "
+                  "data anchor exact and gauge-invariant under "
+                  "(H_i, t0) -> (H_i e^{-j2πf_R a}, t0 + a)",
+                  f"declared H_ref sign={h_sign}, t0_eff sign={t_sign} "
+                  f"(pair {'consistent' if pair_ok else 'INCONSISTENT'}); "
                   f"data anchor: H_ref+ -> {anchors[+1] / TS:.6f} Ts "
                   f"(err {plus_err * 1e12:.3f} ps), "
-                  f"H_ref- -> {anchors[-1] / TS:.6f} Ts; "
+                  f"H_ref- -> {anchors[-1] / TS:.6f} Ts "
+                  f"(err {minus_err * 1e12:.3f} ps); "
                   f"declared-anchor error {declared_err * 1e9:.3f} ns; "
                   f"gauge drift {gauge_drift * 1e9:+.3f} ns",
                   ok,
-                  "0f521a4 writes H_ref ∝ exp(-j2πf_R τ_hw) with t0_eff = t0 + τ_hw; "
-                  "the anchor then lands at t0 - τ_hw (2τ_hw = 0.70 ns away) and the "
-                  "claimed gauge invariance fails by 2a. Section 3.2 derives a positive "
-                  "delay as exp(+j2πf_R τ), so the one-character fix is H_ref -> "
-                  "exp(+j2πf_R τ_hw), keeping t0_eff = t0 + τ_hw. No numeric result "
-                  "changes (t0_eff is fitted from data, not computed from this formula)")
+                  caveat
+                  + " | 0f521a4 wrote H_ref ∝ exp(-j2πf_R τ_hw) with t0_eff = "
+                  "t0 + τ_hw, so the anchor landed 2τ_hw = 0.70 ns away and the "
+                  "gauge invariance failed by 2a; t0_eff is fitted from data, so no "
+                  "existing numeric result changes")
+
+    # --- M0-18: frozen split artifact (A-Q1-SPLIT0) vs reviewed spec ------
+    # Codex froze coordination/A_Q1_SPLIT.json from the spec's section 6.2
+    # tables.  This check re-reads both and fails if the frozen names, the
+    # disjoint/complete 10+10 structure, the air-template list, the explored
+    # entries or the extrapolation limits disagree with the reviewed text.
+    if not args.split_file.is_file() or not args.spec.is_file():
+        rep.skip("M0-18", "frozen split artifact vs spec 6.2",
+                 f"missing {args.split_file} or {args.spec}")
+    else:
+        sha = "-"
+        detail = ""
+        try:
+            raw = args.split_file.read_bytes()
+            # Hash the LF form so a CRLF worktree checkout still reports the
+            # committed blob hash (the frozen record quotes this value).
+            sha = hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()
+            rec = json.loads(raw.decode("utf-8"))
+            text = args.spec.read_text(encoding="utf-8")
+            parsed: dict[str, list[str]] = {}
+            for line in text.splitlines():
+                s = line.strip()
+                if not s.startswith("|"):
+                    continue
+                names = re.findall(r"data\d+-\d+cm", s)
+                if len(names) < 10:
+                    continue
+                for mat, word in (("wall", "墙体"), ("metal", "金属")):
+                    if word not in s:
+                        continue
+                    if "校准集" in s:
+                        parsed[f"{mat}_cal"] = names
+                    elif "检验集" in s:
+                        parsed[f"{mat}_test"] = names
+            grp = rec.get("groups", {})
+            keys = ("wall_cal", "wall_test", "metal_cal", "metal_test")
+            groups_ok = all(
+                len(grp.get(k, [])) == 10
+                and sorted(grp.get(k, [])) == sorted(parsed.get(k, []))
+                for k in keys)
+
+            def idx(names: list[str]) -> set[int]:
+                return {int(m.group(1)) for n in names
+                        if (m := re.match(r"data(\d+)-", n))}
+
+            disjoint = all(
+                not (set(grp.get(f"{m}_cal", [])) & set(grp.get(f"{m}_test", [])))
+                for m in ("wall", "metal"))
+            complete = all(
+                idx(grp.get(f"{m}_cal", [])) | idx(grp.get(f"{m}_test", []))
+                == set(range(1, 21))
+                and len(idx(grp.get(f"{m}_cal", []))) == 10
+                and len(idx(grp.get(f"{m}_test", []))) == 10
+                for m in ("wall", "metal"))
+            air_ok = rec.get("air_template_groups") == [f"data{i}" for i in range(1, 11)]
+            lim = rec.get("limitations", {})
+            lim_ok = (lim.get("test_max_cm") == {"wall": 121, "metal": 99}
+                      and lim.get("wall_extrapolation_test_cm_above") == 106
+                      and lim.get("metal_extrapolation_test_cm_above") == 91)
+            explored = set(rec.get("explored_target_groups", []))
+            explored_ok = ({"wall/data1-42cm", "metal/data1-69cm"} <= explored
+                           and "data1-42cm" in grp.get("wall_cal", [])
+                           and "data1-69cm" in grp.get("metal_cal", []))
+            commit_ok = bool(re.fullmatch(r"[0-9a-f]{40}", rec.get("source_spec_commit", "")))
+            ok = all([groups_ok, disjoint, complete, air_ok, lim_ok,
+                      explored_ok, commit_ok])
+            detail = (f"sha256 {sha}; source_spec_commit "
+                      f"{rec.get('source_spec_commit')}; "
+                      f"approval_id={rec.get('approval_id')}; "
+                      f"checks groups/disjoint/complete/air/limits/explored/commit = "
+                      f"{groups_ok}/{disjoint}/{complete}/{air_ok}/{lim_ok}/"
+                      f"{explored_ok}/{commit_ok}")
+        except Exception as exc:  # a malformed record fails, it must not crash
+            ok = False
+            detail = f"failed to parse/compare: {exc!r}; sha256 {sha}"
+        rep.check("M0-18", "frozen split artifact equals the reviewed 10/10 tables",
+                  "20 groups per material, 10/10 disjoint and complete, air "
+                  "template data1..data10, explored groups in calibration, "
+                  "extrapolation limits 106/91 cm, 40-hex source commit",
+                  "consistent" if ok else "MISMATCH", ok, detail)
 
     return rep.summary()
 
