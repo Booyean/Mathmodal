@@ -80,6 +80,7 @@ def rf_envelope_coarse_lag(x_sig: np.ndarray, y_ref: np.ndarray) -> int:
 
 def run_closed_loop_example(
     common_shift_a: float = 0.0,
+    tau_ref_hw_s: float = 0.0,
     nonlinear_dispersion: bool = False,
 ) -> dict[str, float]:
     """Run 2-RX closed-loop calibration, DW suppression, and DAS ranging."""
@@ -98,11 +99,14 @@ def run_closed_loop_example(
     r_tgt_0 = np.sqrt(r_dir ** 2 + (2.0 * d_true) ** 2)
     tau_tgt_0 = r_tgt_0 / C0
 
-    # Planted hardware response on RX1 (ref) and RX2, plus common gauge shift `common_shift_a`
+    # Planted hardware response on RX1 (ref) and RX2:
+    # Positive lag tau_ref_hw_s uses exp(+j 2*pi*f_R*tau_ref_hw_s), consistent with propagation delay.
+    # Gauge shift common_shift_a multiplies H_i by exp(-j 2*pi*f_R*a) and adds +a to t0.
     dtau2_true = 0.50e-9  # +0.5 ns = +2.0 Ts
     g2_true = 1.25
     psi2_true = 0.30
-    h1_all = np.exp(-1j * 2.0 * np.pi * f_r_all * common_shift_a)
+    tau_ref_hw_eff = tau_ref_hw_s - common_shift_a
+    h1_all = np.exp(1j * 2.0 * np.pi * f_r_all * tau_ref_hw_eff)
     if nonlinear_dispersion:
         f_c = 0.5 * (F_START + F_STOP)
         u = (freqs - f_c) / (0.5 * (F_STOP - F_START))
@@ -287,6 +291,23 @@ def main() -> int:
         f"d_norm'={res_shift['d_est_norm_m']:.6f} m"
     )
 
+    # Counterexample B2: pure-delay parameter equality under gauge shift
+    # H_ref = exp(+j 2*pi*f_R*tau_hw), t_eff = t0 + tau_hw,
+    # under H' = H exp(-j 2*pi*f_R*a), t0' = t0 + a => tau_hw' = tau_hw - a => t_eff' = t_eff
+    tau_hw = 0.20e-9
+    a_shift = 0.35e-9
+    t0_tgt_base = 250.40 * TS
+    res_hw0 = run_closed_loop_example(common_shift_a=0.0, tau_ref_hw_s=tau_hw)
+    res_hw1 = run_closed_loop_example(common_shift_a=a_shift, tau_ref_hw_s=tau_hw)
+    t_eff_alg = (t0_tgt_base + tau_hw) / TS
+    t_eff_alg_prime = ((t0_tgt_base + a_shift) + (tau_hw - a_shift)) / TS
+    print(
+        f"Counterexample B2 (pure-delay sign equality tau_hw=0.20ns, a=0.35ns): "
+        f"alg t_eff={t_eff_alg:.4f} Ts, alg t_eff'={t_eff_alg_prime:.4f} Ts, "
+        f"recovered t0_eff=({res_hw0['t0_eff_tgt_samples']:.4f}, {res_hw1['t0_eff_tgt_samples']:.4f}) Ts, "
+        f"d_norm'=({res_hw0['d_est_norm_m']:.6f}, {res_hw1['d_est_norm_m']:.6f}) m"
+    )
+
     # Counterexample C: general nonlinear common dispersion in H_ref
     res_disp = run_closed_loop_example(common_shift_a=0.10e-9, nonlinear_dispersion=True)
     print(
@@ -308,6 +329,10 @@ def main() -> int:
     assert diff_gauge_a < 1e-13
     assert rel_obs_air < 1e-12 and rel_obs_tgt < 1e-12
     assert abs(res_shift["d_est_norm_m"] - 0.600000) < 1e-5
+    assert abs(t_eff_alg - t_eff_alg_prime) < 1e-12
+    assert abs(res_hw0["t0_eff_tgt_samples"] - t_eff_alg) < 1e-3
+    assert abs(res_hw1["t0_eff_tgt_samples"] - t_eff_alg) < 1e-3
+    assert abs(res_hw1["d_est_norm_m"] - 0.600000) < 1e-5
     assert abs(res_disp["d_est_norm_eff_m"] - 0.600000) < 1e-5
     print("ALL M0 CLOSED-LOOP CHECKS PASSED.")
     return 0

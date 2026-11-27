@@ -101,7 +101,9 @@ $$X_i^{(g)}(f_D) = H_i(f_D)\, S(f_D)\, e^{+j 2\pi f_R (t_0^{(g)} + \delta t_{g,r
    则所有相对通道比 $H_i'(f_D)/H_{i_{\text{ref}}}'(f_D) = H_i(f_D)/H_{i_{\text{ref}}}(f_D)$ 与全部观测频谱 $X_i^{(g)}(f_D)$ **保持完全不变**。因此，**仅靠观测数据无法分别唯一识别参考通道的绝对硬件群时延与物理绝对起始时刻 $t_0^{(g)}$**。
    - **闭环消去证明与“纯时延 vs 一般色散”边界**：定义吸收了公共参考频响与异步触发偏移后的**有效参考频谱** $S_{\text{eff}}^{(g)}(f_D)$：
      $$S_{\text{eff}}^{(g)}(f_D) \triangleq H_{i_{\text{ref}}}(f_D)\, S(f_D)\, e^{+j 2\pi f_R t_0^{(g)}}.$$
-     1. **当公共参考通道仅为纯时延移位**（即 $H_{i_{\text{ref}}}(f_D) \propto e^{-j 2\pi f_R \tau_{\text{ref}}^{\text{hw}}}$）时，可将 $\tau_{\text{ref}}^{\text{hw}}$ 吸收进标量**有效时间零点** $t_{0,\text{eff}}^{(g)} \triangleq t_0^{(g)} + \tau_{\text{ref}}^{\text{hw}}$；在规范变换 $(H_i, t_0^{(g)}) \mapsto (H_i e^{-j2\pi f_R a}, t_0^{(g)} + a)$ 下，$t_{0,\text{eff}}^{(g)}$ 严格不变。
+     1. **当公共参考通道仅为纯时延移位**（按第二奈奎斯特区物理滞后正号约定，即 $H_{i_{\text{ref}}}(f_D) = H_0\, e^{+j 2\pi f_R \tau_{\text{ref}}^{\text{hw}}}$，正 $\tau_{\text{ref}}^{\text{hw}}$ 表示硬件滞后）时，公共因子乘积为 $H_0 S(f_D) e^{+j 2\pi f_R (t_0^{(g)} + \tau_{\text{ref}}^{\text{hw}})}$，由此定义标量**有效时间零点** $t_{0,\text{eff}}^{(g)} \triangleq t_0^{(g)} + \tau_{\text{ref}}^{\text{hw}}$。在规范变换 $H_i'(f_D) = H_i(f_D) e^{-j 2\pi f_R a}$、$(t_0^{(g)})' = t_0^{(g)} + a$ 下，$H_{i_{\text{ref}}}'(f_D) = H_0 e^{+j 2\pi f_R (\tau_{\text{ref}}^{\text{hw}} - a)}$，即 $(\tau_{\text{ref}}^{\text{hw}})' = \tau_{\text{ref}}^{\text{hw}} - a$，故
+        $$(t_{0,\text{eff}}^{(g)})' = (t_0^{(g)})' + (\tau_{\text{ref}}^{\text{hw}})' = (t_0^{(g)} + a) + (\tau_{\text{ref}}^{\text{hw}} - a) = t_0^{(g)} + \tau_{\text{ref}}^{\text{hw}} = t_{0,\text{eff}}^{(g)},$$
+        与从观测信号锚定恢复的有效零点 $\hat{t}_{0,\text{eff}}^{(g)}$ 严格保持一致且规范不变。（注：若改用负号参数化 $H_{i_{\text{ref}}} \propto e^{-j 2\pi f_R \tilde{\tau}_{\text{ref}}^{\text{hw}}}$，则须配对定义 $(\tilde{\tau}_{\text{ref}}^{\text{hw}})' = \tilde{\tau}_{\text{ref}}^{\text{hw}} + a$ 与 $t_{0,\text{eff}}^{(g)} \triangleq t_0^{(g)} - \tilde{\tau}_{\text{ref}}^{\text{hw}}$，两种约定完全等价。）
      2. **当存在一般公共频率色散**（如 $|H_{i_{\text{ref}}}(f_D)|$ 非平坦倾斜或含有非线性相位色散 $\psi_{\text{ref}}(f_D) \neq 0$）时，**仅靠单一标量时间平移 $\hat{t}_{0,\text{eff}}^{(g)}$ 无法消去该公共频率色散**；必须显式由已对齐的校准空场直达波重构含色散有效参考模板 $\hat{S}_{\text{eff}}^{(g)}(f_D)$（见第 5.3 节）用于目标导向矢量匹配，方能在带内完整抵消一般公共频响 $H_{i_{\text{ref}}}(f_D)$ 的影响（前提是空场直射波耦合 $E_i^{\text{dir}}$ 已知或已校平）。在此条件下，测距目标函数仅依赖净传播路径差 $\tau_i^{\text{tgt}}(d_g) - \tau_{i_{\text{ref}}}^{\text{dir}}$，距离反演对公共规范移位严格不变。
 
 2. **不可识别自由度 B — 相对传递函数 $H_i^{\text{rel}}(f_D)$ 内部 $(\Delta\tau_i, \psi_i(f_D))$ 的共线性**：
@@ -244,6 +246,7 @@ python solutions/A/verify_q1_spec.py
 | 归一化 `P_norm`、`P_norm_eff` 与 `P_env` 测距（$[0.55, 0.65]\text{ m}$, $10\,\mu\text{m}$ 步长） | `0.600000 m`（理想无噪且导向矢量不共线条件下精确恢复） | `P_norm = 0.600000 m`, `P_norm_eff = 0.600000 m`, `P_env = 0.600000 m` |
 | 反例 A（自由 $\psi$ 移位 $\delta = 0.25\text{ ns}$） | $\max|H_2 - H_2'| \approx 0$ | `max|H - H'| = 2.445e-15`（加权投影唯一固定 $\Delta\hat{\tau}_2$） |
 | 反例 B（公共纯时延规范移位 $a = 0.35\text{ ns}$） | 相对观测不变，且有效零点消去后 $\hat{d}' = 0.600000\text{ m}$ | `rel\|X_air-X'\|=1.017e-13, rel\|X_tgt-X'\|=2.051e-13, d_norm'=0.600000 m` |
+| 反例 B2（纯时延参数等式 $\tau_{\text{ref}}^{\text{hw}}=0.20\text{ ns}, a=0.35\text{ ns}$） | $t_{0,\text{eff}} = t_0 + \tau_{\text{ref}}^{\text{hw}} = 251.20\,T_s$ 在规范变换下与观测恢复 $\hat{t}_{0,\text{eff}}$ 严格一致 | 见运行日志（参数等式差 `< 1e-15`，实测恢复 `251.2000 Ts`） |
 | 边界 C（一般非线性公共色散 $H_{\text{ref}}$） | 纯时间平移 `t0_eff` 存在色散残差；显式 $\hat{S}_{\text{eff}}$ 严格消去并回到 `0.600000 m` | `scalar-shift d_norm=0.600010 m`, `explicit S_eff d_norm_eff=0.600000 m` |
 
 ---
