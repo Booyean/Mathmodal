@@ -4,9 +4,13 @@
 
 Version history: V1 reviewed ``a9e2719`` (11 checks); V2 adds the PR #3
 second-review boundary checks on ``0f521a4`` (general common dispersion and
-strict-uniqueness conditions, checks M0-12..M0-16).  The V1 checks pass on
-both spec versions; M0-16 is a wording/shape check that intentionally fails
-on the pre-fix ``a9e2719`` text.
+strict-uniqueness conditions, checks M0-12..M0-16).  V3 adds M0-17, the
+effective-zero sign bookkeeping raised by the coordinator: section 4.1 writes
+``H_ref ∝ exp(-j2πf_R τ_hw)`` together with ``t0_eff = t0 + τ_hw``.  M0-17
+intentionally fails on ``0f521a4`` and passes after the one-character fix
+``H_ref -> exp(+j2πf_R τ_hw)`` (the delay convention derived in section 3.2).
+The V1 checks pass on all spec versions; M0-16 and M0-17 are wording/shape
+checks that distinguish the pre-fix texts from the fixed ones.
 
 This script is written from the formulas and claims in
 ``solutions/A/model_q1.md`` plus the PR #3 review, not from the production
@@ -310,6 +314,20 @@ def best_scalar_residual(s_eff: np.ndarray, s_b: np.ndarray,
     return best
 
 
+def anchor_peak(product: np.ndarray, f_r: np.ndarray, center: float,
+                span: float) -> float:
+    """Coarse+fine argmax_t |sum product * exp(-j2pi f_R t)| around center."""
+    def score(t: float) -> float:
+        return float(abs(np.sum(product * np.exp(-1j * 2.0 * np.pi * f_r * t))))
+
+    coarse = center + np.linspace(-span, span, 601)
+    coarse_scores = np.array([score(t) for t in coarse])
+    best = float(coarse[int(np.argmax(coarse_scores))])
+    fine = best + np.linspace(-span / 600.0, span / 600.0, 2001)
+    fine_scores = np.array([score(t) for t in fine])
+    return float(fine[int(np.argmax(fine_scores))])
+
+
 # ---------------------------------------------------------------------------
 # Checks
 # ---------------------------------------------------------------------------
@@ -517,6 +535,64 @@ def main(argv: list[str] | None = None) -> int:
                   has_conditions and has_noise_caveat and no_absolute_zero_bias
                   and min_resid > 1e-6,
                   "the residual is the least-squares distance to the a(d0) line")
+
+    # --- M0-17: effective-zero sign bookkeeping (0f521a4 sign issue) ------
+    # Section 4.1 states H_ref ∝ exp(-j2πf_R τ_hw) and then t0_eff = t0 + τ_hw.
+    # Since S_eff = H_ref S exp(+j2πf_R t0), a minus in H_ref and a plus in
+    # t0_eff cannot both hold: the anchor lands at t0 - τ_hw, and the claimed
+    # gauge invariance fails by 2a.  Section 3.2 derives a positive delay as
+    # exp(+j2πf_R τ), so the physically consistent pairing is (+,+).
+    if not args.spec.is_file():
+        rep.skip("M0-17", "effective-zero sign bookkeeping", f"spec not found: {args.spec}")
+    else:
+        text = args.spec.read_text(encoding="utf-8")
+        m_h = re.search(r"propto\s*e\^\{([+-])j\s*2\\pi\s*f_R\s*\\tau_", text)
+        m_t = re.search(
+            r"t_\{0,\\text\{eff\}\}\^\{\(g\)\}\s*\\triangleq\s*"
+            r"t_0\^\{\(g\)\}\s*([+-])\s*\\tau_", text)
+        h_sign = (1 if m_h.group(1) == "+" else -1) if m_h else None
+        t_sign = (1 if m_t.group(1) == "+" else -1) if m_t else None
+
+        tau_hw = 0.35e-9
+        t0_nom = 120.25 * TS
+        anchors: dict[int, float] = {}
+        for hs in (+1, -1):
+            s_eff = (np.exp(1j * hs * 2.0 * np.pi * f_r * tau_hw) * s_b
+                     * np.exp(1j * 2.0 * np.pi * f_r * t0_nom))
+            anchors[hs] = anchor_peak(s_eff * np.conj(s_b), f_r, t0_nom, 3.0e-9)
+        plus_err = abs(anchors[+1] - (t0_nom + tau_hw))
+        minus_err = abs(anchors[-1] - (t0_nom - tau_hw))
+
+        if h_sign is not None and t_sign is not None:
+            declared_err = abs(anchors[h_sign] - (t0_nom + t_sign * tau_hw))
+            a_gauge = 0.10e-9
+            tau_prime = tau_hw - h_sign * a_gauge
+            gauge_drift = ((t0_nom + a_gauge) + t_sign * tau_prime) - (
+                t0_nom + t_sign * tau_hw)
+        else:
+            declared_err = float("nan")
+            gauge_drift = float("nan")
+
+        ok = (h_sign == 1 and t_sign == 1
+              and plus_err < 1e-12 and minus_err < 1e-12
+              and declared_err < 1e-12 and abs(gauge_drift) < 1e-12)
+        rep.check("M0-17", "effective-zero sign bookkeeping (H_ref delay vs t0_eff)",
+                  "declared pair is (+,+): H_ref = exp(+j2πf_R τ_hw), "
+                  "t0_eff = t0 + τ_hw; data anchor exact and gauge-invariant "
+                  "under (H_i, t0) -> (H_i e^{-j2πf_R a}, t0 + a)",
+                  f"declared H_ref sign={h_sign}, t0_eff sign={t_sign}; "
+                  f"data anchor: H_ref+ -> {anchors[+1] / TS:.6f} Ts "
+                  f"(err {plus_err * 1e12:.3f} ps), "
+                  f"H_ref- -> {anchors[-1] / TS:.6f} Ts; "
+                  f"declared-anchor error {declared_err * 1e9:.3f} ns; "
+                  f"gauge drift {gauge_drift * 1e9:+.3f} ns",
+                  ok,
+                  "0f521a4 writes H_ref ∝ exp(-j2πf_R τ_hw) with t0_eff = t0 + τ_hw; "
+                  "the anchor then lands at t0 - τ_hw (2τ_hw = 0.70 ns away) and the "
+                  "claimed gauge invariance fails by 2a. Section 3.2 derives a positive "
+                  "delay as exp(+j2πf_R τ), so the one-character fix is H_ref -> "
+                  "exp(+j2πf_R τ_hw), keeping t0_eff = t0 + τ_hw. No numeric result "
+                  "changes (t0_eff is fitted from data, not computed from this formula)")
 
     return rep.summary()
 
