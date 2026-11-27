@@ -8,7 +8,7 @@
     若 type == 102 : freq(float32) -> sync(u32) -> num(u32) -> len(u32)
                      -> num*len/2 个 int16（时刻交织，reshape 后 8 x num）
 输出：
-  recon/manifests/a_dat_manifest.csv   每个 .dat 一行（哈希、包数、包头字段、数据统计、异常）
+  recon/manifests/a_dat_manifest.csv   每个 .dat 一行（哈希、包数、包头字段、**全部采样包**的数据统计、异常）
   recon/manifests/a_group_manifest.csv 每个测量组一行（组内 8 行文件是否齐全）
   recon/reports/a_inventory_summary.json
   recon/samples/a_sample_dat_header.json        真实包头原始字节
@@ -16,6 +16,7 @@
   recon/samples/a_period_check.json             周期结构核对（16000 点 vs 题面 12000 点）
 用法：
   python recon/scripts/a_inventory.py --root "<A题目录>"
+  python recon/scripts/a_inventory.py --self-test   # 只跑 -32768/+32767/0 边界值单测
 """
 
 import argparse
@@ -33,6 +34,8 @@ import numpy as np
 MAGIC = 963072
 TYPE_DATA = 102
 CHANNELS = 8
+INT16_POS_MAX = 32767   # int16 正满量程
+INT16_NEG_MIN = -32768  # int16 负满量程（np.abs(int16(-32768)) 会回绕成 -32768）
 
 
 def find_packets(buf):
@@ -102,19 +105,120 @@ def find_packets(buf):
     return packets, problems
 
 
-def stats_from(buf, pkt):
-    a = np.frombuffer(buf, dtype="<i2", count=pkt["num"] * pkt["len"] // 2, offset=pkt["start"])
-    mat = a.reshape(pkt["num"], pkt["len"] // 2).T  # 8 x num
-    per_ch = mat.astype(np.float64)
+def stats_from_mat(mat):
+    """对一包 int16 数据（channels x samples）做统计。
+
+    关键修复：先升到 int32 再取绝对值。numpy 的 int16 是定宽类型，
+    np.abs(np.int16(-32768)) 会回绕成 -32768，导致 -32768 被当成"小值"而漏计。
+    """
+    m = np.asarray(mat)
+    if m.dtype != np.int32:
+        m = m.astype(np.int32)
+    absm = np.abs(m)
+    n = int(m.size)
+    per_ch_mean = m.mean(axis=1, dtype=np.float64)
     return {
-        "shape": [int(mat.shape[0]), int(mat.shape[1])],
-        "min": int(mat.min()),
-        "max": int(mat.max()),
-        "mean": round(float(per_ch.mean()), 3),
-        "std": round(float(per_ch.std()), 3),
-        "ch_mean_abs": [round(float(v), 1) for v in np.abs(per_ch.mean(axis=1))],
-        "clip_frac": round(float(np.mean(np.abs(mat) >= 32767)), 6),
+        "shape": [int(m.shape[0]), int(m.shape[1])],
+        "min": int(m.min()),
+        "max": int(m.max()),
+        "mean": round(float(m.mean(dtype=np.float64)), 3),
+        "std": round(float(m.std(dtype=np.float64)), 3),
+        "ch_mean_abs": [round(float(v), 1) for v in np.abs(per_ch_mean)],
+        # 满量程判据：+32767 或 -32768（统计上等价于 |x| >= 32767；int32 下不再溢出）
+        "clip_frac": round(float(np.count_nonzero(absm >= INT16_POS_MAX) / n), 6),
+        "n_at_pos_max": int(np.count_nonzero(m >= INT16_POS_MAX)),
+        "n_at_neg_min": int(np.count_nonzero(m <= INT16_NEG_MIN)),
+        "n_zero": int(np.count_nonzero(m == 0)),
+        "n_samples": n,
     }
+
+
+def stats_all_packets(buf, packets):
+    """对单个文件的**所有采样包**做幅值统计，并显式记录统计覆盖范围。
+
+    旧版只统计 packets[0]；报告若据此写"全库无削顶"会超出证据范围。
+    """
+    n = 0
+    total = 0.0
+    total_sq = 0.0
+    mn = INT16_POS_MAX
+    mx = INT16_NEG_MIN
+    n_pos = 0
+    n_neg = 0
+    n_zero = 0
+    ch_sum = np.zeros(CHANNELS, dtype=np.float64)
+    for pkt in packets:
+        a = np.frombuffer(buf, dtype="<i2", count=pkt["num"] * pkt["len"] // 2, offset=pkt["start"])
+        mat = a.reshape(pkt["num"], pkt["len"] // 2).T.astype(np.int32)  # 8 x num
+        n += int(mat.size)
+        total += float(mat.sum(dtype=np.float64))
+        total_sq += float(np.square(mat.astype(np.float64)).sum())
+        mn = min(mn, int(mat.min()))
+        mx = max(mx, int(mat.max()))
+        n_pos += int(np.count_nonzero(mat >= INT16_POS_MAX))
+        n_neg += int(np.count_nonzero(mat <= INT16_NEG_MIN))
+        n_zero += int(np.count_nonzero(mat == 0))
+        ch_sum += mat.sum(axis=1, dtype=np.float64)
+    if n == 0:
+        raise ValueError("no samples to aggregate")
+    mean = total / n
+    var = max(0.0, total_sq / n - mean * mean)
+    return {
+        "min": mn,
+        "max": mx,
+        "mean": round(mean, 3),
+        "std": round(float(np.sqrt(var)), 3),
+        "ch_mean_abs": [round(float(v), 1) for v in np.abs(ch_sum / n)],
+        "clip_frac": round(float((n_pos + n_neg) / n), 6),
+        "n_at_pos_max": n_pos,
+        "n_at_neg_min": n_neg,
+        "n_zero": n_zero,
+        "n_samples": n,
+        "n_packets": len(packets),
+    }
+
+
+def self_test():
+    """边界值单测：正负极值与零值必须被正确计数（不依赖任何原始数据）。"""
+    cases = []
+
+    def check(name, mat, expected):
+        got = stats_from_mat(mat)
+        ok = all(got[k] == v for k, v in expected.items())
+        cases.append({"case": name, "ok": ok, "got": {k: got[k] for k in expected}, "expected": expected})
+        if not ok:
+            raise AssertionError("%s failed: got=%s expected=%s" % (name, got, expected))
+
+    check(
+        "all_int16_neg_full_scale",
+        np.full((8, 16), INT16_NEG_MIN, dtype="<i2"),
+        {"min": -32768, "max": -32768, "clip_frac": 1.0, "n_at_neg_min": 128, "n_at_pos_max": 0, "n_zero": 0},
+    )
+    check(
+        "all_int16_pos_full_scale",
+        np.full((8, 16), INT16_POS_MAX, dtype="<i2"),
+        {"min": 32767, "max": 32767, "clip_frac": 1.0, "n_at_pos_max": 128, "n_at_neg_min": 0, "n_zero": 0},
+    )
+    check(
+        "all_zero",
+        np.zeros((8, 16), dtype="<i2"),
+        {"min": 0, "max": 0, "clip_frac": 0.0, "n_zero": 128, "n_at_pos_max": 0, "n_at_neg_min": 0},
+    )
+    check(
+        "mixed_extremes_and_zero",
+        np.array([[-32768, 32767, 0, 5], [1, -1, 32767, -32768]], dtype="<i2"),
+        {
+            "min": -32768,
+            "max": 32767,
+            "clip_frac": 0.5,
+            "n_at_pos_max": 2,
+            "n_at_neg_min": 2,
+            "n_zero": 1,
+            "n_samples": 8,
+        },
+    )
+    print(json.dumps({"self_test": cases, "all_ok": all(c["ok"] for c in cases)}, ensure_ascii=False, indent=2))
+    return all(c["ok"] for c in cases)
 
 
 def sha256_bytes(b):
@@ -123,9 +227,14 @@ def sha256_bytes(b):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--root", required=True, help="A 题目录（含 附件/）")
+    ap.add_argument("--root", help="A 题目录（含 附件/）")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    ap.add_argument("--self-test", action="store_true", help="只跑 -32768/+32767/0 边界值单测后退出")
     args = ap.parse_args()
+    if args.self_test:
+        return 0 if self_test() else 1
+    if not args.root:
+        ap.error("--root is required unless --self-test")
 
     root = os.path.abspath(args.root)
     out = os.path.abspath(args.out)
@@ -170,6 +279,11 @@ def main():
             "data_mean": "",
             "data_std": "",
             "clip_frac": "",
+            "n_packets_stat": 0,
+            "n_samples_stat": 0,
+            "n_at_int16_pos_max": 0,
+            "n_at_int16_neg_min": 0,
+            "n_zero": 0,
         }
         if size == 0:
             rows.append(row)
@@ -188,12 +302,18 @@ def main():
             row["sync_ids"] = ",".join(str(p["sync"]) for p in packets)
             row["header_ok"] = all(p["hdr_ok"] for p in packets)
             row["bytes_consumed"] = packets[-1]["end"]
-            st = stats_from(buf, packets[0])
+            # 统计覆盖：本文件所有采样包，而不是仅首包
+            st = stats_all_packets(buf, packets)
             row["data_min"] = st["min"]
             row["data_max"] = st["max"]
             row["data_mean"] = st["mean"]
             row["data_std"] = st["std"]
             row["clip_frac"] = st["clip_frac"]
+            row["n_packets_stat"] = st["n_packets"]
+            row["n_samples_stat"] = st["n_samples"]
+            row["n_at_int16_pos_max"] = st["n_at_pos_max"]
+            row["n_at_int16_neg_min"] = st["n_at_neg_min"]
+            row["n_zero"] = st["n_zero"]
             if sample_header is None:
                 sample_header = {
                     "file": rel,
@@ -286,10 +406,14 @@ def main():
         "fs_hz": 4e9,
         "Np": 4000,
         "samples_per_packet": 16000,
-        "periods_in_packet": 16000 / 4000,
+        "record_period_multiple": 16000 / 4000,
         "pdf_text_says": "附件为 .txt，每列 12000 点 = 3 个整周期；每个 .dat 包 16000 点",
         "actual_dat_points_per_channel_per_packet": 16000,
-        "note": "实测每包 8 通道 x 16000 点(4 个周期)，与题面文字 12000 点(3 个周期)不一致；需建模方确认取哪 12000/16000 点及周期对齐方式。",
+        "note": (
+            "实测每包 8 通道 x 16000 点，长度是 Np=4000 的 4 倍；但 16000/4000=4 只说明记录长度相当于 4 个周期，"
+            "采集起点是否在周期边界、4 段是否与真实发射周期对齐均未验证。"
+            "需建模方确认取 12000/16000 点，并先对齐周期边界再截取 3 个整周期。"
+        ),
         "packet_counts_observed": {str(k): v for k, v in sorted(n_pkt_hist.items())},
         "size_bytes_histogram": {str(k): v for k, v in sorted(size_hist.items())},
     }
@@ -328,6 +452,41 @@ def main():
             max(r["data_max"] for r in rows if r["data_max"] != ""),
         ],
         "clip_frac_max": max(r["clip_frac"] for r in rows if r["clip_frac"] != ""),
+        "stats_scope": "每个非空 .dat 的全部采样包（不是仅首包）；n_samples_stat 为全部 int16 采样点数",
+        "n_samples_stat": sum(r["n_samples_stat"] for r in rows),
+        "n_packets_stat": sum(r["n_packets_stat"] for r in rows),
+        "clip_frac_global": round(
+            float(
+                sum(r["n_at_int16_pos_max"] + r["n_at_int16_neg_min"] for r in rows)
+                / max(1, sum(r["n_samples_stat"] for r in rows))
+            ),
+            6,
+        ),
+        "int16_extreme_counts": {
+            "at_pos_32767": sum(r["n_at_int16_pos_max"] for r in rows),
+            "at_neg_-32768": sum(r["n_at_int16_neg_min"] for r in rows),
+            "zero": sum(r["n_zero"] for r in rows),
+        },
+        "files_with_int16_extreme": [
+            {
+                "rel_path": r["rel_path"],
+                "n_at_pos_32767": r["n_at_int16_pos_max"],
+                "n_at_neg_-32768": r["n_at_int16_neg_min"],
+                "clip_frac": r["clip_frac"],
+                "n_samples_stat": r["n_samples_stat"],
+            }
+            for r in rows
+            if r["n_at_int16_pos_max"] or r["n_at_int16_neg_min"]
+        ],
+        "adc_interpretation": (
+            "统计覆盖每个非空 .dat 的全部采样包；实测 +32767 共 %d 个、-32768 共 %d 个。"
+            "不能据此宣称'无削顶'：ADC 位深、前端增益/衰减与采集链路均未在附件中定义，不能排除真实 ADC 饱和或前端压缩。"
+            "若极值为连续多点，倾向饱和；若为孤立单点（见 files_with_int16_extreme），倾向采集异常/坏点，应标记后交建模决定是否剔除。"
+            % (
+                sum(r["n_at_int16_pos_max"] for r in rows),
+                sum(r["n_at_int16_neg_min"] for r in rows),
+            )
+        ),
     }
     with open(os.path.join(rep_dir, "a_inventory_summary.json"), "w", encoding="utf-8") as fh:
         json.dump(summary, fh, ensure_ascii=False, indent=2)

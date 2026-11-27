@@ -16,60 +16,61 @@
       "file": "3#LF.xlsx",
       "sheet": "LF精炼位3信息数据",
       "header": "净吹时间",
-      "n_negative": 1,
+      "n_negative_cells": 1,
       "sample": "-80.0"
     },
     {
       "file": "工序时间信息.xlsx",
       "sheet": "工序信息数据",
       "header": "钢包车座罐结束至出钢开始时间",
-      "n_negative": 177,
+      "n_negative_cells": 177,
       "sample": "-3分钟\t-51秒"
     },
     {
       "file": "工序时间信息.xlsx",
       "sheet": "工序信息数据",
       "header": "出钢开始至结束时间",
-      "n_negative": 4,
+      "n_negative_cells": 4,
       "sample": "-31分钟\t-37秒"
     },
     {
       "file": "工序时间信息.xlsx",
       "sheet": "工序信息数据",
       "header": "重罐进站在LF待机位等待时间",
-      "n_negative": 297,
+      "n_negative_cells": 297,
       "sample": "-4分钟\t-13秒"
     },
     {
       "file": "工序时间信息.xlsx",
       "sheet": "工序信息数据",
       "header": "LF处理结束至吊起时间",
-      "n_negative": 114,
+      "n_negative_cells": 114,
       "sample": "-1分钟\t-44秒"
     },
     {
       "file": "工序时间信息.xlsx",
       "sheet": "工序信息数据",
       "header": "RH处理结束至重罐吊起时间",
-      "n_negative": 143,
+      "n_negative_cells": 143,
       "sample": "-46分钟\t-16秒"
     },
     {
       "file": "工序时间信息.xlsx",
       "sheet": "工序信息数据",
       "header": "重罐在铸机接受位等待时间",
-      "n_negative": 73,
+      "n_negative_cells": 73,
       "sample": "-39分钟\t-29秒"
     },
     {
       "file": "工序时间信息.xlsx",
       "sheet": "工序信息数据",
       "header": "浇铸结束至空罐吊起时间",
-      "n_negative": 235,
+      "n_negative_cells": 235,
       "sample": "-23分钟\t-47秒"
     }
   ],
   "n_negative_duration_columns": 8,
+  "n_negative_duration_cells": 1044,
   "tab_contaminated_columns": [
     {
       "file": "1#RH.xlsx",

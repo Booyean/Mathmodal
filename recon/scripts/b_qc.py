@@ -132,7 +132,8 @@ def main():
                     neg = [v for v in nonnull if isinstance(v, str) and v.strip().startswith("-")]
                     if neg:
                         neg_durations.append(
-                            {"file": base, "sheet": sname, "header": h, "n_negative": len(neg), "sample": fmt(neg[0])[:60]}
+                            # 按单元格计数：同一炉次可有多列/多格负值，不能当作"故障炉次数"
+                            {"file": base, "sheet": sname, "header": h, "n_negative_cells": len(neg), "sample": fmt(neg[0])[:60]}
                         )
                 for v in nonnull:
                     if isinstance(v, str) and ("\t" in v):
@@ -212,6 +213,7 @@ def main():
         "nan_outside_claim_window": sum(r["n_outside_claim_window"] for r in time_rows),
         "negative_duration_columns": neg_durations,
         "n_negative_duration_columns": len(neg_durations),
+        "n_negative_duration_cells": sum(x["n_negative_cells"] for x in neg_durations),
         "tab_contaminated_columns": [{"file": k[0], "header": k[1], "n": v} for k, v in tab_cells.items()],
         "placeholders_minus2": [{"file": k[0], "header": k[1], "sheet": k[2], "n": v} for k, v in sorted(placeholders.items())],
         "melting_key": key_rows,

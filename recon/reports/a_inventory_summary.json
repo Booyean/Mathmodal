@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-27T12:55:58.709279+00:00",
+  "generated_at": "2026-11-27T14:17:53.913825+00:00",
   "root": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题",
   "n_dat_files": 881,
   "total_bytes": 801111612,
@@ -73,8 +73,27 @@
     16
   ],
   "data_range_global": [
-    -32764,
+    -32768,
     32764
   ],
-  "clip_frac_max": 0.0
+  "clip_frac_max": 9e-05,
+  "stats_scope": "每个非空 .dat 的全部采样包（不是仅首包）；n_samples_stat 为全部 int16 采样点数",
+  "n_samples_stat": 400512000,
+  "n_packets_stat": 3129,
+  "clip_frac_global": 0.0,
+  "int16_extreme_counts": {
+    "at_pos_32767": 0,
+    "at_neg_-32768": 46,
+    "zero": 276264
+  },
+  "files_with_int16_extreme": [
+    {
+      "rel_path": "附件/附件3-成像数据/金属柱和金属铲/2026-11-12-22-09-58_16000_1.dat",
+      "n_at_pos_32767": 0,
+      "n_at_neg_-32768": 46,
+      "clip_frac": 9e-05,
+      "n_samples_stat": 512000
+    }
+  ],
+  "adc_interpretation": "统计覆盖每个非空 .dat 的全部采样包；实测 +32767 共 0 个、-32768 共 46 个。不能据此宣称'无削顶'：ADC 位深、前端增益/衰减与采集链路均未在附件中定义，不能排除真实 ADC 饱和或前端压缩。若极值为连续多点，倾向饱和；若为孤立单点（见 files_with_int16_extreme），倾向采集异常/坏点，应标记后交建模决定是否剔除。"
 }
