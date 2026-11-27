@@ -1,11 +1,11 @@
 # A 题 D0 数据契约：原始 `.dat` 读取器输出
 
 - **任务 / 分支**：D0 / `data/a-q1-reader`
-- **主责**：`dsh`（数据与求解）；接口审阅：`codex`；公式/坐标待 `A-Q1-M0` 批复
-- **输入基线**：D0 起点 `main` = `44c778ead3c3ebd14ab701befbebac22c7480c02`；合并核验目标 `main` = `2486358…`（PR #3 合并后主线，PR #7 已开）；原始数据基线 = `d8ee44021dd7acec18e7fd608e50835b0f7e8dd9`
-- **契约版本**：`D0-3`（读取器常量 `CONTRACT_VERSION = "D0-3"`）
+- **主责**：`dsh`（数据与求解）；接口审阅：`codex`；坐标公式已随 `A-Q1-M0` 批复（`098e17d`）
+- **输入基线**：D0 起点 `main` = `44c778ead3c3ebd14ab701befbebac22c7480c02`；合并核验目标 `main` = `b40e15b…`（PR #9，M0 批复记录；已在 `b40e15b` 上合并复跑）；原始数据基线 = `d8ee44021dd7acec18e7fd608e50835b0f7e8dd9`
+- **契约版本**：`D0-4`（读取器常量 `CONTRACT_VERSION = "D0-4"`）
 - **实现**：`solutions/A/a_dat_reader.py`；测试：`solutions/A/test_a_dat_reader.py`
-- **依据**：`附件1-数据读取函数/get_data_iq.m`（同版本原件）；`coordination/A_Q1_PLAN.md` 的 D0 行；`solutions/A/model_q1.md`（PR #3，`0f521a4…`）§1、§2.1、§7.1（**A-Q1-M0 待批复**，本契约只借用其字段与坐标提案）
+- **依据**：`附件1-数据读取函数/get_data_iq.m`（同版本原件）；`coordination/A_Q1_PLAN.md` 的 D0 行；`solutions/A/model_q1.md`（PR #3，`098e17d…`）§1、§2.1、§7.1（**A-Q1-M0 已批复**，本契约借用其字段与坐标定义）
 
 > 本文件只描述**读取、展平、配对与体检**。折迭、一致性门控、校准、直射波抑制、测距均不在 D0 范围内，字段也不在此定义。
 
@@ -107,7 +107,7 @@ D0 采用**同一语义**（不假定 `num` 就是点数、`len` 就是字节数
 | `channel_valid` | `bool` | `(64,)` | — | 该通道所属行是否存在且已参与配对 | 恒 64 项（描述通道有效性，不随包数变化）；8 行齐全且每行有契约形状包时全 True；缺行/整行无有效包且 `require_all_rows=False` 时对应 8 个通道 False；`P=0` 时仍为 64 项 |
 | `tx_idx` | `int` | 标量 | — | 27（第 4 行第 4 列，0-based `row=3, col=3`） | 常量 |
 | `ref_idx` | `int` | 标量 | — | 28（第 4 行第 5 列，0-based `row=3, col=4`） | 常量 |
-| `positions_m` | `float64` | `(64, 3)` | m | `channel_positions()`，依 **M0 §2.1 提案** | **待 A-Q1-M0 批复**；坐标变更不影响读取/配对 |
+| `positions_m` | `float64` | `(64, 3)` | m | `channel_positions()`，依 **M0 §2.1** | **A-Q1-M0 已批复（`098e17d`）**；坐标变更不影响读取/配对 |
 | `meta` | `dict` | — | — | 见 §2.2 | 只放事实与异常，不放估计量 |
 
 `packets` 的通道索引：`i = 8*(r-1) + (c) ∈ {0..63}`，其中 `r = 行号+1`、`c = 文件内列号 0..7`（即 `i = 8*n + c`）。
@@ -117,7 +117,7 @@ D0 采用**同一语义**（不假定 `num` 就是点数、`len` 就是字节数
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `contract_version` | str | `D0-3` |
+| `contract_version` | str | `D0-4` |
 | `group_key` / `dataset` / `name` / `dir_rel` / `prefix` | str | 组标识（§1.2） |
 | `n_files_expected` / `n_files_used` | int | 恒 8 / 实际**参与配对**的行数（不含缺行、空行、整行无契约形状包的行） |
 | `missing_rows` | int[] | 缺文件的行（0-based） |
@@ -151,7 +151,7 @@ D0 采用**同一语义**（不假定 `num` 就是点数、`len` 就是字节数
 |---|---|---|
 | 采样值 `packets` | ADC int16 原始计数 | **未标定**：ADC 位深、前端增益/衰减、天线与电缆频响均未在附件中给出，不能当作电压/场强 |
 | 时间 `ts_s`、`sync` | s / 包号 | `Ts` 来自题面；`sync` 无量纲 |
-| 坐标 `positions_m` | m | 依 M0 §2.1 提案，待批复 |
+| 坐标 `positions_m` | m | 依 M0 §2.1（A-Q1-M0 已批复，`098e17d`） |
 | 频率 | Hz | 仅 `fs_hz` 配置；`freq` 字段原样保留，未解释 |
 
 ---
@@ -199,7 +199,7 @@ D0 采用**同一语义**（不假定 `num` 就是点数、`len` 就是字节数
 | O-D0-04 | 组目录名中的 `42cm`… 是标称还是实测距离 | 会影响"真值"用法 | 采集记录 |
 | O-D0-05 | 附件 3 的 0 字节文件是采集失败还是拷贝缺失 | 该组当前不可用 | 原件复核 |
 | O-D0-06 | 同组包数 2–6 不等的原因（丢包/停采/配置） | 交集后 `P` 随组变化 | 采集日志 |
-| O-D0-07 | `positions_m` 公式（M0 §2.1）是否批复、`+x` 定向 | 只影响几何辅助，不影响读取 | `A-Q1-M0` 批复 |
+| O-D0-07 | `positions_m` 公式（M0 §2.1）的 `+x` 定向 | 只影响几何辅助，不影响读取 | **已批复（`098e17d`）**；若后续变更需同步本契约与读取器 |
 | O-D0-08 | 10/10 校准/检验拆分未冻结 | D0 不写任何标签 | `codex` + 验证方冻结 |
 | O-D0-09 | 光速取值（M0 第一轮取 `c0`） | 属测距阶段，D0 不使用 | `A-Q1-M0` 批复 |
 
@@ -222,7 +222,7 @@ python solutions/A/a_dat_reader.py --verify-all --json out/verify_all.json
 python solutions/A/test_a_dat_reader.py
 ```
 
-验收口径：合成例覆盖协议分支与异常路径（预期值先写死、再与实现比对）；真实组覆盖 8 行齐全组、包数不等组、含 `-32768` 组、0 字节组；全量体检核对 111 组、110 完整、扫描问题 0。`D0-3` 另要求 S16（整行无契约形状包：strict 拒绝 / allow-incomplete 时整行退出交集且通道无效）与 S17（`--max-packets` 截断不污染丢包记录、完整交集另存）通过。
+验收口径：合成例覆盖协议分支与异常路径（预期值先写死、再与实现比对）；真实组覆盖 8 行齐全组、包数不等组、含 `-32768` 组、0 字节组；全量体检核对 111 组、110 完整、扫描问题 0。`D0-3` 起另要求 S16（整行无契约形状包：strict 拒绝 / allow-incomplete 时整行退出交集且通道无效）与 S17（`--max-packets` 截断不污染丢包记录、完整交集另存）通过。
 
 ---
 
@@ -233,3 +233,4 @@ python solutions/A/test_a_dat_reader.py
 | D0-1 | 2026-11-27 | 首版：协议解析、64/63 路、共同 `sync` 配对、异常规则、双口径端点统计、坐标标注待批复 |
 | D0-2 | 2026-11-27 | 自审修正：截断包优先记 `truncated_samples`（原在 `num*len/2` 非 8 倍数且采样区不足时会误记 `sample_count_not_multiple_of_8` 并静默跳过尾部）；明确 `P=0` 时 `channel_valid` 仍为 64 项；新增 S14/S15 两个合成例 |
 | D0-3 | 2026-11-28 | 自审修正：某行全部包形状不符时不再让空 `sync` 集合把整组交集压成 `P=0`，strict 拒绝、`--allow-incomplete` 时整行退出配对并登记 `rows_without_valid_packet`；`--max-packets` 只截断装载，被截包不再误记为交集外丢包，完整交集另存 `sync_common_all`/`n_packets_common_all`/`max_packets_applied`；新增 S16/S17；契约基线更新到 PR #3 合并后的主线 |
+| D0-4 | 2026-11-28 | 记录 `A-Q1-M0` 最终批复（`098e17d`）：坐标公式与 `positions_source` 由"待批复"改为"已批复"；合并核验基线更新到 `main` = `b40e15b`（PR #9，M0 批复记录）。仅文档/标注，读取与配对行为不变 |

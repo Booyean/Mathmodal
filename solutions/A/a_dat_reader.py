@@ -29,7 +29,7 @@
   * ``read_dat(path)`` -> DatFile（包列表、异常、每个包的 (8, N) int16 矩阵）
   * ``load_group(ref, ...)`` -> GroupData（packets/sync/rx_mask/channel_valid/
     positions_m/meta）
-  * ``channel_positions()`` -> (64, 3) 几何坐标（**依 M0 §2.1 提案，待 A-Q1-M0 批复**）
+  * ``channel_positions()`` -> (64, 3) 几何坐标（**依 M0 §2.1，A-Q1-M0 已批复 098e17d**）
 
 命令行
   python solutions/A/a_dat_reader.py --list-groups
@@ -77,7 +77,7 @@ INT16_POS_MAX = 32767
 INT16_NEG_MIN = -32768
 INT16_MASK = 0xFFFFFFFF
 
-CONTRACT_VERSION = "D0-3"
+CONTRACT_VERSION = "D0-4"
 
 _ROW_FILE_RE = re.compile(r"^(?P<prefix>.+)_(?P<row>[0-7])\.dat$", re.IGNORECASE)
 _GROUP_DIR_RE = re.compile(r"^data\d+(?:-\d+cm)?$", re.IGNORECASE)
@@ -477,14 +477,14 @@ def find_group(root: os.PathLike, group_key: str) -> GroupRef:
     return hits[0]
 
 
-# ---------------------------------------------------------------- 几何（M0 §2.1，待批复）
+# ---------------------------------------------------------------- 几何（M0 §2.1，A-Q1-M0 已批复 098e17d）
 def channel_positions() -> np.ndarray:
     """(64, 3) 阵元坐标，单位 m。
 
-    依 M0 §2.1 提案：z_r=(75.5-7(r-1))cm，奇行 c_grid=2k-1、偶行 c_grid=2k，
+    依 M0 §2.1：z_r=(75.5-7(r-1))cm，奇行 c_grid=2k-1、偶行 c_grid=2k，
     x=(8-c_grid)*0.035 m，阵列在 y=0 平面，+x 指向第 1 列移动前端。
-    **该公式属 A-Q1-M0（待审）**；若批复修改，此函数与 ``positions_m`` 需同步更新，
-    D0 的读取/配对结果不受影响。
+    **该公式已由 A-Q1-M0 批复（098e17d）**；若后续修改，此函数与 ``positions_m``
+    需同步更新，D0 的读取/配对结果不受影响。
     """
     pos = np.zeros((N_CHANNELS, 3), dtype=np.float64)
     for r in range(1, N_ROWS + 1):
@@ -721,7 +721,7 @@ def load_group(
                 "n_samples": int(all_n),
             },
         },
-        "positions_source": "M0 §2.1（A-Q1-M0 待批复）；仅几何辅助，不影响读取/配对",
+        "positions_source": "M0 §2.1（A-Q1-M0 已批复 098e17d）；仅几何辅助，不影响读取/配对",
     }
 
     return GroupData(
