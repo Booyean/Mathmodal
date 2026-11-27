@@ -2,9 +2,9 @@
 
 - **任务编号**：M0（`model/a-q1-spec`）
 - **主责**：`antigravity02`（建模与论文）
-- **输入基线**：`main` = `e1f50ec1723ce74ac4ef9d550b50835b0f7e8dd9`，原始数据基线 = `d8ee44021dd7acec18e7fd608e50835b0f7e8dd9`
-- **参考依据**：赛题 PDF 第 1、3–7 页；`附件1-数据读取函数/get_data_iq.m`；`coordination/A_Q1_PLAN.md`；`coordination/A_Q1_METHODS.md`
-- **状态说明**：本文件为数学规范与接口契约；**须经统筹 `codex` 审阅并记录 `A-Q1-M0` 批复后，方可进入正式实现与试验**。
+- **输入基线**：`main` = `e1f50ec1723ce74ac4ef9d550b50835b0f7e8dd9`（并同步核对最新 `main` = `44c778ead3c3ebd14ab701befbebac22c7480c02`），原始数据基线 = `d8ee44021dd7acec18e7fd608e50835b0f7e8dd9`
+- **参考依据**：赛题 PDF 第 1、3–7 页；`附件1-数据读取函数/get_data_iq.m`；`coordination/A_Q1_PLAN.md`；`coordination/A_Q1_METHODS.md`；`checks/A/q1_preflight.md`（V0 PR #4）
+- **状态说明**：本文件为数学规范、接口契约与独立闭环验证说明；**须经统筹 `codex` 审阅并记录 `A-Q1-M0` 批复后，方可进入正式求解器与试验实现**。
 
 ---
 
@@ -28,229 +28,220 @@
 
 **周期边界与异步采集说明**：
 1. 发射端稳态循环播放 $N_p = 4000$ 点的射频波形，接收端每包连续采集 $N_{\text{pkt}} = 16000 = 4 N_p$ 点。**“16000 点相当于 4 个发射周期”不代表采集起点对齐到扫频周期零点**；每组采集存在未知的连续异步起始偏移 $t_0^{(g)} \in [0, T_p)$。
-2. 第一问中目标最大垂直距离 $d_{\max} = 1.21\text{ m}$，对应双程传播时延 $\tau_{\max} \approx 8.1\text{ ns} \ll T_p = 1000\text{ ns}$（不足周期的 $1\%$），无距离模糊（unambiguous range $c T_p / 2 \approx 150\text{ m}$）。由于信号在稳态连续周期循环下采集，将单包 $16000$ 点按 $N_p = 4000$ 折迭分段 $x^{(p,q)}[m] = x^{(p)}[q N_p + m]$（$q \in \{0,1,2,3\}$），其内部 4 段在理想无漂移下具有同一周期相位；所有单周期内的移位、相关与匹配滤波**必须按长度 $N_p = 4000$ 的循环卷积/DFT 频域定义**执行，禁止使用零填充线性相关破坏周期衔接。
-3. **多包与跨行一致性校验（前置门控）**：同一测量组内的 8 个 `.dat` 文件先按 `sync_packet_cnt` 取交集包集合 $\mathcal{P}_g$；对每包先计算 4 段周期内相关系数与逐包参考通道包间相位漂移。仅当各段/各包满足一致性阈值时才做相干均值折叠；若某一行板（如部分采集组中的板卡微弱相位漂移）出现包间相位滑移 $\delta\theta_{g,p,r}$，应在候选改进中显式引入板级/包级残余时偏或按包对齐后再叠加。
+2. 第一问中目标最大垂直距离 $d_{\max} = 1.21\text{ m}$，对应双程传播时延 $\tau_{\max} \approx 8.1\text{ ns} \ll T_p = 1000\text{ ns}$（不足周期的 $1\%$），无距离模糊（$c_0 T_p / 2 \approx 149.896\text{ m}$）。将单包 $16000$ 点按 $N_p = 4000$ 折迭分段 $x^{(p,q)}[m] = x^{(p)}[q N_p + m]$（$q \in \{0,1,2,3\}$）属于**后续已批复预处理阶段**的工作（不属于 `D0` 读取器职责）。所有单周期内的移位、相关与匹配滤波**必须按长度 $N_p = 4000$ 的循环卷积 / DFT 频域定义**执行，禁止使用零填充线性相关破坏周期衔接。
+3. **多包与跨行一致性门控（预处理阶段执行）**：同一测量组内的 8 个 `.dat` 文件由 `D0` 读取器先按 `sync_packet_cnt` 取交集包集合 $\mathcal{P}_g$；进入预处理后，逐包核查包内 4 段相关性及包间参考通道相位一致性，仅当通过一致性阈值时才做相干均值折叠；若某一行板（如侦察中见于 `空场数据/data2` 行 2）出现包间载波滑移，则在候选改进中引入行板级/包级时偏对齐后再叠加。
 
 ---
 
 ## 2. 坐标系、单位体系与几何传播路径
 
-### 2.1 全局三维直角坐标系（SI 单位，兼容问题 1–3）
-统一采用国际单位制（长度 $\text{m}$，时间 $\text{s}$，频率 $\text{Hz}$，相位 $\text{rad}$）；表征结果与赛题对照时换算为 $\text{cm}$（$1\text{ m} = 100\text{ cm}$）。
+### 2.1 全局三维直角坐标系（SI 单位，兼容问题 1–3 与 V0 O-03 核对）
+统一采用国际单位制（长度 $\text{m}$，时间 $\text{s}$，频率 $\text{Hz}$，相位 $\text{rad}$）；结果表同时按 $\text{cm}$ 汇报（$1\text{ m} = 100\text{ cm}$）。
 
 结合赛题图 1（第 3 页）与问题 2/3 坐标约定（第 7–8 页）：
 - 地面为 $z = 0$；阵列平面在第一问静止于 $y = 0$（垂直于地面），目标平面位于 $y = d > 0$。
 - **竖直坐标 $z_r$（m）**：第 $r \in \{1,\dots,8\}$ 行天线中心距地面高度为
   $$z_r = \big(75.5 - 7(r - 1)\big)\times 10^{-2}\text{ m}, \quad r=1,\dots,8,$$
-  于是发射天线 $z_{\text{tx}} = z_4 = 0.545\text{ m}$。
-- **水平网格列号与局部 $x$ 坐标（m）**：奇数行占据奇数列，偶数行占据偶数列，即 16 列网格编号为
+  发射天线 $z_{\text{tx}} = z_4 = 0.545\text{ m}$。
+- **水平网格列号与局部 $x$ 坐标（m）**：
   $$c_{\text{grid}}(r,k) = \begin{cases} 2k - 1, & r \text{ 为奇数},\\ 2k, & r \text{ 为偶数}, \end{cases} \quad k \in \{1,\dots,8\},\; c_{\text{grid}} \in \{1,\dots,16\}.$$
-  列间距 $\Delta u = 0.035\text{ m}$（$3.5\text{ cm}$），发射天线位于 $r=4, k=4 \Rightarrow c_{\text{grid}} = 8$。以图 1 向左（第 1 列方向）为 $+x$ 轴正方向、以第一问发射天线水平投影为 $x_{\text{tx}} = 0$：
+  列间距 $\Delta u = 0.035\text{ m}$（$3.5\text{ cm}$），发射天线位于 $r=4, k=4 \Rightarrow c_{\text{grid}} = 8$。以图 1 向左（第 1 列方向，“移动前端”）为 $+x$ 轴正方向、第一问发射天线投影为 $x_{\text{tx}} = 0$：
   $$x_{r,k} = \big(8 - c_{\text{grid}}(r,k)\big)\cdot 0.035\text{ m}.$$
-  因此第 $i$ 路天线的三维坐标为 $\mathbf{p}_i = (x_i, 0, z_i)$，发射天线坐标为 $\mathbf{p}_{\text{tx}} = (0, 0, 0.545)\text{ m}$。
-  > **几何对称性注记**：第一问中墙体与金属板均平行于阵列平面（$y = d$），所有直达路径与镜面反射路径仅依赖阵列面内欧氏距 $\|\mathbf{p}_i - \mathbf{p}_{\text{tx}}\|_2 = \sqrt{(x_i - x_{\text{tx}})^2 + (z_i - z_{\text{tx}})^2}$，对 $\pm x$ 定向完全不变；上述符号约定同时与问题 2/3 的移动方向一致。
+  > **与 V0（O-03）坐标符号核对**：V0 预检文档（`checks/A/q1_preflight.md` §2.2）曾提议 $x = 3.5(c_{\text{grid}} - 1) - 24.5\text{ cm} = (c_{\text{grid}} - 8)\cdot 0.035\text{ m}$，与本文仅相差 $x$ 轴正负号定向；就第一问平面目标（墙体/金属板平行于 $xOz$ 平面）而言，所有传播距离仅依赖 $(x_i - x_{\text{tx}})^2 + (z_i - z_{\text{tx}})^2$，两种定向**完全等价且结果严格不变**。同时本规范明确将 $+x$ 固定为第 1 列移动前端方向，以与问题 2/3（第 3 页图 1、第 7 页 $(x_j, 0)$ 沿 $+x$ 移动）保持一致（第 7 页文字“平行于 $yOz$”与同页“$(x_j, y_j)$ 沿 $x$ 轴平移”之笔误亦在此明确按阵面 $xOz$、深度 $+y$ 统一）。
 
-### 2.2 直射波与平面目标传播路径
-取空气中电磁波传播速度 $c = c_0 / n_{\text{air}}$，其中真空光速 $c_0 = 2.99792458\times 10^8\text{ m/s}$，标准空气折射率 $n_{\text{air}} \approx 1.0003$（对应 $c \approx 2.9970\times 10^8\text{ m/s}$；相比直接使用 $c_0$，在 $1\text{ m}$ 距离上差异仅 $0.03\text{ cm}$）。
+### 2.2 光速约定与直射波/平面目标传播路径
+- **第一轮统一光速**：与 V0 保持一致，第一轮统一取真空光速
+  $$c = c_0 = 299792458\text{ m/s}.$$
+  标准空气折射率 $n_{\text{air}} \approx 1.0003$（对应 $1\text{ m}$ 处约 $0.03\text{ cm}$ 系统差异）列为后续可选敏感性检查，不在第一轮混用不同 $c$ 值。
 
 1. **直射波路径（TX $\to$ RX $i$）**：
-   $$R_i^{\text{dir}} = \|\mathbf{p}_i - \mathbf{p}_{\text{tx}}\|_2 = \sqrt{x_i^2 + (z_i - z_{\text{tx}})^2}, \qquad \tau_i^{\text{dir}} = \frac{R_i^{\text{dir}}}{c}.$$
-   对参考通道 $i_{\text{ref}} = (4,5)$：$R_{\text{ref}}^{\text{dir}} = 0.070000\text{ m}$，$\tau_{\text{ref}}^{\text{dir}} \approx 0.2335\text{ ns}$。
+   $$R_i^{\text{dir}} = \|\mathbf{p}_i - \mathbf{p}_{\text{tx}}\|_2 = \sqrt{x_i^2 + (z_i - z_{\text{tx}})^2}, \qquad \tau_i^{\text{dir}} = \frac{R_i^{\text{dir}}}{c_0}.$$
+   对参考通道 $i_{\text{ref}} = (4,5)$：$R_{\text{ref}}^{\text{dir}} = 0.070000\text{ m}$，$\tau_{\text{ref}}^{\text{dir}} = 0.233495\text{ ns}$。
 2. **平面目标镜面反射路径（镜像法，平面 $y = d > 0$）**：
-   设墙体前表面或金属板位于平面 $y = d$（垂直距离 $d > 0$）。由电磁波镜面反射（虚像法），发射点 $\mathbf{p}_{\text{tx}} = (0, 0, z_{\text{tx}})$ 关于反射面 $y = d$ 的镜像点为 $\mathbf{p}_{\text{tx}}'(d) = (0, 2d, z_{\text{tx}})$。由 Fermat 原理，镜面反射点位于连接 $\mathbf{p}_{\text{tx}}'(d)$ 与 $\mathbf{p}_i$ 的直线上，故第 $i$ 路总传播路径与传播时延为：
-   $$R_i^{\text{tgt}}(d) = \|\mathbf{p}_i - \mathbf{p}_{\text{tx}}'(d)\|_2 = \sqrt{(R_i^{\text{dir}})^2 + 4 d^2}, \qquad \tau_i^{\text{tgt}}(d) = \frac{\sqrt{(R_i^{\text{dir}})^2 + 4 d^2}}{c}.$$
-   单通道目标回波相对其自身直射波的物理传播时延差为：
-   $$\Delta\tau_i^{\text{prop}}(d) = \tau_i^{\text{tgt}}(d) - \tau_i^{\text{dir}} = \frac{\sqrt{(R_i^{\text{dir}})^2 + 4 d^2} - R_i^{\text{dir}}}{c} > 0,$$
-   其精确反演公式为：
-   $$d = \frac{1}{2}\sqrt{\big(c\,\tau_i^{\text{tgt}}\big)^2 - (R_i^{\text{dir}})^2} = \frac{1}{2}\sqrt{\big(c\,\Delta\tau_i^{\text{prop}} + R_i^{\text{dir}}\big)^2 - (R_i^{\text{dir}})^2}.$$
+   设墙体前表面或金属板位于平面 $y = d$（垂直距离 $d > 0$）。发射点 $\mathbf{p}_{\text{tx}} = (0, 0, z_{\text{tx}})$ 关于 $y = d$ 的镜像点为 $\mathbf{p}_{\text{tx}}'(d) = (0, 2d, z_{\text{tx}})$，则第 $i$ 路总传播路径与传播时延为：
+   $$R_i^{\text{tgt}}(d) = \|\mathbf{p}_i - \mathbf{p}_{\text{tx}}'(d)\|_2 = \sqrt{(R_i^{\text{dir}})^2 + 4 d^2}, \qquad \tau_i^{\text{tgt}}(d) = \frac{\sqrt{(R_i^{\text{dir}})^2 + 4 d^2}}{c_0}.$$
+   单通道净传播时延差与精确反演关系为：
+   $$\Delta\tau_i^{\text{prop}}(d) = \tau_i^{\text{tgt}}(d) - \tau_i^{\text{dir}}, \qquad d = \frac{1}{2}\sqrt{\big(c_0\,\tau_i^{\text{tgt}}\big)^2 - (R_i^{\text{dir}})^2}.$$
 
 ---
 
-## 3. 第二奈奎斯特区射频镜像与传播算子（核心物理模型）
+## 3. 第二奈奎斯特区射频镜像与带限传播算子
 
-### 3.1 从数字发射序列到物理射频信号
-根据赛题第 4 页，发射链路选取第二奈奎斯特区（$f_s/2 = 2.0\text{ GHz}$ 至 $f_s = 4.0\text{ GHz}$）镜像。连续时间物理射频信号在单个周期 $0 \le t < T_p$ 内为：
-$$s_R(t) = A\, w_c(t)\cos\!\big(2\pi f_s t - \phi_D(t)\big),$$
-其物理射频瞬时频率由 $3.7\text{ GHz}$ 线性下降至 $2.3\text{ GHz}$：
-$$f_R(t) = f_s - f_D(t) = f_s - f_{\text{start}} - K t.$$
-对理想零时延射频波形直接以 $f_s$ 采样（$f_s m T_s = m \in \mathbb{Z}$），得到 $s_R(m T_s) = A w[m]\cos(2\pi m - \phi_D(mT_s)) = s[m]$。
+### 3.1 物理射频信号与混叠映射
+根据赛题第 4 页，发射链路选取第二奈奎斯特区（$[2.0, 4.0]\text{ GHz}$），连续时间物理射频信号在单个周期 $0 \le t < T_p$ 内为：
+$$s_R(t) = A\, w_c(t)\cos\!\big(2\pi f_s t - \phi_D(t)\big), \qquad f_R(t) = f_s - f_D(t) = f_s - f_{\text{start}} - K t.$$
+直接按 $f_s$ 采样满足 $s_R(m T_s) = s[m]$。
 
-### 3.2 物理传播时延 $\tau$ 在离散数字频域中的精确表示
-**不可直接对数字序列 $s[m]$ 做普通插值/相位斜坡 $e^{-j 2\pi f_D \tau}$ 来等价物理延时！** 推导如下：
+### 3.2 带限近似下的射频镜像时延算子
+**假设与适用边界说明**：$s[m]$ 是有限时长（$T_p = 1\,\mu\text{s}$）加汉明窗的 LFM 信号，其瞬时频率落在 $[0.3, 1.7]\text{ GHz}$，但加窗截断后的离散傅里叶频谱在数学上**并非严格紧支撑于 $\mathcal{B} = [0.3, 1.7]\text{ GHz}$**（带外存在微弱旁瓣泄露；实测带内 $\mathcal{B}$ 能量占全带宽约 $99.9918\%$）。下述频域射频时延算子是在**假设信号能量主集中在工作频带 $\mathcal{B}$ 内、仅保留第二奈奎斯特区主带 $(f_s/2, f_s)$ 内对应 DFT 分量**的带限近似下成立。
 
-将 $s_R(t)$ 拆分为正负解析信号分量：$s_R(t) = \frac{1}{2} z_R(t) + \frac{1}{2} z_R^*(t)$，其中 $z_R(t) = A w_c(t) e^{j(2\pi f_s t - \phi_D(t))}$ 的频谱仅支持在正射频带 $[2.3, 3.7]\text{ GHz} \subset (f_s/2, f_s)$。当电磁波经历物理时延 $\tau > 0$ 时，到达接收端的射频信号为 $s_R(t - \tau)$，以 $t = m T_s$ 采样得：
-$$s_R(m T_s - \tau) = \frac{1}{2} z_R(m T_s - \tau) + \frac{1}{2} z_R^*(m T_s - \tau).$$
-其中共轭分支在 $t = m T_s$ 处为：
-$$z_R^*(m T_s - \tau) = A\, w_c(m T_s - \tau)\, e^{-j 2\pi f_s (m T_s - \tau) + j\phi_D(m T_s - \tau)} = e^{+j 2\pi f_s \tau}\, \Big[A\, w_c(m T_s - \tau)\, e^{+j\phi_D(m T_s - \tau)}\Big].$$
-由于信号在基带数字采样前处于 $(f_s/2, f_s)$，连续频谱中位于负射频 $-f_R = -(f_s - f_D)$ 的分量经采样混叠平移 $+f_s$ 后，恰好落入离散正数字频率 $f_D \in [f_{\text{start}}, f_{\text{stop}}] \subset (0, f_s/2)$。因此，对周期信号做 $N_p$ 点 DFT（记数字频率 $f_D \in \{q/(N_p T_s) : q=0,\dots,N_p/2\}$，物理射频映射 $f_R = f_s - f_D$），理想时延 $\tau$ 的离散正频谱响应为：
-$$\boxed{X_{\text{ideal}}(f_D) = S(f_D)\cdot \exp\!\big(+j 2\pi (f_s - f_D)\tau\big) = S(f_D)\cdot e^{+j 2\pi f_s \tau}\cdot e^{-j 2\pi f_D \tau}.}$$
+将实信号 $s_R(t)$ 分解为正负解析信号：$s_R(t) = \frac{1}{2} z_R(t) + \frac{1}{2} z_R^*(t)$，其中 $z_R(t) = A w_c(t) e^{j(2\pi f_s t - \phi_D(t))}$ 主频谱位于正射频带 $[2.3, 3.7]\text{ GHz} \subset (f_s/2, f_s)$。经历物理时延 $\tau > 0$ 后：
+$$z_R^*(m T_s - \tau) = e^{+j 2\pi f_s \tau}\, \Big[A\, w_c(m T_s - \tau)\, e^{+j\phi_D(m T_s - \tau)}\Big].$$
+负射频分量 $-f_R = -(f_s - f_D)$ 经 $f_s$ 采样混叠平移 $+f_s$ 后落入离散正数字频率 $f_D \in \mathcal{B} \subset (0, f_s/2)$。因此，在工作频带 $\mathcal{B}$ 的离散 DFT 网格 $f_D = q/(N_p T_s)$（$f_R = f_s - f_D$）上，理想物理时延 $\tau$ 的带限正频谱响应为：
+$$\boxed{X_{\text{ideal}}(f_D) \approx S(f_D)\cdot \exp\!\big(+j 2\pi (f_s - f_D)\tau\big) = S(f_D)\cdot e^{+j 2\pi f_s \tau}\cdot e^{-j 2\pi f_D \tau}, \quad f_D \in \mathcal{B}.}$$
 
-**符号与物理意义双重校验**：
-1. **群时延 / 包络移动方向**：相位对数字频率 $f_D$ 的导数为 $-\frac{1}{2\pi}\frac{\partial \arg}{\partial f_D} = +\tau > 0$，即包络和瞬时数字频率向右（更晚的采样时刻 $m T_s$）移动 $+\tau$，符合物理因果性；同时与赛题第 6 页表格中“滞后 $\Delta\tau_i > 0$ 在频域产生 $-2\pi f_D \Delta\tau_i$ 线性相位差”的定义完全一致。
-2. **射频载波镜像相移项 $e^{+j 2\pi f_s \tau}$**：当 $\tau / T_s \in \mathbb{Z}$ 时，$e^{+j 2\pi f_s \tau} = 1$，此时离散整数移位与物理延迟重合；但当 $\tau$ 存在**亚采样小数时延**时（例如 $\Delta\tau = 0.5 T_s \Rightarrow \Delta R \approx 3.75\text{ cm}$），$2\pi f_s \tau = \pi$ 会带来 $180^\circ$ 载波反转。若忽略 $+2\pi f_s \tau$ 项而直接对数字序列平移，将在多通道相干叠加和空场模板对齐相减中产生高达 $\sim 180^\circ$ 的相消误差。
-3. **传播补偿算子**：给定已知物理传播时延 $\tau$，从接收频谱中消除该传播时延的逆算子为：
-   $$\mathcal{C}_{-\tau}[X](f_D) = X(f_D)\cdot \exp\!\big(-j 2\pi (f_s - f_D)\tau\big), \quad f_D \in (0, f_s/2).$$
-   所有时域重构均通过复共轭对称的 `irfft(..., n=Np)` 返回实值周期序列。
+**符号与物理意义**：
+1. 群时延 $-\frac{1}{2\pi}\frac{\partial\arg}{\partial f_D} = +\tau > 0$（波形包络向右滞后），同时产生 $-2\pi f_D\tau$ 线性数字相位斜率（与赛题第 6 页表格定义一致）。
+2. 当 $\tau / T_s \notin \mathbb{Z}$ 时，载波镜像相移项 $e^{+j 2\pi f_s\tau} \neq 1$；不可用仅含 $e^{-j 2\pi f_D\tau}$ 的数字序列平移替代物理时延。
+3. 给定已知物理传播时延 $\tau$，带内传播补偿逆算子为：
+   $$\mathcal{C}_{-\tau}[X](f_D) = X(f_D)\cdot \exp\!\big(-j 2\pi (f_s - f_D)\tau\big), \quad f_D \in \mathcal{B}.$$
 
 ---
 
-## 4. 完整观测模型与参数可识别性分析
+## 4. 完整观测模型与严格可识别性分析
 
-对第 $g$ 组采集，设该组共同异步采样偏移为 $t_0^{(g)} \in [0, T_p)$，并允许可选的行板级残余时间抖动 $\delta t_{g,r}$（基线模型中设 $\delta t_{g,r} \equiv 0$，扩展模型中用于检验板卡微弱漂移）。在工作频带 $\mathcal{B} = \{f_D : f_{\text{start}} \le f_D \le f_{\text{stop}}\}$ 内，第 $i \in \mathcal{I}_{\text{rx}}$ 路接收频谱建模为：
-$$X_i^{(g)}(f_D) = H_i(f_D)\, S(f_D)\, e^{+j 2\pi f_R (t_0^{(g)} + \delta t_{g,r(i)})} \Big[ E_i^{\text{dir}}(f_D)\, e^{+j 2\pi f_R \tau_i^{\text{dir}}} + E_i^{\text{bg}}(f_D) + \mathbb{1}_{\text{tgt}}(g)\,\Gamma_g(f_D)\, \frac{e^{+j 2\pi f_R \tau_i^{\text{tgt}}(d_g)}}{R_i^{\text{tgt}}(d_g)} \Big] + N_i^{(g)}(f_D),$$
-其中：
-- $H_i(f_D)$ 为第 $i$ 路设备传递函数（相对参考通道拆解为时延差 $\Delta\tau_i \in \mathbb{R}$、幅度比 $G_i(f_D) > 0$ 与剩余相位差 $\psi_i(f_D) \in (-\pi, \pi]$）：
-  $$H_i^{\text{rel}}(f_D) \triangleq \frac{H_i(f_D)}{H_{i_{\text{ref}}}(f_D)} = G_i(f_D)\,\exp\!\big(-j 2\pi f_D \Delta\tau_i + j\psi_i(f_D)\big).$$
-  注意此处设备链路自身差异定义在基带/通道观测频率 $f_D$ 上，与物理定义表格（PDF 第 6 页）一致；其中符号约定为 $\Delta\tau_i > 0$ 表示第 $i$ 路相对参考通道硬件滞后（对应线性相位斜率 $-2\pi f_D \Delta\tau_i$）。
-- $E_i^{\text{dir}}(f_D)$ 为空场直射波复耦合响应（包含球面扩展 $1/R_i^{\text{dir}}$ 与阵列面内 Vivaldi 单元方向性/互耦响应）。
-- $E_i^{\text{bg}}(f_D)$ 为空场固有背景杂波（地面/机架散射）。
-- $\Gamma_g(f_D)$ 为平面目标有效复反射响应（理想金属板接近常数负反射 $-|\Gamma_0|$，墙体前表面为与介电常数相关的复反射系数；对远场/正入射平面波可近似各通道共有，大斜视角下的辐射方向图差异由几何权重控制）。
+对第 $g$ 组采集，设连续异步采样偏移为 $t_0^{(g)} \in [0, T_p)$（可选行板抖动 $\delta t_{g,r}$，基线取 $0$）。在工作频带 $\mathcal{B}$ 内，第 $i \in \mathcal{I}_{\text{rx}}$ 路接收频谱为：
+$$X_i^{(g)}(f_D) = H_i(f_D)\, S(f_D)\, e^{+j 2\pi f_R (t_0^{(g)} + \delta t_{g,r(i)})} \Big[ E_i^{\text{dir}}(f_D)\, e^{+j 2\pi f_R \tau_i^{\text{dir}}} + E_i^{\text{bg}}(f_D) + \mathbb{1}_{\text{tgt}}(g)\,\Gamma_g(f_D)\, \frac{e^{+j 2\pi f_R \tau_i^{\text{tgt}}(d_g)}}{R_i^{\text{tgt}}(d_g)} \Big] + N_i^{(g)}(f_D).$$
 
-### 可识别性（Identifiability）证明与约束条件
-1. **全局尺度与时延规范自由度（Gauge Ambiguity）**：若将所有通道 $H_i(f_D)$ 同乘非零复函数 $C(f_D)$，同时将发射参考 $S(f_D)$ 除以 $C(f_D)$，观测值 $X_i^{(g)}(f_D)$ 保持不变。通过固定参考通道规范约束：
-   $$\Delta\tau_{i_{\text{ref}}} \equiv 0, \qquad G_{i_{\text{ref}}}(f_D) \equiv 1, \qquad \psi_{i_{\text{ref}}}(f_D) \equiv 0 \quad (\forall f_D \in \mathcal{B}),$$
-   消除了全局参考模糊度，$H_i^{\text{rel}}(f_D)$ 相对 $i_{\text{ref}}$ 唯一确定。
-2. **异步启动偏移 $t_0^{(g)}$ 与设备时延 $\Delta\tau_i$ 的分离**：在单次采集中，同板/同组共享 $t_0^{(g)}$，因此在同组比值 $X_i^{(g)}(f_D)/X_{i_{\text{ref}}}^{(g)}(f_D)$ 中，公共因子 $S(f_D) e^{+j 2\pi f_R t_0^{(g)}}$ 完全抵消，故 $\Delta\tau_i$ 与绝对触发时刻 $t_0^{(g)}$ 可分离。但若不同采集行板之间存在未锁相的独立随机抖动 $\delta t_{g,r}$，跨行 $\Delta\tau_i$ 将与均值 $\mathbb{E}_g[\delta t_{g,r}]$ 混叠，因此需跨多组空场与校准组检验 $\delta t_{g,r}$ 的方差量级（基线先行检验各行板一致性）。
-3. **设备时延 $\Delta\tau_i$ 与传播时延 $\tau_i^{\text{dir}}$ / $\tau_i^{\text{tgt}}$ 的分离**：两类时延均已知物理几何表达式 $\tau_i^{\text{dir}} = R_i^{\text{dir}}/c$ 与 $\tau_i^{\text{tgt}}(d_g) = \sqrt{(R_i^{\text{dir}})^2+4d_g^2}/c$。扣除已知的几何传播时延差 $\tau_i^{\text{prop}} - \tau_{i_{\text{ref}}}^{\text{prop}}$ 后，剩余的线性相位斜率即为设备自身时延差 $\Delta\tau_i$。
-4. **直射波互耦响应 $E_i^{\text{dir}}(f_D)$ 与设备增益 $G_i(f_D)$ 的可分性警告**：在空场直达波中，接收天线处于发射天线近场/端射（$90^\circ$ 掠射）位置，各阵元之间的 E/H 面方向图与互耦差异会进入 $E_i^{\text{dir}}(f_D)$；若仅以自由空间 $1/R_i^{\text{dir}}$ 替代 $E_i^{\text{dir}}(f_D)$ 来反推 $G_i(f_D)$，会把端射耦合系数混入通道硬件增益 $G_i(f_D)$。**解决策略**：利用已知距离校准组 $g \in \mathcal{G}_{\text{cal}}$ 扣除空场直射波后的近法向镜面回波（入射角显著减小、互耦影响远弱于阵列面内直达波），在保留空场独立时延分离的基础上，联合评估或对比纯空场校准与联合校准的留出测距误差。
-5. **绝对参考零点 $t_0^{(g)}$ 与测距绝对时延的锚定**：由于采样异步，$t_0^{(g)}$ 未知，无法单独从 $\tau_i^{\text{tgt}} + t_0^{(g)}$ 确定 $d_g$；必须通过同一次测量 $g$ 中**参考通道的直射波到达时刻**（由与空场对齐的直射波模板给出 $\hat{\tau}_{\text{ref,dir}}^{(g)} = \tau_{\text{ref}}^{\text{dir}} + \hat{t}_0^{(g)}$）与目标回波到达时刻做差（或共同锚定 $\hat{t}_0^{(g)}$），从而完全消除异步采集偏移 $t_0^{(g)}$。
+### 4.1 可识别性边界：哪些自由度不可识别，哪些在约定/差分下唯一确定
+
+1. **不可识别自由度 A — 公共参考响应 $H_{i_{\text{ref}}}(f_D)$ 与物理绝对触发时刻 $t_0^{(g)}$ 的互换**：
+   若对所有通道与所有测量组作如下公共规范变换（任意 $a \in \mathbb{R}$）：
+   $$H_i'(f_D) = H_i(f_D)\, e^{-j 2\pi f_R a}, \qquad (t_0^{(g)})' = t_0^{(g)} + a \quad (\forall i, \forall g),$$
+   则所有相对通道比 $H_i'(f_D)/H_{i_{\text{ref}}}'(f_D) = H_i(f_D)/H_{i_{\text{ref}}}(f_D)$ 与全部观测频谱 $X_i^{(g)}(f_D)$ **保持完全不变**。因此，**仅靠观测数据无法分别唯一识别参考通道的绝对硬件群时延与物理绝对起始时刻 $t_0^{(g)}$**。
+   - **闭环消去证明（有效参考零点与差分测距不变性）**：定义吸收了公共参考相位因子后的**有效参考频谱与有效时间零点** $t_{0,\text{eff}}^{(g)}$：
+     $$S_{\text{eff}}^{(g)}(f_D) \triangleq H_{i_{\text{ref}}}(f_D)\, S(f_D)\, e^{+j 2\pi f_R t_0^{(g)}}, \qquad t_{0,\text{eff}}^{(g)} \triangleq t_0^{(g)} + \tau_{\text{ref}}^{\text{hw}}.$$
+     在相对校准 $X_i^{(g,\text{cal})}(f_D) = X_i^{(g)}(f_D) / H_i^{\text{rel}}(f_D)$ 后，同一组 $g$（或通过空场对齐模板 $\bar{X}^{\text{air,cal}}$）得到的**直射波有效到达时刻**与**目标回波有效到达时刻**共享同一公共因子 $H_{i_{\text{ref}}}(f_D) e^{+j 2\pi f_R t_0^{(g)}}$。在 $(H_i, t_0^{(g)}) \mapsto (H_i e^{-j2\pi f_R a}, t_0^{(g)} + a)$ 变换下，$t_{0,\text{eff}}^{(g)}$ 严格不变；若存在更一般的公共带内色散 $H_{i_{\text{ref}}}(f_D)$，采用由空场直射波反推的有效参考频谱做匹配（或将公共参考时延吸收进 $t_{0,\text{eff}}^{(g)}$）后，测距目标函数仅依赖净传播路径差 $\tau_i^{\text{tgt}}(d_g) - \tau_{i_{\text{ref}}}^{\text{dir}}$，因而平面距离 $d_g$ 对公共规范移位**严格不变**。
+
+2. **不可识别自由度 B — 相对传递函数 $H_i^{\text{rel}}(f_D)$ 内部 $(\Delta\tau_i, \psi_i(f_D))$ 的共线性**：
+   固定参考通道规范约束 $H_{i_{\text{ref}}}^{\text{rel}}(f_D) \equiv 1$ 后，仅能确定复比值 $H_i^{\text{rel}}(f_D) = H_i(f_D)/H_{i_{\text{ref}}}(f_D)$。若 $\psi_i(f_D)$ 为不受约束的任意逐频点函数，则对任意 $\delta \in \mathbb{R}$，变换
+   $$\Delta\tau_i' = \Delta\tau_i + \delta, \qquad \psi_i'(f_D) = \psi_i(f_D) + 2\pi f_D \delta$$
+   给出**完全相同的复响应** $G_i(f_D)\exp(-j2\pi f_D\Delta\tau_i' + j\psi_i'(f_D))$。因此，固定参考通道本身**不能**消除 $\Delta\tau_i$ 与 $\psi_i(f_D)$ 之间的自由度。
+   - **约定下的唯一分解（加权线性投影规范）**：在核心子带 $\mathcal{B}_{\text{core}} = [0.4, 1.6]\text{ GHz}$ 内对解卷绕相位 $\phi_i(f_D) = \operatorname{unwrap}(\angle H_i^{\text{rel}}(f_D))$ 取非负权重 $\omega(f_D) > 0$（基线取参考发射能量 $\omega(f_D) = |S(f_D)|^2$ 或 $|\bar{X}_{i_{\text{ref}}}^{\text{air}}(f_D)|^2$），定义 $(\hat{\theta}_{i,0}, \Delta\hat{\tau}_i)$ 为 $\phi_i(f_D)$ 在 $\operatorname{span}\{1, f_D\}$ 上的加权最小二乘投影：
+     $$(\hat{\theta}_{i,0}, \Delta\hat{\tau}_i) = \arg\min_{(\theta_0,\Delta\tau)} \sum_{f_D \in \mathcal{B}_{\text{core}}} \omega(f_D)\big(\phi_i(f_D) - (\theta_0 - 2\pi f_D \Delta\tau)\big)^2.$$
+     这等价于对未卷绕剩余相位 $\tilde{\psi}_i(f_D) = \phi_i(f_D) + 2\pi f_D \Delta\hat{\tau}_i$ 施加**中心化一阶矩为零**的正交性约束：
+     $$\sum_{f_D \in \mathcal{B}_{\text{core}}} \omega(f_D)\big(\tilde{\psi}_i(f_D) - \hat{\theta}_{i,0}\big)(f_D - \bar{f}_D) = 0, \qquad \bar{f}_D = \frac{\sum \omega(f_D) f_D}{\sum \omega(f_D)}, \qquad \psi_i(f_D) = \operatorname{wrap}_{(-\pi,\pi]}\big(\tilde{\psi}_i(f_D)\big).$$
+   - **“约定唯一”与“物理硬件真值可识别”的区分**：上述投影约束仅保证了**给定 $H_i^{\text{rel}}(f_D)$ 在固定解卷绕起点枝下的唯一数学分解**；在物理层面上，如果某通道滤波器本身存在色散或空场近场端射互耦 $E_i^{\text{dir}}(f_D)$ 偏离 $1/R_i^{\text{dir}}$（未知 $E_i^{\text{dir}}$ 不能默认剥离），其线性相位成分会并入 $\Delta\hat{\tau}_i$、幅度响应会并入 $\hat{G}_i(f_D)$。因此在校准与测距中，信号逆校正直接使用完整复频响 $\hat{H}_i^{\text{rel}}(f_D)$（该乘积对 $\delta$ 变换不变），并通过对比纯空场校准（`M0-Cal-Base`）与校准集近法向回波联合校准（`M0-Cal-Joint`）来检验端射耦合偏置大小。
+
+3. **行板间异步抖动核查边界**：同板 8 通道共享同一 ADC 时钟，但不同行板（`_0.dat`–`_7.dat`）在跨组或跨包时若存在独立微弱抖动 $\delta t_{g,r}$，跨行 $\Delta\tau_i$ 将与 $\mathbb{E}_g[\delta t_{g,r}]$ 耦合。须在预处理阶段对 8 行板包间相关性与跨空场组相位稳定性先做统计检验。
 
 ---
 
 ## 5. 分步数学模型：经典基线与候选改进
 
-严格遵循“先基线、再单因素可控改进并做消融”的原则，不将未验证的改进写为既定方案。
+严格遵循“先基线、再单因素可控改进并做消融”的原则，以下公式与第 8 节可复跑小算例严格一致。
 
 ### 5.1 问题 1.1：通道校准
 
 #### 经典基线（`M0-Cal-Base`：空场几何补偿 + 频域正则化比值校准）
-1. **空场模板聚合**：对空场各组 $g \in \mathcal{G}_{\text{air}}$（经过包同步与周期折叠验证后），以任意指定空场基准组（如 `空场/data1`）为时间原点，利用参考通道（或全 63 路联合）在 $[0, T_p)$ 搜索每组的射频对齐时移 $\Delta\hat{t}_0^{(g)}$（最大化带内 $\mathcal{B}$ 内积 / 最小化 $L_2$ 残差），将各空场组对齐到同一时间基准后做平均，得到高信噪比空场平均频谱 $\bar{X}_i^{\text{air}}(f_D)$。
-2. **传播路径几何补偿**：假设空场以直射波主导且近似满足 $E_i^{\text{dir}} \propto 1/R_i^{\text{dir}}$，对每路相对参考通道补偿已知传播时延差与几何扩散比：
-   $$\hat{H}_i^{\text{raw}}(f_D) = \frac{\bar{X}_i^{\text{air}}(f_D)}{\bar{X}_{i_{\text{ref}}}^{\text{air}}(f_D)} \cdot \frac{R_i^{\text{dir}}}{R_{i_{\text{ref}}}^{\text{dir}}} \cdot \exp\!\Big(-j 2\pi f_R \big(\tau_i^{\text{dir}} - \tau_{i_{\text{ref}}}^{\text{dir}}\big)\Big), \quad f_D \in \mathcal{B}.$$
-   为避免分母 $|\bar{X}_{i_{\text{ref}}}^{\text{air}}(f_D)|$ 在带边汉明窗衰减区过小引发噪声放大，采用 **Tikhonov/Wiener 正则化除法**：
-   $$\hat{H}_i^{\text{raw}}(f_D) = \frac{\bar{X}_i^{\text{air}}(f_D)\,\big(\bar{X}_{i_{\text{ref}}}^{\text{air}}(f_D)\big)^*}{|\bar{X}_{i_{\text{ref}}}^{\text{air}}(f_D)|^2 + \lambda_{\text{cal}} \bar{P}_{\text{ref}}} \cdot \frac{R_i^{\text{dir}}}{R_{i_{\text{ref}}}^{\text{dir}}} \cdot \exp\!\Big(-j 2\pi f_R \big(\tau_i^{\text{dir}} - \tau_{i_{\text{ref}}}^{\text{dir}}\big)\Big),$$
-   其中 $\bar{P}_{\text{ref}} = \operatorname{mean}_{f_D \in \mathcal{B}} |\bar{X}_{i_{\text{ref}}}^{\text{air}}(f_D)|^2$，$\lambda_{\text{cal}} \in [10^{-4}, 10^{-2}]$ 为正则化系数（在校准集上选定）。
-3. **三参数提取（$\Delta\tau_i, G_i(f_D), \psi_i(f_D)$）**：
-   - 将 $\angle \hat{H}_i^{\text{raw}}(f_D)$ 在有效子带 $\mathcal{B}_{\text{core}} = [0.4, 1.6]\text{ GHz}$ 内解卷绕（`unwrap`），对该子带内相位作带权线性回归 $\angle \hat{H}_i^{\text{raw}}(f_D) \approx \theta_{i,0} - 2\pi \Delta\tau_i f_D$（权重取 $|\bar{X}_{i_{\text{ref}}}^{\text{air}}(f_D)|^2$），解得时延校正量 $\Delta\hat{\tau}_i$（单位：$\text{s}$）。
-   - 幅度校正参数：$\hat{G}_i(f_D) = |\hat{H}_i^{\text{raw}}(f_D)|$（无量纲）。
-   - 剩余相位校正参数：扣除线性时延项后的残余相位 $\hat{\psi}_i(f_D) = \operatorname{wrap}_{(-\pi,\pi]}\!\big(\angle \hat{H}_i^{\text{raw}}(f_D) + 2\pi f_D \Delta\hat{\tau}_i\big)$（单位：$\text{rad}$）。
-4. **信号逆校正算子**：对任意待处理频谱 $X_i(f_D)$，带内正则化逆滤波为：
-   $$X_i^{\text{cal}}(f_D) = \begin{cases} \dfrac{\big(\hat{H}_i^{\text{raw}}(f_D)\big)^*}{|\hat{H}_i^{\text{raw}}(f_D)|^2 + \lambda_{\text{inv}}}\, X_i(f_D), & f_D \in \mathcal{B}, \\ 0, & f_D \notin \mathcal{B}. \end{cases}$$
+1. **空场模板聚合**：对经预处理折迭、一致性检验后的空场各组 $g \in \mathcal{G}_{\text{air}}$，以指定基准组（如 `空场/data1`）为时间原点，通过带内包络粗搜与射频对齐细搜求得各组偏移 $\Delta\hat{t}_0^{(g)}$，对齐平均得 $\bar{X}_i^{\text{air}}(f_D)$。
+2. **传播路径几何补偿**：在假设 $E_i^{\text{dir}}(f_D) \approx c_0 / R_i^{\text{dir}}$（待 `M0-Cal-Joint` 对比检验）下，对 $\mathcal{B} = [0.3, 1.7]\text{ GHz}$ 采用 Tikhonov 正则化除法补偿已知几何传播路径差：
+   $$\hat{H}_i^{\text{rel}}(f_D) = \frac{\bar{X}_i^{\text{air}}(f_D)\,\big(\bar{X}_{i_{\text{ref}}}^{\text{air}}(f_D)\big)^*}{|\bar{X}_{i_{\text{ref}}}^{\text{air}}(f_D)|^2 + \lambda_{\text{cal}} \bar{P}_{\text{ref}}} \cdot \frac{R_i^{\text{dir}}}{R_{i_{\text{ref}}}^{\text{dir}}} \cdot \exp\!\Big(-j 2\pi f_R \big(\tau_i^{\text{dir}} - \tau_{i_{\text{ref}}}^{\text{dir}}\big)\Big), \quad f_D \in \mathcal{B},$$
+   其中 $\bar{P}_{\text{ref}} = \operatorname{mean}_{f_D \in \mathcal{B}} |\bar{X}_{i_{\text{ref}}}^{\text{air}}(f_D)|^2$，基准无噪下 $\lambda_{\text{cal}} = 0$，实测中 $\lambda_{\text{cal}} \in [10^{-4}, 10^{-2}]$ 在校准集上选定。
+3. **投影参数提取**：在 $\mathcal{B}_{\text{core}} = [0.4, 1.6]\text{ GHz}$ 内按第 4.1 节第 2 条加权线性投影提取 $(\Delta\hat{\tau}_i, \hat{G}_i(f_D), \hat{\psi}_i(f_D))$，其中 $\hat{G}_i(f_D) = |\hat{H}_i^{\text{rel}}(f_D)|$。
+4. **信号逆校正算子**：
+   $$X_i^{\text{cal}}(f_D) = \begin{cases} \dfrac{\big(\hat{H}_i^{\text{rel}}(f_D)\big)^*}{|\hat{H}_i^{\text{rel}}(f_D)|^2 + \lambda_{\text{inv}}}\, X_i(f_D), & f_D \in \mathcal{B}, \\ 0, & f_D \notin \mathcal{B}. \end{cases}$$
 
-#### 改进候选（`M0-Cal-Joint`：空场时延分离 + 校准组镜面回波联合响应估计）
-- **可证伪假设**：由于空场直达波受阵元端射耦合和地面背景散射影响，$E_i^{\text{dir}}$ 偏离纯 $1/R_i^{\text{dir}}$；若利用校准分割集 $g \in \mathcal{G}_{\text{cal}}$（已知距离 $d_g$）中**已抑制直射波的目标回波**，在近正入射方向上联合估计宽带复响应 $\hat{H}_i^{\text{raw}}(f_D)$（结合多组加权最小二乘与正则化平滑），可在不引入检验集标签的前提下降低跨通道幅相残差并改善测距精度。
-- **需验证与消融项**：对比 `M0-Cal-Base` 与 `M0-Cal-Joint` 在校准交叉验证与留出检验集上的通道残差及测距 RMSE；检查跨行板是否存在残余同步抖动 $\delta t_{g,r}$。
+#### 改进候选（`M0-Cal-Joint`：空场时延参考 + 校准组近法向镜面回波联合校准）
+- **可证伪假设**：相比端射角 $90^\circ$ 的空场直达波，已知距离校准组 $g \in \mathcal{G}_{\text{cal}}$ 扣减直射波后的目标回波接近法向入射，$E_i^{\text{tgt}}$ 更贴近自由空间 $1/R_i^{\text{tgt}}(d_g)$；在固定参考规范下联合多组校准回波估计 $\hat{H}_i^{\text{rel}}(f_D)$，可检验并降低近场端射互耦对 $\hat{G}_i(f_D)$ 与 $\hat{\psi}_i(f_D)$ 的偏置。
 
 ---
 
 ### 5.2 问题 1.2：直射波抑制
 
 #### 经典基线（`M0-DW-Base`：校准后射频对齐与空场模板减除）
-1. 对空场模板 $\bar{X}_i^{\text{air}}(f_D)$ 与目标测量 $X_i^{(g)}(f_D)$ 施加同一通道校准算子，得 $\bar{X}_i^{\text{air,cal}}(f_D)$ 与 $X_i^{(g,\text{cal})}(f_D)$。
-2. 利用校准后全 63 路（或直达波强通道子集）的带内信号，在 $\Delta t_0 \in [0, T_p)$ 内通过包络粗搜 + 亚采样精确搜索，求取该组相对空场模板的异步采样偏移 $\Delta\hat{t}_0^{(g)}$：
+1. 对空场模板 $\bar{X}_i^{\text{air}}(f_D)$ 与目标测量 $X_i^{(g)}(f_D)$ 施加同一逆校正，得 $\bar{X}_i^{\text{air,cal}}(f_D)$ 与 $X_i^{(g,\text{cal})}(f_D)$。
+2. 利用直达波强通道权重 $w_i^{\text{dw}} \ge 0$（如先在参考通道粗搜包络峰 $\hat{k}_0$，再在 $(\hat{k}_0 \pm 1)\,T_s$ 精细搜索，小算例中取参考通道权重 $1$），求相对异步偏移：
    $$\Delta\hat{t}_0^{(g)} = \arg\min_{\Delta t_0 \in [0, T_p)} \sum_{i \in \mathcal{I}_{\text{rx}}} w_i^{\text{dw}} \sum_{f_D \in \mathcal{B}} \Big| X_i^{(g,\text{cal})}(f_D) - \bar{X}_i^{\text{air,cal}}(f_D)\, e^{+j 2\pi f_R \Delta t_0} \Big|^2.$$
-   （其中 $w_i^{\text{dw}}$ 为预设或校准集确定的直达波能量权重；注意使用带通频域 RF 移位 $e^{+j 2\pi f_R \Delta t_0}$，**不得用整数点平移**。）
-3. **幅度/模板减除**：
+3. **模板减除**：
    $$\tilde{X}_i^{(g)}(f_D) = X_i^{(g,\text{cal})}(f_D) - \hat{\alpha}_g\,\bar{X}_i^{\text{air,cal}}(f_D)\, e^{+j 2\pi f_R \Delta\hat{t}_0^{(g)}},$$
-   基线取 $\hat{\alpha}_g \equiv 1$（纯模板减除），并对照检验单一全局实标量因子 $\hat{\alpha}_g = \frac{\operatorname{Re}\langle X^{(g,\text{cal})}, \bar{X}^{\text{air,cal}} e^{+j 2\pi f_R \Delta\hat{t}_0} \rangle}{\|\bar{X}^{\text{air,cal}}\|^2}$（仅当目标回波时延与直达波分离充分时安全）。
+   基线取 $\hat{\alpha}_g \equiv 1$，并对照检验全局实标量 $\hat{\alpha}_g$。
 
-#### 改进候选（`M0-DW-Subspace`：多组空场子空间 / 时窗约束直射波抑制）
-- **可证伪假设**：若不同采集之间存在微小环境温漂或发射功率波动（或跨行板微秒/皮秒级同步偏移），用 10 组对齐空场构造秩-$K_{\text{air}}$ 主成分子空间（$K_{\text{air}} \in \{1,2\}$）并**仅在直射波主到达时间窗 $[0, \tau_{\text{win}}]$（如 $\tau_i^{\text{dir}} \pm 0.5\text{ ns}$）内拟合投影系数**，既能吸收空场微扰，又避免过度拟合消掉近距离目标回波（如 $42\text{ cm}$ 墙体，超前直达波仅 $\approx 2.6\text{ ns}$）。
-- **门控核验指标**：必须在最近目标校准样例（$42\text{ cm}$ 墙体 / $48\text{ cm}$ 金属板）上同时报告**直射波残余抑制比（dB）**与**目标回波峰值保留率（relative to 基准减除）**，禁止只刷高抑制比而吞掉目标回波。
+#### 改进候选（`M0-DW-Subspace`：多组空场子空间 + 时窗约束直射波抑制）
+- **可证伪假设**：利用 10 组对齐空场构造低秩子空间（秩 $1$–$2$）且**仅在直射波主时间窗内拟合投影系数**，以吸收微小环境温漂而不误消近距离目标（$42\text{ cm}$ 墙体）回波。需同时报告直射波抑制比（dB）与近距离目标回波保留率。
 
 ---
 
 ### 5.3 问题 1.3：金属板与墙体测距
 
-#### 经典基线（`M0-Rng-Base`：匹配滤波 + 镜面几何相干延迟叠加 1D 剖面）
-1. **参考直射波零点锚定**：对每组 $g$，通过已对齐的空场参考模板（或目标测量中直达波峰与 $S(f_D)$ 的匹配相关）确定该组的有效异步时间零点 $\hat{t}_0^{(g)}$：
-   $$\hat{t}_0^{(g)} = \arg\max_{t_0 \in [0, T_p)} \left| \sum_{i \in \mathcal{I}_{\text{rx}}} w_i^{\text{dw}} \sum_{f_D \in \mathcal{B}} \big(\bar{X}_i^{\text{air,cal}}(f_D) e^{+j 2\pi f_R \Delta\hat{t}_0^{(g)}}\big) \, S^*(f_D)\, e^{-j 2\pi f_R (\tau_i^{\text{dir}} + t_0)} \right|.$$
-   该公式给出物理绝对零点（消除了设备相对时延与异步采集偏移）。
-2. **多通道相干延迟叠加（Coherent Delay-and-Sum, DAS）**：
-   对于候选垂直距离 $d \in [d_{\min}, d_{\max}]$（如 $[0.15, 2.00]\text{ m}$，步长 $1\text{ mm}$ 精搜），第 $i$ 路理论目标回波到达时间为 $\tau_i^{\text{tgt}}(d) + \hat{t}_0^{(g)}$。构造二维对照剖面函数：
-   - **非相干包络叠加（对照基线 A）**：先对每路抑制后信号做带内匹配滤波并取解析包络 $|z_i^{(g)}(\tau)|$，在 $\tau = \tau_i^{\text{tgt}}(d) + \hat{t}_0^{(g)}$ 处插值求和：
-     $$P_{\text{env}}^{(g)}(d) = \sum_{i \in \mathcal{I}_{\text{rx}}} w_i\, \big|z_i^{(g)}\big(\tau_i^{\text{tgt}}(d) + \hat{t}_0^{(g)}\big)\big|.$$
-   - **相干匹配叠加（完整利用校准相位与射频镜像基线 B）**：
-     $$P_{\text{coh}}^{(g)}(d) = \left| \sum_{i \in \mathcal{I}_{\text{rx}}} w_i\, R_i^{\text{tgt}}(d)\, \sum_{f_D \in \mathcal{B}} \tilde{X}_i^{(g)}(f_D)\, S^*(f_D)\, e^{-j 2\pi f_R (\tau_i^{\text{tgt}}(d) + \hat{t}_0^{(g)})} \right|.$$
-3. **峰值提取与墙体多次回波甄别**：
-   $$\hat{d}_g = \arg\max_{d \in [d_{\min}, d_{\max}]} P^{(g)}(d).$$
-   **物理注记（墙体前表面 vs 内部/后表面回波）**：金属板为强导体，仅存在前表面一次主反射；墙体为介质体，电磁波部分穿透后可能产生后界面多次弱回波（位于更大 $d$ 处）。故在墙体测距中取**超过噪声门限且位于前向主包络的首个显著主峰**（并在先导试验中核对是否存在第二界面峰干扰）。
+#### 经典基线（`M0-Rng-Base`：有效零点锚定 + 归一化 GLRT 相干/包络 DAS 剖面）
+1. **有效参考时间零点锚定**：通过已对齐至当前组的校准空场直达波模板，补偿各通道已知直射波路径 $R_i^{\text{dir}}$ 与时延 $\tau_i^{\text{dir}}$，最大化与数字发射参考 $S(f_D)$ 的相干匹配相关，得到第 $g$ 组有效异步零点 $\hat{t}_{0,\text{eff}}^{(g)}$（吸收任何未知公共参考时延）：
+   $$\hat{t}_{0,\text{eff}}^{(g)} = \arg\max_{t_0 \in [0, T_p)} \left| \sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i^{\text{dw}}}{R_i^{\text{dir}}} \sum_{f_D \in \mathcal{B}} \big(\bar{X}_i^{\text{air,cal}}(f_D) e^{+j 2\pi f_R \Delta\hat{t}_0^{(g)}}\big) \, S^*(f_D)\, e^{-j 2\pi f_R (\tau_i^{\text{dir}} + t_0)} \right|.$$
+2. **归一化多通道延迟叠加（GLRT / Cauchy-Schwarz 无偏统计量）**：
+   设模型期望回波导向矢量为 $a_{i,f_D}^{(g)}(d) = \dfrac{1}{R_i^{\text{tgt}}(d)}\, S(f_D)\, e^{+j 2\pi f_R (\tau_i^{\text{tgt}}(d) + \hat{t}_{0,\text{eff}}^{(g)})}$，通道权重矩阵 $W$ 对角元为 $w_i > 0$（第一轮经典基线统一取等权 $w_i \equiv 1$；其余权重须经消融对照后启用）。
+   - **归一化相干匹配统计量（主基线 `P_norm`）**：
+     $$P_{\text{norm}}^{(g)}(d) = \frac{\big|a^{(g)}(d)^H W \tilde{X}^{(g)}\big|^2}{a^{(g)}(d)^H W a^{(g)}(d)} = \frac{\left|\sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i}{R_i^{\text{tgt}}(d)} \sum_{f_D \in \mathcal{B}} \tilde{X}_i^{(g)}(f_D)\, S^*(f_D)\, e^{-j 2\pi f_R (\tau_i^{\text{tgt}}(d) + \hat{t}_{0,\text{eff}}^{(g)})}\right|^2}{\left(\sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i}{\big(R_i^{\text{tgt}}(d)\big)^2}\right)\left(\sum_{f_D \in \mathcal{B}} |S(f_D)|^2\right)}.$$
+     在无噪理想镜面信号 $\tilde{X}_{i}^{(g)}(f_D) = \Gamma a_{i,f_D}^{(g)}(d_0)$ 下，由 Cauchy-Schwarz 不等式可知 $P_{\text{norm}}^{(g)}(d)$ 在 $d = d_0$ 处**严格唯一达到全局最大值** $|\Gamma|^2 \sum_i \frac{w_i}{(R_i^{\text{tgt}}(d_0))^2} \sum_{f_D\in\mathcal{B}} |S(f_D)|^2$，**零估计偏差**。
+     > **关于旧版未归一化形式的偏差说明**：若在分子错乘 $R_i^{\text{tgt}}(d)$ 而分母不归一化，真值 $d_0$ 处的一阶导数存在正偏项 $\sum_i (R_i^{\text{tgt}})'(d_0) / R_i^{\text{tgt}}(d_0) > 0$，会导致小算例峰值从 `0.600000 m` 偏移至 `0.620000 m`（已由 `verify_q1_spec.py` 复现验证）。
+   - **归一化非相干包络叠加（对照基线 `P_env`）**：令 $z_i^{(g)}(\tau) = \sum_{f_D \in \mathcal{B}} \tilde{X}_i^{(g)}(f_D)\, S^*(f_D)\, e^{-j 2\pi f_R \tau}$ 为第 $i$ 路去直达波后的复匹配滤波响应，定义同样经几何归一化消偏的包络剖面：
+     $$P_{\text{env}}^{(g)}(d) = \frac{\left(\sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i}{R_i^{\text{tgt}}(d)}\, \big|z_i^{(g)}\big(\tau_i^{\text{tgt}}(d) + \hat{t}_{0,\text{eff}}^{(g)}\big)\big|\right)^2}{\sum_{i \in \mathcal{I}_{\text{rx}}} \frac{w_i}{\big(R_i^{\text{tgt}}(d)\big)^2}}.$$
+3. **峰值提取与墙体多次回波甄别**：$\hat{d}_g = \arg\max_{d \in [d_{\min}, d_{\max}]} P^{(g)}(d)$；墙体工况在先导试验中核对前表面主峰与后界面弱回波的分离门限。
 
 #### 改进候选（`M0-Rng-WLS`：宽带鲁棒加权非线性最小二乘）
-- **可证伪假设**：实际阵列中，靠近发射天线近旁通道可能受更强的残余直达波泄露，而远离阵元存在幅度衰减和较低信噪比。若在初值 $\hat{d}_g^{(0)}$ 附近，使用有界鲁棒非线性最小二乘（`scipy.optimize.least_squares`，显式拆分为实部与虚部残差，`loss='huber'` 或 `'soft_l1'`），联合估计 $(d_g, \Gamma_g)$（将有效复反射率 $\Gamma_g \in \mathbb{C}$ 线性投影消元或作为变量），并按通道信噪比加权，有望进一步压低测距误差与异常通道敏感性。
+- **可证伪假设**：在初值 $\hat{d}_g^{(0)}$ 附近用 `scipy.optimize.least_squares`（实虚部分离，`loss='huber'`）联合拟合 $(d_g, \Gamma_g)$ 并按校准集残差/信噪比确定通道权重 $w_i$，抑制近邻通道残余直射波泄露对远距离或弱回波通道的拉偏。
 
 ---
 
-## 6. 分层 10/10 校准与检验拆分方案（待统筹与验证方确认冻结）
+## 6. 既有侦察披露与分层 10/10 校准/检验拆分提案（待确认冻结）
 
-按照 `coordination/A_Q1_PLAN.md` 要求，**检验组真实距离仅用于最终独立评价，绝对不得参与通道校准、正则化系数选择或任何超参数调优**。对墙体 20 组（`42 cm`–`121 cm`）与金属板 20 组（`48 cm`–`99 cm`）分别按真值距离升序排列后取奇偶交替分层抽样（10 组校准 / 10 组留出检验），保证两侧覆盖相同距离跨度：
+### 6.1 截至本方案前已探索/侦察的真实数据组清单
+为严守“检验组绝对不得参与探索、拟合或调参”，以下列出 M0 与 V0 阶段曾读取检查的全部测量组：
+- `空场数据`：`data1`, `data2`, `data3`, `data4`, `data5`（共 5 组；空场全部归入校准/模板池）。
+- `墙体数据`：`data1-42cm`（1 组；已划入下方校准集 $\mathcal{G}_{\text{cal}}^{\text{wall}}$）。
+- `金属板数据`：`data1-69cm`（1 组；V0 与 M0 前期侦察曾读取，现已从拟议检验集调入校准集 $\mathcal{G}_{\text{cal}}^{\text{metal}}$，并与 `data10-70cm` 对换，保持 10/10 均衡）。
 
-| 目标类型 | 用途 | 组数 | 建议目录清单（按升序奇偶分层） | 距离覆盖（cm） |
+### 6.2 建议分层 10/10 拆分表（所有拟议检验组均未曾触碰）
+当前拆分**尚未冻结**，待 `codex` 与 `my_deepseek` 核对后固化为正式清单；冻结前严禁对任何检验组做参数调整：
+
+| 目标类型 | 用途 | 组数 | 建议目录清单 | 距离覆盖（cm） |
 |---|---|---|---|---|
 | 空场数据 | 校准/直射波模板 | 10 | `data1`–`data10`（全量用于模板与空场自检） | — |
 | 墙体数据 | 校准集 $\mathcal{G}_{\text{cal}}^{\text{wall}}$ | 10 | `data1-42cm`, `data16-46cm`, `data13-56cm`, `data4-62cm`, `data2-71cm`, `data11-76cm`, `data8-78cm`, `data10-82cm`, `data19-93cm`, `data7-106cm` | 42 – 106 |
 | 墙体数据 | 检验集 $\mathcal{G}_{\text{test}}^{\text{wall}}$ | 10 | `data5-44cm`, `data14-48cm`, `data15-57cm`, `data12-65cm`, `data20-73cm`, `data3-77cm`, `data17-81cm`, `data9-91cm`, `data18-105cm`, `data6-121cm` | 44 – 121 |
-| 金属板数据 | 校准集 $\mathcal{G}_{\text{cal}}^{\text{metal}}$ | 10 | `data2-48cm`, `data13-52cm`, `data3-54cm`, `data16-59cm`, `data11-62cm`, `data20-68cm`, `data10-70cm`, `data19-74cm`, `data8-83cm`, `data7-91cm` | 48 – 91 |
-| 金属板数据 | 检验集 $\mathcal{G}_{\text{test}}^{\text{metal}}$ | 10 | `data14-48cm`, `data15-53cm`, `data12-55cm`, `data5-60cm`, `data17-65cm`, `data1-69cm`, `data18-70cm`, `data9-76cm`, `data4-87cm`, `data6-99cm` | 48 – 99 |
+| 金属板数据 | 校准集 $\mathcal{G}_{\text{cal}}^{\text{metal}}$ | 10 | `data2-48cm`, `data13-52cm`, `data3-54cm`, `data16-59cm`, `data11-62cm`, `data20-68cm`, **`data1-69cm`**, `data19-74cm`, `data8-83cm`, `data7-91cm` | 48 – 91 |
+| 金属板数据 | 检验集 $\mathcal{G}_{\text{test}}^{\text{metal}}$ | 10 | `data14-48cm`, `data15-53cm`, `data12-55cm`, `data5-60cm`, `data17-65cm`, **`data10-70cm`**, `data18-70cm`, `data9-76cm`, `data4-87cm`, `data6-99cm` | 48 – 99 |
 
 ---
 
-## 7. 输入输出接口与验收指标契约（供求解与验证方对接）
+## 7. 数据与接口契约（严格区分 D0 读取器与预处理阶段）
 
-### 7.1 输入契约（由 `data/a-q1-reader` 提供）
-- `signals`: `float64` 数组，形状 `(64, Np)`（单包或经一致性检验后的多包平均周期波形，单位：ADC 量化值），以及逐包原始数组 `(P, 64, 4, Np)` 供包间漂移检查。
+### 7.1 `D0` 读取器输出契约（`data/a-q1-reader`，不做折迭与校准）
+- `packets`: `int16` 或 `float64` 原始逐包数组，按组内 8 个文件共同 `sync_packet_cnt` 交集配对，形状 `(P_common, 64, 16000)`（或等价 `(P_common, 8, 8, 16000)`）。
 - `rx_mask`: `bool` 数组，形状 `(64,)`，`rx_mask[27] == False`，其余 63 项为 `True`。
 - `tx_idx`: `int = 27`；`ref_idx`: `int = 28`。
-- `positions_m`: `float64` 数组，形状 `(64, 3)`，列为 $(x, y, z)$，单位 $\text{m}$（第 2 节坐标公式）。
-- `meta`: 组别标签、数据来源路径、同步 `sync_packet_cnt` 交集、期段相关系数、极值溢出/饱和告警标记。
+- `positions_m`: `float64` 数组，形状 `(64, 3)`，单位 $\text{m}$（按第 2.1 节坐标公式）。
+- `meta`: 组别、目录、共同 `sync_packet_cnt` 列表、每文件缺包/损坏记录、极值 `-32768/+32767` 统计（以 `int32` 升位计数）。
 
-### 7.2 输出契约（求解器交付物）
-1. **问题 1.1 校准参数表**（CSV/NPZ）：
-   - `channel_idx` ($0\dots 63$, 仅 `rx_mask`), `row` ($1\dots 8$), `col_in_row` ($1\dots 8$), `grid_col` ($1\dots 16$)
-   - `delta_tau_s` ($\text{s}$, 可同步输出 $\text{ns}$)
-   - `gain_mag_band`（$f_D \in [0.3, 1.7]\text{ GHz}$ 频谱数组及带内均值，无量纲）
-   - `residual_phase_rad_band`（带内剩余相位 $\psi_i(f_D)$，单位 $\text{rad}$）
-   - 典型通道（如近邻通道、远端边缘通道、畸变最大通道）校准前后时域波形与幅度/相位频谱对比数据。
-2. **问题 1.2 直射波抑制指标**：
-   - 空场自留交叉抑制比（Leave-one-air-out suppression ratio, dB）
-   - 校准集目标信号直射波时间窗残余功率降幅（dB）与目标回波峰保持度。
-3. **问题 1.3 测距结果表**：
-   - 逐组输出：`group_id`, `split` (`cal`/`test`), `target_type` (`wall`/`metal`), `d_true_cm`（仅评估时对照）, `d_est_cm`, `abs_err_cm`, `rel_err_pct`, `peak_to_sidelobe_db`
-   - 汇总指标（分别按 `wall` / `metal` 与 `cal` / `test` 报告）：MAE ($\text{cm}$)、RMSE ($\text{cm}$)、MaxAE ($\text{cm}$)、中位绝对误差 ($\text{cm}$)。
+### 7.2 已批复预处理阶段输出（`A-Q1-E0` 前端）
+- 经包内 4 段（$N_p = 4000$）与包间一致性门控后，折叠输出单周期实值信号 `signals_folded`: `float64` 数组，形状 `(64, 4000)`，及逐包相位漂移诊断日志。
+
+### 7.3 求解器交付契约（问题 1.1–1.3）
+1. **校准参数表**：`channel_idx`, `row`, `col_in_row`, `grid_col`, `delta_tau_s`（投影约定下）, `gain_mag_band`, `residual_phase_rad_band`，及代表性通道校准前后波形/频谱图。
+2. **直射波抑制指标**：空场留一交叉抑制比（dB）、校准集直射波时间窗残余功率降幅（dB）与目标回波峰保持率。
+3. **测距结果表**：逐组与汇总（按 `wall`/`metal` 与 `cal`/`test` 分列）MAE、RMSE、MaxAE、中位绝对误差（$\text{cm}$）及峰旁瓣比（dB）。
 
 ---
 
-## 8. 独立可手算及代码可复算小算例（2 接收通道解析验证）
+## 8. 独立可复跑闭环小算例（附 `solutions/A/verify_q1_spec.py`）
 
-本算例仅采用几何公式与解析合成信号（**不依赖生产估计器**），用于验证：**传播几何、第二奈奎斯特区射频镜像相位符号、设备校准参量可分离性、异步平移抵消及平面测距反演**。
+本算例脚本 [verify_q1_spec.py](verify_q1_spec.py) 仅包含第 5 节解析闭环公式与第 4.1 节可识别性反例检验（不读取 `.dat`、不是生产估计器），供统筹与验证方直接复跑核对。
 
-### 8.1 算例设定
-取 $c = 2.99792458\times 10^8\text{ m/s}$，$f_s = 4.0\times 10^9\text{ Hz}$，$T_s = 0.25\text{ ns}$，$N_p = 4000$，数字扫频参数同第 1.2 节。
-- **发射通道 TX**：$(r=4, k=4)$，$\mathbf{p}_{\text{tx}} = (0, 0, 0.545)\text{ m}$。
-- **参考通道 RX1**：$(r=4, k=5)$，$\mathbf{p}_1 = (-0.07, 0, 0.545)\text{ m}$，设设备响应完美 $H_1(f_D) \equiv 1$（$\Delta\tau_1 = 0, G_1 = 1, \psi_1 = 0$）。
-- **待校准通道 RX2**：$(r=2, k=5)$，$\mathbf{p}_2 = (-0.07, 0, 0.685)\text{ m}$，植入真实设备偏差：
-  $$\Delta\tau_2 = +0.500000\text{ ns}\ (= +2.0\,T_s), \quad G_2(f_D) \equiv 1.250000, \quad \psi_2(f_D) \equiv +0.300000\text{ rad},$$
-  即 $H_2(f_D) = 1.25\, e^{-j 2\pi f_D (0.5\times 10^{-9}) + j 0.30}$。
-- **目标真实垂直距离**：$d_{\text{true}} = 0.600000\text{ m}$ ($60.0\text{ cm}$)，有效反射系数 $\Gamma = -0.35$（金属板反向衰减）。
-- **异步采样启动偏移**：空场采集 $t_0^{\text{air}} = 120.25\,T_s$（含亚采样小数）；目标采集 $t_0^{\text{tgt}} = 250.40\,T_s$（两组相对偏移 $\Delta t_0 = t_0^{\text{tgt}} - t_0^{\text{air}} = +130.15\,T_s$）。
+### 8.1 算例参数
+- 统一常数：$c_0 = 299792458\text{ m/s}$，$f_s = 4.0\times 10^9\text{ Hz}$，$T_s = 0.25\text{ ns}$，$N_p = 4000$。
+- 几何：TX $(0, 0, 0.545)\text{ m}$；RX1 $(-0.07, 0, 0.545)\text{ m}$（参考通道，$R_1^{\text{dir}} = 0.070000\text{ m}$）；RX2 $(-0.07, 0, 0.685)\text{ m}$（$R_2^{\text{dir}} = 0.156525\text{ m}$）。
+- 植入偏差（RX2 相对 RX1）：$\Delta\tau_2 = +0.500000\text{ ns}$、$G_2 \equiv 1.250000$、$\psi_2 \equiv +0.300000\text{ rad}$。
+- 平面目标与异步偏移：$d_{\text{true}} = 0.600000\text{ m}$，$\Gamma = -0.35$，$t_0^{\text{air}} = 120.25\,T_s$，$t_0^{\text{tgt}} = 250.40\,T_s$（$\Delta t_0 = +130.15\,T_s$）。
 
-### 8.2 手算预期结果（已独立数值验证至小数点后 6 位）
-1. **直射波路径与传播时延**：
-   - $R_1^{\text{dir}} = 0.070000\text{ m}$，$\tau_1^{\text{dir}} = 0.233495\text{ ns}\ (0.933979\,T_s)$。
-   - $R_2^{\text{dir}} = \sqrt{0.07^2 + 0.14^2} = 0.156525\text{ m}$，$\tau_2^{\text{dir}} = 0.522110\text{ ns}\ (2.088442\,T_s)$。
-2. **镜面反射路径与传播时延**（$2 d_{\text{true}} = 1.20\text{ m}$）：
-   - $R_1^{\text{tgt}} = \sqrt{0.07^2 + 1.20^2} = 1.202040\text{ m}$，$\tau_1^{\text{tgt}} = 4.009574\text{ ns}\ (16.038295\,T_s)$，相对直射波净滞后 $\Delta\tau_1^{\text{prop}} = 3.776079\text{ ns}\ (15.104315\,T_s)$。
-   - $R_2^{\text{tgt}} = \sqrt{0.156525^2 + 1.20^2} = 1.210165\text{ m}$，$\tau_2^{\text{tgt}} = 4.036677\text{ ns}\ (16.146707\,T_s)$，相对直射波净滞后 $\Delta\tau_2^{\text{prop}} = 3.514566\text{ ns}\ (14.058266\,T_s)$。
-3. **无噪声带内恢复闭环预期**：
-   - 经几何路径比 $(R_2^{\text{dir}}/R_1^{\text{dir}})$ 与射频传播相位补偿 $e^{-j 2\pi (f_s - f_D)(\tau_2^{\text{dir}} - \tau_1^{\text{dir}})}$ 后，空场比值频谱线性回归斜率严格还原：
-     $$\Delta\hat{\tau}_2 = 0.500000\text{ ns}, \quad \hat{G}_2 = 1.250000, \quad \hat{\psi}_2 = 0.300000\text{ rad}.$$
-   - 利用射频镜像对齐算子 $e^{+j 2\pi (f_s - f_D)\Delta t_0}$ 对齐空场至目标组，求得 $\Delta\hat{t}_0 = 130.1500\,T_s$，相减后直达波残余为零（若错用数字平移 $e^{-j 2\pi f_D \Delta t_0}$ 则因缺少 $2\pi f_s (0.15 T_s) = 0.3\pi\text{ rad}$ 载波相移导致明显直达波泄漏）。
-   - 锚定 $\hat{t}_0^{\text{tgt}} = 250.4000\,T_s$ 后执行双通道相干 DAS 搜索（步长 $0.1\text{ mm}$），峰值精准收敛至 $\hat{d} = 0.600000\text{ m}$（误差 $0.0000\text{ cm}$）。
+### 8.2 运行命令与预期/实测输出
+运行命令：
+```powershell
+python solutions/A/verify_q1_spec.py
+```
+
+| 检查项 | 数学预期 | 脚本实测结果 |
+|---|---|---|
+| 带内能量占比（$[0.3,1.7]\text{ GHz}$） | $\approx 1$（存在约 $0.008\%$ 带外旁瓣） | `0.99991761` |
+| 相对校准（投影约定还原） | $\Delta\hat{\tau}_2 = 0.500000\text{ ns},\ \hat{G}_2 = 1.250000,\ \hat{\psi}_2 = 0.300000\text{ rad}$ | `dtau2=0.500000 ns, G2=1.250000, psi2=0.300000 rad` |
+| 射频对齐与有效零点 | $\Delta\hat{t}_0 = 130.1500\,T_s,\ \hat{t}_{0,\text{eff}}^{\text{tgt}} = 250.4000\,T_s$ | `dt0=130.1500 Ts, t0_eff_tgt=250.4000 Ts` |
+| 旧版未归一化 DAS 偏差对照 | $> 0.60\text{ m}$（存在正一阶导数偏项） | `0.620000 m`（复现 $+2.0\text{ cm}$ 偏差） |
+| 归一化 `P_norm` 与 `P_env` 测距（$[0.55, 0.65]\text{ m}$, $10\,\mu\text{m}$ 步长） | `0.600000 m`（零偏差闭环） | `P_norm = 0.600000 m`，`P_env = 0.600000 m` |
+| 反例 A（自由 $\psi$ 移位 $\delta = 0.25\text{ ns}$） | $\max|H_2 - H_2'| \approx 0$ | `max|H - H'| = 2.445e-15`（加权投影唯一固定 $\Delta\hat{\tau}_2$） |
+| 反例 B（公共 $H_{\text{ref}}$ 与 $t_0$ 移位 $a = 0.35\text{ ns}$） | 相对观测不变，且有效零点消去后 $\hat{d}' = 0.600000\text{ m}$ | `rel\|X_air-X'\|=1.017e-13, rel\|X_tgt-X'\|=2.051e-13, d_norm'=0.600000 m` |
 
 ---
 
-## 9. 已知局限与后续推进前提
+## 9. 已知限制与后续推进前提
 
-1. **天线近场互耦与射频通道色散**：空场中近邻发射天线的接收单元受阵面耦合影响较大，$E_i^{\text{dir}}(f_D)$ 偏离 $1/R_i^{\text{dir}}$ 的程度需要在先导试验（`A-Q1-E0`）中通过对比 `M0-Cal-Base` 与 `M0-Cal-Joint` 量化验证。
-2. **行板间异步抖动核查**：初步侦察中曾观测到个别组内单个行板数据包存在微弱载波相移；需待 `data/a-q1-reader` 完成全量 8 行包间一致性统计后，决定是否激活行板级微移参数 $\delta t_{g,r}$。
-3. **墙体多界面反射**：墙体前表面与后界面之间存在介质传播衰减与延时，测距模型需在先导试验中验证“首个显著前向主峰”在远距离/弱反射工况下的稳定性。
+1. **端射耦合响应 $E_i^{\text{dir}}(f_D)$ 未知**：纯空场校准假定 $E_i^{\text{dir}} \propto 1/R_i^{\text{dir}}$ 可能将阵元端射方向图/互耦并入 $\hat{G}_i, \hat{\psi}_i$；需在 `A-Q1-E0` 中用校准集比较 `M0-Cal-Base` 与 `M0-Cal-Joint`。
+2. **行板间异步微漂移检验**：需待 `D0` 完成全量 8 行包间相关性统计后，判定是否需要开启行板级微移参数 $\delta t_{g,r}$。
+3. **墙体介质内部多界面反射**：墙体前表面主峰可能受后界面弱反射旁瓣影响，需在先导试验中测试前向首峰门限稳定性。
