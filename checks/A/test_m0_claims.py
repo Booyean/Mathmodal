@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Independent review checks for the A-Q1 math spec (M0, reviewed at a9e2719).
+"""Independent review checks for the A-Q1 math spec (M0, reviewed at 0f521a4).
+
+Version history: V1 reviewed ``a9e2719`` (11 checks); V2 adds the PR #3
+second-review boundary checks on ``0f521a4`` (general common dispersion and
+strict-uniqueness conditions, checks M0-12..M0-16).  V3 adds M0-17, the
+effective-zero sign bookkeeping raised by the coordinator: section 4.1 writes
+``H_ref ∝ exp(-j2πf_R τ_hw)`` together with ``t0_eff = t0 + τ_hw``.  M0-17
+intentionally fails on ``0f521a4`` and passes after the one-character fix
+``H_ref -> exp(+j2πf_R τ_hw)`` (the delay convention derived in section 3.2).
+The V1 checks pass on all spec versions; M0-16 and M0-17 are wording/shape
+checks that distinguish the pre-fix texts from the fixed ones.
 
 This script is written from the formulas and claims in
 ``solutions/A/model_q1.md`` plus the PR #3 review, not from the production
@@ -109,7 +119,8 @@ def weighted_projection(h: np.ndarray, f: np.ndarray, w: np.ndarray,
 # ---------------------------------------------------------------------------
 # Closed-loop example from section 8.1
 # ---------------------------------------------------------------------------
-def closed_loop(common_shift_a: float = 0.0) -> dict[str, object]:
+def closed_loop(common_shift_a: float = 0.0,
+                dispersion: str | None = None) -> dict[str, object]:
     _, s_f, freqs, band = reference_spectrum()
     f_b = freqs[band]
     s_b = s_f[band]
@@ -122,6 +133,15 @@ def closed_loop(common_shift_a: float = 0.0) -> dict[str, object]:
     tau_tgt = r_tgt / C0
 
     h1 = np.exp(-1j * 2.0 * np.pi * f_r * common_shift_a)
+    if dispersion:
+        # Boundary C distortion taken from the PR #3 counterexample definition:
+        # asymmetric amplitude tilt plus linear/quadratic/cubic phase dispersion.
+        u = (f_b - 0.5 * (F_START + F_STOP)) / (0.5 * (F_STOP - F_START))
+        g_common = 1.0 + 0.45 * u
+        phi_common = -2.0 * np.pi * f_b * 0.40e-9
+        if dispersion == "full":
+            phi_common = phi_common + 2.5 * u ** 2 + 1.5 * u ** 3
+        h1 = h1 * g_common * np.exp(1j * phi_common)
     h2 = (1.25 * np.exp(-1j * 2.0 * np.pi * f_b * 0.50e-9 + 1j * 0.30)) * h1
     h = np.vstack([h1, h2])
 
@@ -167,6 +187,14 @@ def closed_loop(common_shift_a: float = 0.0) -> dict[str, object]:
     x_air_aligned = x_air_cal * np.exp(1j * 2.0 * np.pi * f_r * dt0)
     x_echo = x_tgt_cal - x_air_aligned
 
+    # Explicit dispersive reference template (section 5.3):
+    #   S_eff = sum_i (w_i/R_i^dir) * X_air,cal e^{j2pi f_R dt0} * e^{-j2pi f_R tau_i^dir}
+    #           / sum_i w_i / (R_i^dir)^2,   w_i = 1.
+    s_eff = (np.sum((x_air_aligned / R_DIR[:, None])
+                    * np.exp(-1j * 2.0 * np.pi * np.outer(tau_dir, f_r)), axis=0)
+             / float(np.sum(1.0 / R_DIR ** 2)))
+    s_true_eff = h1 * s_b * np.exp(1j * 2.0 * np.pi * f_r * t0_tgt)
+
     # Effective time zero: coherent match of the aligned air template to s.
     dw = np.sum((x_air_aligned / R_DIR[:, None]) * np.conj(s_b)
                 * np.exp(-1j * 2.0 * np.pi * np.outer(tau_dir, f_r)), axis=0)
@@ -183,17 +211,40 @@ def closed_loop(common_shift_a: float = 0.0) -> dict[str, object]:
     d_grid = np.linspace(0.55, 0.65, 10001)
     r_d = np.sqrt(R_DIR[:, None] ** 2 + (2.0 * d_grid[None, :]) ** 2)
     p_norm = np.zeros_like(d_grid)
+    p_norm_eff = np.zeros_like(d_grid)
     p_env = np.zeros_like(d_grid)
     p_unnorm = np.zeros_like(d_grid)
     s2 = float(np.sum(np.abs(s_b) ** 2))
+    seff2 = float(np.sum(np.abs(s_eff) ** 2))
     for j in range(d_grid.size):
         phase = np.exp(-1j * 2.0 * np.pi * np.outer(
             r_d[:, j] / C0 + t0_eff, f_r))
+        phase_raw = np.exp(-1j * 2.0 * np.pi * np.outer(
+            r_d[:, j] / C0, f_r))
         z = np.sum(x_echo * np.conj(s_b)[None, :] * phase, axis=1)
+        z_eff = np.sum(x_echo * np.conj(s_eff)[None, :] * phase_raw, axis=1)
         inv_r2 = float(np.sum(1.0 / r_d[:, j] ** 2))
         p_norm[j] = abs(np.sum(z / r_d[:, j])) ** 2 / (inv_r2 * s2)
+        p_norm_eff[j] = abs(np.sum(z_eff / r_d[:, j])) ** 2 / (inv_r2 * seff2)
         p_env[j] = float(np.sum(np.abs(z) / r_d[:, j])) ** 2 / inv_r2
         p_unnorm[j] = abs(np.sum(r_d[:, j] * z))
+
+    # 1 um local refinement around the true distance: separates genuine bias
+    # from the 10 um grid quantization of the quoted boundary-C numbers.
+    d_fine = np.linspace(D_TRUE - 0.001, D_TRUE + 0.001, 2001)
+    r_fine = np.sqrt(R_DIR[:, None] ** 2 + (2.0 * d_fine[None, :]) ** 2)
+    p_norm_f = np.zeros_like(d_fine)
+    p_norm_eff_f = np.zeros_like(d_fine)
+    for j in range(d_fine.size):
+        phase = np.exp(-1j * 2.0 * np.pi * np.outer(
+            r_fine[:, j] / C0 + t0_eff, f_r))
+        phase_raw = np.exp(-1j * 2.0 * np.pi * np.outer(
+            r_fine[:, j] / C0, f_r))
+        z = np.sum(x_echo * np.conj(s_b)[None, :] * phase, axis=1)
+        z_eff = np.sum(x_echo * np.conj(s_eff)[None, :] * phase_raw, axis=1)
+        inv_r2 = float(np.sum(1.0 / r_fine[:, j] ** 2))
+        p_norm_f[j] = abs(np.sum(z / r_fine[:, j])) ** 2 / (inv_r2 * s2)
+        p_norm_eff_f[j] = abs(np.sum(z_eff / r_fine[:, j])) ** 2 / (inv_r2 * seff2)
 
     return {
         "band_ratio": float(np.sum(np.abs(s_b) ** 2) / np.sum(np.abs(s_f) ** 2)),
@@ -204,10 +255,17 @@ def closed_loop(common_shift_a: float = 0.0) -> dict[str, object]:
         "t0_eff": t0_eff,
         "d_unnorm": float(d_grid[int(np.argmax(p_unnorm))]),
         "d_norm": float(d_grid[int(np.argmax(p_norm))]),
+        "d_norm_eff": float(d_grid[int(np.argmax(p_norm_eff))]),
+        "d_norm_refined": float(d_fine[int(np.argmax(p_norm_f))]),
+        "d_norm_eff_refined": float(d_fine[int(np.argmax(p_norm_eff_f))]),
         "d_env": float(d_grid[int(np.argmax(p_env))]),
+        "s_eff": s_eff,
+        "s_true_eff": s_true_eff,
         "x_air": x_air,
         "x_tgt": x_tgt,
         "p_unnorm": p_unnorm,
+        "p_norm": p_norm,
+        "p_norm_eff": p_norm_eff,
         "d_grid": d_grid,
     }
 
@@ -242,6 +300,32 @@ def parse_split_table(spec_text: str) -> dict[str, list[str]]:
 
 def indices(names: list[str]) -> list[int]:
     return [int(re.match(r"data(\d+)", n).group(1)) for n in names]
+
+
+def best_scalar_residual(s_eff: np.ndarray, s_b: np.ndarray,
+                         f_r: np.ndarray, t_center: float) -> float:
+    """Smallest relative residual after fitting c*S*exp(-j2pi f_R t) to s_eff."""
+    norm = float(np.linalg.norm(s_eff))
+    best = 1.0
+    for t in t_center + np.linspace(-2.0e-9, 2.0e-9, 20001):
+        basis = s_b * np.exp(1j * 2.0 * np.pi * f_r * t)
+        c = np.vdot(basis, s_eff) / np.vdot(basis, basis)
+        best = min(best, float(np.linalg.norm(s_eff - c * basis)) / norm)
+    return best
+
+
+def anchor_peak(product: np.ndarray, f_r: np.ndarray, center: float,
+                span: float) -> float:
+    """Coarse+fine argmax_t |sum product * exp(-j2pi f_R t)| around center."""
+    def score(t: float) -> float:
+        return float(abs(np.sum(product * np.exp(-1j * 2.0 * np.pi * f_r * t))))
+
+    coarse = center + np.linspace(-span, span, 601)
+    coarse_scores = np.array([score(t) for t in coarse])
+    best = float(coarse[int(np.argmax(coarse_scores))])
+    fine = best + np.linspace(-span / 600.0, span / 600.0, 2001)
+    fine_scores = np.array([score(t) for t in fine])
+    return float(fine[int(np.argmax(fine_scores))])
 
 
 # ---------------------------------------------------------------------------
@@ -370,6 +454,145 @@ def main(argv: list[str] | None = None) -> int:
                   f"swap={swapped}; recon_safe={recon_safe}",
                   wall_ok and metal_ok and swapped and recon_safe,
                   "freeze is still pending coordinator/validator confirmation")
+
+    # --- V2 boundary checks (spec 0f521a4) --------------------------------
+    _, s_f_v2, freqs_v2, band_v2 = reference_spectrum()
+    f_b = freqs_v2[band_v2]
+    f_r = FS - f_b
+    s_b = s_f_v2[band_v2]
+    res_disp = closed_loop(common_shift_a=0.10e-9, dispersion="full")
+    res_amp = closed_loop(common_shift_a=0.10e-9, dispersion="amp")
+
+    d10 = float(res_disp["d_norm"])
+    d1 = float(res_disp["d_norm_refined"])
+    rep.check("M0-12", "boundary C: scalar t0_eff anchoring under common dispersion",
+              "author quotes 0.600010 m (their 0.5 ps anchor grid); an independent "
+              "sub-fs anchor should show whether that residual is real or grid quantization",
+              f"10 um grid = {d10:.6f} m, 1 um refine = {d1:.6f} m "
+              f"(bias {(d1 - D_TRUE) * 1e6:+.3f} um)",
+              abs(d10 - D_TRUE) <= 1e-5 + 1e-12 and abs(d1 - D_TRUE) < 1e-6,
+              "the quoted one-step residual tracks the author's 0.5 ps anchor grid; "
+              "at the same 10 um profile grid an optimal anchor gives 0.600000 m, "
+              "so it must not be cited as a dispersion-induced bias")
+
+    rep.check("M0-13", "boundary C: explicit S_eff template removes the dispersion",
+              "0.600000 m on both the 10 um and the refined 1 um grid",
+              f"10 um = {float(res_disp['d_norm_eff']):.6f} m, "
+              f"1 um = {float(res_disp['d_norm_eff_refined']):.6f} m",
+              abs(float(res_disp["d_norm_eff"]) - D_TRUE) < 1e-9
+              and abs(float(res_disp["d_norm_eff_refined"]) - D_TRUE) < 1e-9,
+              "a_eff(d) = S_eff(f_D) e^{j2pi f_R tau_i(d)} / R_i(d), no scalar anchor")
+
+    ratio = np.asarray(res_disp["s_eff"]) / np.asarray(res_disp["s_true_eff"])
+    rel_ratio = float(np.max(np.abs(ratio - ratio.mean())) / abs(ratio.mean()))
+    rep.check("M0-14", "explicit S_eff identity: S_eff = H_ref S e^{j2pi f_R t0}",
+              "ratio to planted H_ref*S*exp(j2pi f_R t0) constant over the band (< 1e-12)",
+              f"max relative spread = {rel_ratio:.2e}, |ratio| = {abs(ratio.mean()):.6f}",
+              rel_ratio < 1e-12,
+              "reconstructed from the calibrated air record only")
+
+    resid_amp = best_scalar_residual(np.asarray(res_amp["s_eff"]), s_b, f_r,
+                                     float(res_amp["t0_eff"]))
+    resid_full = best_scalar_residual(np.asarray(res_disp["s_eff"]), s_b, f_r,
+                                      float(res_disp["t0_eff"]))
+    rep.check("M0-15", "common dispersion is not removable by any scalar time shift",
+              "amplitude tilt alone leaves a >1e-3 residual; full dispersion leaves more",
+              f"best-shift residual: amplitude-only = {resid_amp:.4f}, "
+              f"full dispersion = {resid_full:.4f}",
+              resid_amp > 1e-3 and resid_full > resid_amp,
+              "quantifies why section 4.1(2) now requires an explicit S_eff template")
+
+    if not args.spec.is_file():
+        rep.skip("M0-16", "strict-uniqueness wording and non-collinearity",
+                 f"spec not found: {args.spec}")
+    else:
+        text = args.spec.read_text(encoding="utf-8")
+        has_conditions = all(k in text for k in
+                             ("严格唯一", "非零回波", "互不共线", "理想无噪"))
+        has_noise_caveat = ("有限样本统计无偏性" in text and "不能" in text)
+        no_absolute_zero_bias = "零估计偏差" not in text
+        # Steering vectors a(d) and a(d0) must not be collinear for d != d0.
+        r0 = np.sqrt(R_DIR ** 2 + (2.0 * D_TRUE) ** 2)
+        a0 = (np.exp(1j * 2.0 * np.pi * np.outer(r0 / C0, f_r))
+              / r0[:, None]).ravel()
+        d_probe = np.linspace(0.55, 0.65, 401)
+        min_resid = 1.0
+        for d in d_probe:
+            if abs(d - D_TRUE) < 1e-12:
+                continue
+            r = np.sqrt(R_DIR ** 2 + (2.0 * d) ** 2)
+            a = (np.exp(1j * 2.0 * np.pi * np.outer(r / C0, f_r))
+                 / r[:, None]).ravel()
+            kappa = np.vdot(a0, a) / np.vdot(a0, a0)
+            min_resid = min(min_resid,
+                            float(np.linalg.norm(a - kappa * a0) / np.linalg.norm(a)))
+        rep.check("M0-16", "strict-uniqueness wording is conditioned; steering vectors non-collinear",
+                  "conditions (noiseless mirror, Gamma!=0, non-collinear) stated; "
+                  "no unconditional zero-bias claim; min a(d) vs a(d0) residual > 1e-6",
+                  f"conditions={has_conditions}, noise caveat={has_noise_caveat}, "
+                  f"no 'zero bias'={no_absolute_zero_bias}, "
+                  f"min non-collinearity residual={min_resid:.2e}",
+                  has_conditions and has_noise_caveat and no_absolute_zero_bias
+                  and min_resid > 1e-6,
+                  "the residual is the least-squares distance to the a(d0) line")
+
+    # --- M0-17: effective-zero sign bookkeeping (0f521a4 sign issue) ------
+    # Section 4.1 states H_ref ∝ exp(-j2πf_R τ_hw) and then t0_eff = t0 + τ_hw.
+    # Since S_eff = H_ref S exp(+j2πf_R t0), a minus in H_ref and a plus in
+    # t0_eff cannot both hold: the anchor lands at t0 - τ_hw, and the claimed
+    # gauge invariance fails by 2a.  Section 3.2 derives a positive delay as
+    # exp(+j2πf_R τ), so the physically consistent pairing is (+,+).
+    if not args.spec.is_file():
+        rep.skip("M0-17", "effective-zero sign bookkeeping", f"spec not found: {args.spec}")
+    else:
+        text = args.spec.read_text(encoding="utf-8")
+        m_h = re.search(r"(?:propto|=\s*H_0\s*\\,?)\s*e\^\{([+-])j\s*2\\pi\s*f_R\s*\\tau_", text)
+        m_t = re.search(
+            r"t_\{0,\\text\{eff\}\}\^\{\(g\)\}\s*\\triangleq\s*"
+            r"t_0\^\{\(g\)\}\s*([+-])\s*\\tau_", text)
+        h_sign = (1 if m_h.group(1) == "+" else -1) if m_h else None
+        t_sign = (1 if m_t.group(1) == "+" else -1) if m_t else None
+
+        tau_hw = 0.35e-9
+        t0_nom = 120.25 * TS
+        anchors: dict[int, float] = {}
+        for hs in (+1, -1):
+            s_eff = (np.exp(1j * hs * 2.0 * np.pi * f_r * tau_hw) * s_b
+                     * np.exp(1j * 2.0 * np.pi * f_r * t0_nom))
+            anchors[hs] = anchor_peak(s_eff * np.conj(s_b), f_r, t0_nom, 3.0e-9)
+        plus_err = abs(anchors[+1] - (t0_nom + tau_hw))
+        minus_err = abs(anchors[-1] - (t0_nom - tau_hw))
+
+        if h_sign is not None and t_sign is not None:
+            declared_err = abs(anchors[h_sign] - (t0_nom + t_sign * tau_hw))
+            a_gauge = 0.10e-9
+            tau_prime = tau_hw - h_sign * a_gauge
+            gauge_drift = ((t0_nom + a_gauge) + t_sign * tau_prime) - (
+                t0_nom + t_sign * tau_hw)
+        else:
+            declared_err = float("nan")
+            gauge_drift = float("nan")
+
+        ok = (h_sign == 1 and t_sign == 1
+              and plus_err < 1e-12 and minus_err < 1e-12
+              and declared_err < 1e-12 and abs(gauge_drift) < 1e-12)
+        rep.check("M0-17", "effective-zero sign bookkeeping (H_ref delay vs t0_eff)",
+                  "declared pair is (+,+): H_ref = exp(+j2πf_R τ_hw), "
+                  "t0_eff = t0 + τ_hw; data anchor exact and gauge-invariant "
+                  "under (H_i, t0) -> (H_i e^{-j2πf_R a}, t0 + a)",
+                  f"declared H_ref sign={h_sign}, t0_eff sign={t_sign}; "
+                  f"data anchor: H_ref+ -> {anchors[+1] / TS:.6f} Ts "
+                  f"(err {plus_err * 1e12:.3f} ps), "
+                  f"H_ref- -> {anchors[-1] / TS:.6f} Ts; "
+                  f"declared-anchor error {declared_err * 1e9:.3f} ns; "
+                  f"gauge drift {gauge_drift * 1e9:+.3f} ns",
+                  ok,
+                  "0f521a4 writes H_ref ∝ exp(-j2πf_R τ_hw) with t0_eff = t0 + τ_hw; "
+                  "the anchor then lands at t0 - τ_hw (2τ_hw = 0.70 ns away) and the "
+                  "claimed gauge invariance fails by 2a. Section 3.2 derives a positive "
+                  "delay as exp(+j2πf_R τ), so the one-character fix is H_ref -> "
+                  "exp(+j2πf_R τ_hw), keeping t0_eff = t0 + τ_hw. No numeric result "
+                  "changes (t0_eff is fitted from data, not computed from this formula)")
 
     return rep.summary()
 
