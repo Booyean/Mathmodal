@@ -1,0 +1,402 @@
+{
+  "root": "D:\\数模\\Mathmodal\\竞赛题目\\B题：炼钢厂钢包周转与排产优化问题",
+  "time_window_check": [
+    {
+      "claim": "全部实际工序数据统一时间窗 2026-09-24 23:24 ～ 2026-10-12 11:01",
+      "observed_min": "2026-09-24 23:24:18",
+      "observed_max": "2026-10-12 13:04:16",
+      "n_timestamps": 60134
+    }
+  ],
+  "n_time_columns": 112,
+  "n_time_columns_with_parse_fail": 0,
+  "nan_outside_claim_window": 20,
+  "negative_duration_columns": [
+    {
+      "file": "3#LF.xlsx",
+      "sheet": "LF精炼位3信息数据",
+      "header": "净吹时间",
+      "n_negative": 1,
+      "sample": "-80.0"
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "sheet": "工序信息数据",
+      "header": "钢包车座罐结束至出钢开始时间",
+      "n_negative": 177,
+      "sample": "-3分钟\t-51秒"
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "sheet": "工序信息数据",
+      "header": "出钢开始至结束时间",
+      "n_negative": 4,
+      "sample": "-31分钟\t-37秒"
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "sheet": "工序信息数据",
+      "header": "重罐进站在LF待机位等待时间",
+      "n_negative": 297,
+      "sample": "-4分钟\t-13秒"
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "sheet": "工序信息数据",
+      "header": "LF处理结束至吊起时间",
+      "n_negative": 114,
+      "sample": "-1分钟\t-44秒"
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "sheet": "工序信息数据",
+      "header": "RH处理结束至重罐吊起时间",
+      "n_negative": 143,
+      "sample": "-46分钟\t-16秒"
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "sheet": "工序信息数据",
+      "header": "重罐在铸机接受位等待时间",
+      "n_negative": 73,
+      "sample": "-39分钟\t-29秒"
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "sheet": "工序信息数据",
+      "header": "浇铸结束至空罐吊起时间",
+      "n_negative": 235,
+      "sample": "-23分钟\t-47秒"
+    }
+  ],
+  "n_negative_duration_columns": 8,
+  "tab_contaminated_columns": [
+    {
+      "file": "1#RH.xlsx",
+      "header": "熔炼号",
+      "n": 16
+    },
+    {
+      "file": "1#RH.xlsx",
+      "header": "RH处理周期",
+      "n": 3
+    },
+    {
+      "file": "2#RH.xlsx",
+      "header": "熔炼号",
+      "n": 18
+    },
+    {
+      "file": "2#RH.xlsx",
+      "header": "RH处理周期",
+      "n": 2
+    },
+    {
+      "file": "3#LF.xlsx",
+      "header": "熔炼号",
+      "n": 2
+    },
+    {
+      "file": "3#LF.xlsx",
+      "header": "净吹时间",
+      "n": 1
+    },
+    {
+      "file": "3#连铸.xlsx",
+      "header": "纯钢水量",
+      "n": 1
+    },
+    {
+      "file": "A炉.xlsx",
+      "header": "熔炼号",
+      "n": 1
+    },
+    {
+      "file": "A炉.xlsx",
+      "header": "出钢量1",
+      "n": 1
+    },
+    {
+      "file": "A炉.xlsx",
+      "header": "钢水收得率",
+      "n": 1
+    },
+    {
+      "file": "A炉.xlsx",
+      "header": "废钢种类1",
+      "n": 29
+    },
+    {
+      "file": "A炉.xlsx",
+      "header": "废钢种类2",
+      "n": 48
+    },
+    {
+      "file": "A炉.xlsx",
+      "header": "废钢种类3",
+      "n": 33
+    },
+    {
+      "file": "A炉.xlsx",
+      "header": "废钢种类4",
+      "n": 4
+    },
+    {
+      "file": "A炉.xlsx",
+      "header": "废钢种类5",
+      "n": 2
+    },
+    {
+      "file": "B炉.xlsx",
+      "header": "翻渣量1",
+      "n": 2
+    },
+    {
+      "file": "B炉.xlsx",
+      "header": "废钢种类1",
+      "n": 29
+    },
+    {
+      "file": "B炉.xlsx",
+      "header": "废钢种类2",
+      "n": 36
+    },
+    {
+      "file": "B炉.xlsx",
+      "header": "废钢种类3",
+      "n": 39
+    },
+    {
+      "file": "B炉.xlsx",
+      "header": "废钢种类4",
+      "n": 8
+    },
+    {
+      "file": "B炉.xlsx",
+      "header": "废钢种类5",
+      "n": 2
+    },
+    {
+      "file": "C炉.xlsx",
+      "header": "出钢量1",
+      "n": 1
+    },
+    {
+      "file": "C炉.xlsx",
+      "header": "翻渣量1",
+      "n": 2
+    },
+    {
+      "file": "C炉.xlsx",
+      "header": "钢水收得率",
+      "n": 1
+    },
+    {
+      "file": "C炉.xlsx",
+      "header": "废钢种类1",
+      "n": 26
+    },
+    {
+      "file": "C炉.xlsx",
+      "header": "废钢种类2",
+      "n": 36
+    },
+    {
+      "file": "C炉.xlsx",
+      "header": "废钢种类3",
+      "n": 29
+    },
+    {
+      "file": "C炉.xlsx",
+      "header": "废钢种类4",
+      "n": 8
+    },
+    {
+      "file": "C炉.xlsx",
+      "header": "废钢种类5",
+      "n": 1
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "header": "熔炼号",
+      "n": 3
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "header": "钢包车座罐结束至出钢开始时间",
+      "n": 208
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "header": "出钢开始至结束时间",
+      "n": 4
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "header": "重罐进站在LF待机位等待时间",
+      "n": 322
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "header": "LF处理结束至吊起时间",
+      "n": 115
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "header": "RH处理结束至重罐吊起时间",
+      "n": 143
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "header": "重罐在铸机接受位等待时间",
+      "n": 108
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "header": "浇铸结束至空罐吊起时间",
+      "n": 238
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "header": "铸余回收量",
+      "n": 2
+    }
+  ],
+  "placeholders_minus2": [
+    {
+      "file": "出钢计划表单.xls",
+      "header": "熔炼号",
+      "sheet": "steel_tapping_plan_info(2)",
+      "n": 55
+    },
+    {
+      "file": "出钢计划表单.xls",
+      "header": "配包flag",
+      "sheet": "steel_tapping_plan_info(2)",
+      "n": 55
+    }
+  ],
+  "melting_key": [
+    {
+      "file": "1#LF.xlsx",
+      "sheet": "LF精炼位1信息数据",
+      "rows": 471,
+      "n_melt_nonnull": 471,
+      "n_distinct": 450,
+      "n_dup_rows": 21,
+      "dup_examples": "26AD6934;26AD6918;26AD6895",
+      "melting_no_format": "##AD##BD##CD"
+    },
+    {
+      "file": "1#RH.xlsx",
+      "sheet": "RH精炼位1信息数据",
+      "rows": 336,
+      "n_melt_nonnull": 336,
+      "n_distinct": 336,
+      "n_dup_rows": 0,
+      "dup_examples": "",
+      "melting_no_format": "##AD##BD##CD"
+    },
+    {
+      "file": "1#连铸.xlsx",
+      "sheet": "连铸A信息数据",
+      "rows": 448,
+      "n_melt_nonnull": 448,
+      "n_distinct": 447,
+      "n_dup_rows": 1,
+      "dup_examples": "26AD6602",
+      "melting_no_format": "##AD##BD##CD"
+    },
+    {
+      "file": "2#RH.xlsx",
+      "sheet": "RH精炼位2信息数据",
+      "rows": 314,
+      "n_melt_nonnull": 314,
+      "n_distinct": 312,
+      "n_dup_rows": 2,
+      "dup_examples": "26AD6701;26AD6504",
+      "melting_no_format": "##AD##BD##CD"
+    },
+    {
+      "file": "2#连铸.xlsx",
+      "sheet": "连铸B信息数据",
+      "rows": 349,
+      "n_melt_nonnull": 349,
+      "n_distinct": 348,
+      "n_dup_rows": 1,
+      "dup_examples": "26BD6269",
+      "melting_no_format": "##AD##BD##CD"
+    },
+    {
+      "file": "3#LF.xlsx",
+      "sheet": "LF精炼位3信息数据",
+      "rows": 446,
+      "n_melt_nonnull": 446,
+      "n_distinct": 422,
+      "n_dup_rows": 24,
+      "dup_examples": "26AD6932;26AD6928;26AD6921",
+      "melting_no_format": "##AD##BD##CD"
+    },
+    {
+      "file": "3#连铸.xlsx",
+      "sheet": "连铸C信息数据",
+      "rows": 379,
+      "n_melt_nonnull": 379,
+      "n_distinct": 378,
+      "n_dup_rows": 1,
+      "dup_examples": "26CD5046",
+      "melting_no_format": "##AD##BD##CD"
+    },
+    {
+      "file": "A炉.xlsx",
+      "sheet": "转炉A信息数据",
+      "rows": 445,
+      "n_melt_nonnull": 445,
+      "n_distinct": 445,
+      "n_dup_rows": 0,
+      "dup_examples": "",
+      "melting_no_format": "##AD"
+    },
+    {
+      "file": "B炉.xlsx",
+      "sheet": "转炉B信息数据",
+      "rows": 471,
+      "n_melt_nonnull": 471,
+      "n_distinct": 471,
+      "n_dup_rows": 0,
+      "dup_examples": "",
+      "melting_no_format": "##BD"
+    },
+    {
+      "file": "C炉.xlsx",
+      "sheet": "转炉C信息数据",
+      "rows": 423,
+      "n_melt_nonnull": 423,
+      "n_distinct": 423,
+      "n_dup_rows": 0,
+      "dup_examples": "",
+      "melting_no_format": "##CD"
+    },
+    {
+      "file": "出钢计划表单.xls",
+      "sheet": "steel_tapping_plan_info(2)",
+      "rows": 1321,
+      "n_melt_nonnull": 1321,
+      "n_distinct": 1267,
+      "n_dup_rows": 54,
+      "dup_examples": "-2",
+      "melting_no_format": "##AD##BD##CD"
+    },
+    {
+      "file": "工序时间信息.xlsx",
+      "sheet": "工序信息数据",
+      "rows": 1355,
+      "n_melt_nonnull": 1350,
+      "n_distinct": 1278,
+      "n_dup_rows": 72,
+      "dup_examples": "26AD6934;26AD6928;26AD6921",
+      "melting_no_format": "##AD##BD##CD"
+    }
+  ],
+  "melting_no_union_size": 1391
+}
