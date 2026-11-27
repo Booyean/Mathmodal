@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "experiment_id": "A-Q1-E0",
   "problem": "A-Q1",
   "phase": "pilot_baseline_verification",
@@ -13,8 +13,10 @@
       "A-Q1-SPLIT0",
       "A-Q1-M0"
     ],
+    "completed_prerequisites": [
+      "D0_merged (PR #7, PR #11 on main 4a21060)"
+    ],
     "blocking_before_execution": [
-      "D0_merged (PR #7)",
       "D1_accepted (folding and consistency gating)",
       "A-Q1-E0_approved"
     ]
@@ -23,11 +25,11 @@
     "raw_data_commit": "d8ee44021dd7acec18e7fd608e50835b0f7e8dd9",
     "a_dat_manifest_overall_sha256": "86305548ac35e44bf07f15fbbfa2e10c30713d0e64721e7ec81d37939f3cfa06",
     "a_dat_manifest_blob_sha256": "d5013e9330ded4464d2d6214b382b9436fc53d1436b0442048a61b25cbade8d4",
-    "main_baseline_commit": "b40e15b227602fbf1ff65984b0f6c9f8188f1d39",
+    "main_baseline_commit": "4a210601041e842de361c8b08b398343d2fc934a",
     "m0_spec_commit": "098e17de9f42c843ab48923547d07b80883cf47c",
     "split_file": "coordination/A_Q1_SPLIT.json",
     "split_blob_sha256_lf": "d623da4ea186f372f2be094121c202c55dae0e236f4683005ab88d220a248b3a",
-    "rollback_commit": "b40e15b227602fbf1ff65984b0f6c9f8188f1d39"
+    "rollback_commit": "4a210601041e842de361c8b08b398343d2fc934a"
   },
   "physical_constants": {
     "c0_m_s": 299792458.0,
@@ -47,6 +49,24 @@
     "rayleigh_range_resolution_cm": 10.7068735,
     "sample_two_way_step_cm": 3.747405725
   },
+  "windows_and_metrics": {
+    "direct_wave_window_ns_rel_tau_dir": [
+      -1.0,
+      1.0
+    ],
+    "noise_tail_window_ns_rel_t0_eff": [
+      50.0,
+      950.0
+    ],
+    "ranging_search_interval_m": [
+      0.15,
+      2.0
+    ],
+    "pslr_mainlobe_half_width_m": 0.1606031,
+    "pslr_scale": "10*log10_on_quadratic_profile",
+    "suppression_scale": "10*log10_on_power",
+    "cal_residual_scale": "20*log10_on_rms"
+  },
   "methods_classic_baseline_only": {
     "n0_improvements_enabled": false,
     "calibration": {
@@ -64,17 +84,28 @@
         "data9",
         "data10"
       ],
+      "regularizer_unit": "dimensionless_power_ratio",
+      "lambda_cal_definition": "ratio_to_mean_inband_ref_psd_P_ref",
+      "lambda_inv_definition": "ratio_to_unit_ref_channel_gain_sq",
       "lambda_cal_default": 0.001,
       "lambda_inv_default": 0.001,
-      "lambda_cal_grid_cal_only": [
+      "lambda_cal_grid_air_loo": [
         0.0001,
         0.001,
         0.01
       ],
-      "lambda_inv_grid_cal_only": [
+      "lambda_inv_grid_air_loo": [
         0.0001,
         0.001,
         0.01
+      ],
+      "air_loo_budget_pairs": 9,
+      "air_loo_objective": "median(Supp_air_LOO_dB) + 0.5 * min(Supp_air_LOO_dB)",
+      "switch_from_default_trigger": "J_air(best) - J_air(default) >= 0.5 dB OR (min(default) < 10.0 dB AND min(best) >= 10.0 dB)",
+      "tie_break_order": [
+        "smaller_(lambda_cal + lambda_inv)",
+        "closer_to_default_(1e-3, 1e-3)",
+        "lexicographically_smaller_(lambda_cal, lambda_inv)"
       ],
       "phase_projection_weights": "abs(S_ref_band)^2",
       "freeze_before_holdout": true
@@ -86,23 +117,31 @@
       "fine_search_half_window_samples": 1.0,
       "fine_search_step_samples": 0.001,
       "alpha_mode_primary": "fixed_1.0",
-      "alpha_mode_diagnostic": "global_real_scalar_ls"
+      "alpha_mode_diagnostic": "time_windowed_dw_only_ls_on_W_dw",
+      "alpha_diagnostic_bounds": [
+        0.5,
+        2.0
+      ]
     },
     "ranging": {
       "id": "M0-Rng-Base",
       "channel_weights": "equal_w_i_1.0",
-      "search_range_m": [
-        0.15,
-        2.0
-      ],
       "coarse_step_m": 0.001,
       "fine_step_m": 0.0001,
-      "primary_statistic": "P_norm",
+      "primary_statistic": "P_norm_eff",
       "comparison_statistics": [
-        "P_norm_eff",
+        "P_norm",
         "P_env"
       ],
-      "wall_first_peak_threshold_mode": "cal_only_fixed_before_holdout"
+      "metal_peak_rule": "global_argmax_in_search_interval",
+      "wall_first_peak_rule": "earliest_local_max_above_eta_wall*P_max_and_noise_plus_6dB",
+      "eta_wall_default": 0.25,
+      "eta_wall_candidates_cal_only": [
+        0.15,
+        0.25,
+        0.35
+      ],
+      "freeze_eta_wall_before_holdout": true
     }
   },
   "pilot_datasets": {
@@ -116,13 +155,41 @@
       },
       {
         "case_id": "E0-S2",
-        "description": "63-RX full-array synthetic closed loop with AWGN",
+        "description": "63-RX full-array synthetic closed loop with planted dispersion & AWGN",
+        "rng": "numpy.random.default_rng(20261128)",
+        "seed": 20261128,
+        "channel_draw_order": "sorted rx_idx in 0..63 excluding 27 and 28",
+        "planted_H_ref": {
+          "tau_ref_hw_s": 2e-10,
+          "amp_tilt_u_coeff": 0.2,
+          "quad_phase_u2_rad": 0.5,
+          "u_def": "(f_D - 1.0e9) / 0.7e9"
+        },
+        "planted_rx_rel_distributions": {
+          "delta_tau_s": "Uniform(-0.75e-9, +0.75e-9)",
+          "gain_mag": "Uniform(0.5, 1.5)",
+          "psi_0_rad": "Uniform(-0.5, +0.5)",
+          "psi_quad_u2_rad": "Uniform(-0.3, +0.3)"
+        },
+        "trigger_offsets": {
+          "air_0_samples": 120.25,
+          "air_1_to_9": "Uniform(0, Tp)",
+          "targets_2": "Uniform(0, Tp)"
+        },
+        "amplitudes": {
+          "direct_wave_E_dir": "1.0 / R_dir_i",
+          "wall_0.42m_Gamma": 0.25,
+          "metal_0.69m_Gamma": -0.35
+        },
         "d_true_m_list": [
           0.42,
           0.69
         ],
-        "noise_snr_db": 25.0,
-        "seed": 20261128
+        "noise": {
+          "placement": "real_time_domain_AWGN_after_H_and_propagation",
+          "snr_db": 25.0,
+          "snr_reference": "63_rx_mean_inband_target_echo_only_power"
+        }
       }
     ],
     "phase_c_calibration_pilot": {
@@ -154,7 +221,7 @@
           "note": "already_explored_in_V0_M0"
         }
       ],
-      "optional_cal_expansion_allowed_only_after_pilot_pass": "remaining wall_cal & metal_cal in A_Q1_SPLIT.json"
+      "expansion_to_remaining_cal_requires_separate_approval": true
     },
     "phase_t_holdout_single_shot_eval": {
       "requires_frozen_config": true,
@@ -179,16 +246,18 @@
     }
   },
   "gates_and_thresholds": {
+    "required_valid_rx_channels": 63,
+    "allow_dropped_rx_channels": false,
     "synthetic_noiseless_max_range_err_cm": 0.05,
     "synthetic_noiseless_max_dtau_err_ns": 0.001,
     "synthetic_noisy_max_range_err_cm": 1.0,
     "synthetic_noisy_min_dw_suppression_db": 20.0,
-    "d1_min_valid_rx_channels": 63,
-    "air_leave_one_out_min_suppression_db": 10.0,
-    "air_leave_one_out_hard_stop_db": 6.0,
+    "air_loo_eligible_min_suppression_db": 10.0,
+    "air_loo_hard_stop_suppression_db": 6.0,
     "target_echo_min_pslr_db": 3.0,
-    "cal_pilot_pass_max_range_err_cm": 5.0,
-    "cal_pilot_hard_stop_range_err_cm": 10.71
+    "cal_pilot_eligible_max_range_err_cm": 5.0,
+    "cal_pilot_hard_stop_range_err_cm": 10.71,
+    "intermediate_band_policy": "not_eligible_for_freeze_halt_before_E0_T"
   },
   "resource_budget": {
     "single_process_cpu_only": true,
