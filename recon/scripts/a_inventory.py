@@ -16,7 +16,7 @@
   recon/samples/a_period_check.json             周期结构核对（16000 点 vs 题面 12000 点）
 用法：
   python recon/scripts/a_inventory.py --root "<A题目录>"
-  python recon/scripts/a_inventory.py --self-test   # 只跑 -32768/+32767/0 边界值单测
+  python recon/scripts/a_inventory.py --self-test   # 边界值/邻界/汇总口径单测（不读原件）
 """
 
 import argparse
@@ -108,15 +108,17 @@ def find_packets(buf):
 def stats_from_mat(mat):
     """对一包 int16 数据（channels x samples）做统计。
 
-    关键修复：先升到 int32 再取绝对值。numpy 的 int16 是定宽类型，
-    np.abs(np.int16(-32768)) 会回绕成 -32768，导致 -32768 被当成"小值"而漏计。
+    关键修复：先升到 int32 再统计，避免 int16 定宽类型的绝对值回绕。
+    端点判据用有符号存储端点 +32767 / -32768（不是 |x|>=32767，后者会把 -32767 误计）。
     """
     m = np.asarray(mat)
     if m.dtype != np.int32:
         m = m.astype(np.int32)
-    absm = np.abs(m)
     n = int(m.size)
     per_ch_mean = m.mean(axis=1, dtype=np.float64)
+    # 满量程判据：有符号存储端点 +32767 或 -32768。
+    # 注意不能用 |x| >= 32767：-32767 也满足 |x| >= 32767，但它不是端点，会被错误计入。
+    n_endpoint = int(np.count_nonzero((m >= INT16_POS_MAX) | (m <= INT16_NEG_MIN)))
     return {
         "shape": [int(m.shape[0]), int(m.shape[1])],
         "min": int(m.min()),
@@ -124,8 +126,7 @@ def stats_from_mat(mat):
         "mean": round(float(m.mean(dtype=np.float64)), 3),
         "std": round(float(m.std(dtype=np.float64)), 3),
         "ch_mean_abs": [round(float(v), 1) for v in np.abs(per_ch_mean)],
-        # 满量程判据：+32767 或 -32768（统计上等价于 |x| >= 32767；int32 下不再溢出）
-        "clip_frac": round(float(np.count_nonzero(absm >= INT16_POS_MAX) / n), 6),
+        "clip_frac": round(float(n_endpoint / n), 6),
         "n_at_pos_max": int(np.count_nonzero(m >= INT16_POS_MAX)),
         "n_at_neg_min": int(np.count_nonzero(m <= INT16_NEG_MIN)),
         "n_zero": int(np.count_nonzero(m == 0)),
@@ -137,6 +138,7 @@ def stats_all_packets(buf, packets):
     """对单个文件的**所有采样包**做幅值统计，并显式记录统计覆盖范围。
 
     旧版只统计 packets[0]；报告若据此写"全库无削顶"会超出证据范围。
+    逐通道均值按各通道自己的样本数计（不等长包按样本加权）。
     """
     n = 0
     total = 0.0
@@ -147,6 +149,7 @@ def stats_all_packets(buf, packets):
     n_neg = 0
     n_zero = 0
     ch_sum = np.zeros(CHANNELS, dtype=np.float64)
+    ch_n = np.zeros(CHANNELS, dtype=np.int64)  # 每通道各自的样本数（不等长包按样本加权）
     for pkt in packets:
         a = np.frombuffer(buf, dtype="<i2", count=pkt["num"] * pkt["len"] // 2, offset=pkt["start"])
         mat = a.reshape(pkt["num"], pkt["len"] // 2).T.astype(np.int32)  # 8 x num
@@ -159,16 +162,19 @@ def stats_all_packets(buf, packets):
         n_neg += int(np.count_nonzero(mat <= INT16_NEG_MIN))
         n_zero += int(np.count_nonzero(mat == 0))
         ch_sum += mat.sum(axis=1, dtype=np.float64)
+        ch_n += int(mat.shape[1])
     if n == 0:
         raise ValueError("no samples to aggregate")
     mean = total / n
     var = max(0.0, total_sq / n - mean * mean)
+    # 逐通道均值必须除以该通道自己的样本数；除以 8 通道总样本数 n 会小算 8 倍。
+    ch_mean = ch_sum / ch_n
     return {
         "min": mn,
         "max": mx,
         "mean": round(mean, 3),
         "std": round(float(np.sqrt(var)), 3),
-        "ch_mean_abs": [round(float(v), 1) for v in np.abs(ch_sum / n)],
+        "ch_mean_abs": [round(float(v), 1) for v in np.abs(ch_mean)],
         "clip_frac": round(float((n_pos + n_neg) / n), 6),
         "n_at_pos_max": n_pos,
         "n_at_neg_min": n_neg,
@@ -178,12 +184,39 @@ def stats_all_packets(buf, packets):
     }
 
 
+def _synthetic_dat(packet_mats):
+    """由 8 x nsamp int16 矩阵列表构造合法 .dat 字节流（仅用于自测）。"""
+    chunks = []
+    for mat in packet_mats:
+        m = np.asarray(mat, dtype="<i2")
+        if m.ndim != 2 or m.shape[0] != CHANNELS:
+            raise ValueError("expected %d x nsamp matrices" % CHANNELS)
+        nsamp = int(m.shape[1])
+        data = m.T.tobytes()  # 时间交织：每个时刻依次 8 个通道
+        total_len = 20 + len(data)
+        chunks.append(struct.pack("<III", MAGIC, total_len, TYPE_DATA))
+        chunks.append(struct.pack("<fIII", 4.0e9, 1, nsamp, 16))
+        chunks.append(data)
+    return b"".join(chunks)
+
+
 def self_test():
-    """边界值单测：正负极值与零值必须被正确计数（不依赖任何原始数据）。"""
+    """边界值单测：正负极值、-32767 相邻边界、单包与多包汇总口径（不依赖原始数据）。"""
     cases = []
 
     def check(name, mat, expected):
         got = stats_from_mat(mat)
+        ok = all(got[k] == v for k, v in expected.items())
+        cases.append({"case": name, "ok": ok, "got": {k: got[k] for k in expected}, "expected": expected})
+        if not ok:
+            raise AssertionError("%s failed: got=%s expected=%s" % (name, got, expected))
+
+    def check_aggregate(name, mats, expected):
+        buf = _synthetic_dat(mats)
+        packets, probs = find_packets(buf)
+        if probs:
+            raise AssertionError("%s: unexpected parse problems %s" % (name, probs))
+        got = stats_all_packets(buf, packets)
         ok = all(got[k] == v for k, v in expected.items())
         cases.append({"case": name, "ok": ok, "got": {k: got[k] for k in expected}, "expected": expected})
         if not ok:
@@ -215,6 +248,74 @@ def self_test():
             "n_at_neg_min": 2,
             "n_zero": 1,
             "n_samples": 8,
+        },
+    )
+    # PR review 用例：每个通道都是 [-32768, 32767, 0, -32767, 12]
+    # 按有符号端点口径，只有 -32768 与 +32767 是端点 → 2/5 = 0.4，-32767 不计入。
+    review_mat = np.tile(np.array([-32768, 32767, 0, -32767, 12], dtype="<i2"), (CHANNELS, 1))
+    check(
+        "signed_endpoints_review_matrix",
+        review_mat,
+        {
+            "clip_frac": 0.4,
+            "n_at_pos_max": 8,
+            "n_at_neg_min": 8,
+            "n_zero": 8,
+            "n_samples": 40,
+            # 每通道均值 = (-32768+32767+0-32767+12)/5 = -6551.2
+            "ch_mean_abs": [6551.2] * CHANNELS,
+        },
+    )
+    check(
+        "minus_32767_is_not_endpoint",
+        np.full((8, 16), -32767, dtype="<i2"),
+        {"min": -32767, "max": -32767, "clip_frac": 0.0, "n_at_neg_min": 0, "n_at_pos_max": 0},
+    )
+    check(
+        "plus_32766_is_not_endpoint",
+        np.full((8, 16), 32766, dtype="<i2"),
+        {"min": 32766, "max": 32766, "clip_frac": 0.0, "n_at_neg_min": 0, "n_at_pos_max": 0},
+    )
+    # 单包：汇总路径必须与单包逐通道路径一致（含逐通道均值分母）
+    check_aggregate(
+        "aggregate_single_packet_matches_single_packet_stats",
+        [review_mat],
+        {
+            "min": -32768,
+            "max": 32767,
+            "mean": -6551.2,
+            "clip_frac": 0.4,
+            "n_at_pos_max": 8,
+            "n_at_neg_min": 8,
+            "n_zero": 8,
+            "n_samples": 40,
+            "n_packets": 1,
+            "ch_mean_abs": [6551.2] * CHANNELS,
+        },
+    )
+    # 不等长包：包1 每通道 2 个 2，包2 每通道 6 个 6 → 加权均值 = (2*2+6*6)/8 = 5.0
+    check_aggregate(
+        "aggregate_unequal_packets_sample_weighted",
+        [np.full((8, 2), 2, dtype="<i2"), np.full((8, 6), 6, dtype="<i2")],
+        {
+            "min": 2,
+            "max": 6,
+            "mean": 5.0,
+            "n_samples": 64,
+            "n_packets": 2,
+            "ch_mean_abs": [5.0] * CHANNELS,
+        },
+    )
+    # 汇总路径的端点口径：包2 全为 -32767，不得被计入削顶
+    check_aggregate(
+        "aggregate_endpoint_criterion_excludes_minus_32767",
+        [review_mat, np.full((8, 3), -32767, dtype="<i2")],
+        {
+            "clip_frac": 0.25,
+            "n_at_pos_max": 8,
+            "n_at_neg_min": 8,
+            "n_samples": 64,
+            "n_packets": 2,
         },
     )
     print(json.dumps({"self_test": cases, "all_ok": all(c["ok"] for c in cases)}, ensure_ascii=False, indent=2))

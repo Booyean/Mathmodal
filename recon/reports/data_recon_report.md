@@ -71,7 +71,7 @@ python recon/scripts/b_tables.py --root "竞赛题目/B题：炼钢厂钢包周�
 # 4) B 题：时间解析、键唯一性、负时长、占位符
 python recon/scripts/b_qc.py --root "竞赛题目/B题：炼钢厂钢包周转与排产优化问题"
 
-# 5) 边界值单测（不读原件）：-32768/+32767/0 的计数与 clip_frac
+# 5) 边界值单测（不读原件）：±满量程、-32767 邻界、单包/多包汇总口径与 clip_frac
 python recon/scripts/a_inventory.py --self-test
 ```
 
@@ -353,3 +353,4 @@ python recon/scripts/a_inventory.py --self-test
 |---|---|---|---|
 | 0.1 | 2026-11-27 | dsh | 首版：A/B 全量附件实测、协议/结构/质量核对、数据侧选题建议、待裁决清单 |
 | 0.2 | 2026-11-27 | dsh | 按 PR review（CHANGES_REQUESTED）修正：①`a_inventory.py` 幅值统计改 int32 防 `-32768` 溢出，统计范围由首包扩到**全部 3129 个采样包**，新增 `--self-test` 正/负极值与零值边界单测；由此发现 46 个孤立 `-32768`（同一文件末包）并改正"全库无削顶"的错误结论；②`a_period_check.py` 字段 `n_full_periods` 改为 `record_period_multiple` 并标注 `period_boundary_alignment=UNVERIFIED`，全文删除"4 个完整且已对齐周期/可任取 3 段"表述；③更正 B 题口径：A 炉缺失 65/445=14.6%（85.4% 为覆盖率）、主表重复熔炼号为 72 条额外记录、1044 是负时长单元格数而非故障炉次 |
+| 0.3 | 2026-11-27 | dsh | 按二次 review 修正统计口径：①`clip_frac` 统一为有符号存储端点 `x>=+32767` 或 `x<=-32768`，删除"等价于 `|x|>=32767`"的错误说法（-32767 会被后者误计），单包/汇总两条路径一致；②`stats_all_packets` 逐通道 `abs(mean)` 改为除以**该通道样本数**（原除以 8 通道总样本数，结果小 8 倍）；③`--self-test` 新增 -32767 邻界、review 矩阵、单包/汇总一致性与不等长包样本加权检查（10 例全过）。清单字段与数值未变，未重跑 800 MB |
