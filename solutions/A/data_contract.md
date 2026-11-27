@@ -234,3 +234,6 @@ python solutions/A/test_a_dat_reader.py
 | D0-2 | 2026-11-27 | 自审修正：截断包优先记 `truncated_samples`（原在 `num*len/2` 非 8 倍数且采样区不足时会误记 `sample_count_not_multiple_of_8` 并静默跳过尾部）；明确 `P=0` 时 `channel_valid` 仍为 64 项；新增 S14/S15 两个合成例 |
 | D0-3 | 2026-11-28 | 自审修正：某行全部包形状不符时不再让空 `sync` 集合把整组交集压成 `P=0`，strict 拒绝、`--allow-incomplete` 时整行退出配对并登记 `rows_without_valid_packet`；`--max-packets` 只截断装载，被截包不再误记为交集外丢包，完整交集另存 `sync_common_all`/`n_packets_common_all`/`max_packets_applied`；新增 S16/S17；契约基线更新到 PR #3 合并后的主线 |
 | D0-4 | 2026-11-28 | 记录 `A-Q1-M0` 最终批复（`098e17d`）：坐标公式与 `positions_source` 由"待批复"改为"已批复"；合并核验基线更新到 `main` = `b40e15b`（PR #9，M0 批复记录）。仅文档/标注，读取与配对行为不变 |
+
+
+补充：即使显式启用 --allow-incomplete，整组没有任何契约形状有效行时仍抛 IncompleteGroupError，不返回全零数据。该开关仅允许在至少一行有效时保留其余有效行，并标记缺失通道。
