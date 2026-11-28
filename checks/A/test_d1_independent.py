@@ -419,23 +419,30 @@ def run_adversarial() -> None:
     pkt = repeat_packet(np.tile(s, (4, 1)))
     flip = (-pkt).astype(np.int16)
 
-    # C1 极性翻转包排第一：rho 并列 -> 锚包取小序号，可能选中翻转包
-    res = FG.fold_group(make_group(np.stack([flip, pkt, pkt, pkt])))
-    anchor = int(res.meta["anchor_index"])
-    check("C1a 锚包=0（翻转包，rho 并列取小）", 0, anchor)
-    check("C1b 仅接受翻转包", [True, False, False, False], res.accepted.tolist())
-    check("C1c 其余包按相位拒绝", ["inter_packet_phase_offset"], res.packet_log[1]["reject_reasons"])
-    finding("F1", "medium",
-            "锚包选择只用 rho 中位数，极性翻转使 rho=1 并列，翻转包排第一时被选为锚包，"
-            "3 个正常包被相位门控拒绝（n_accepted=1，输出=翻转包）。折叠本身仍自洽，"
-            "但结果依赖包顺序且丢弃多数正常包；建议锚包评分加入 phi 一致性（如通过相位门控的"
-            "同伴数），或先按 |phi| 聚类再取最大簇。非阻断：默认数据无极性翻转。")
+    # C1 系列是 **D1-1 已知缺陷的刻画**：仅在 CONTRACT_VERSION=="D1-1" 成立。
+    # D1-2 修复 F1 后这些旧期望必然失败，不能作为回归标准；改由
+    # checks/A/test_d1_2_independent.py 的 P-F1-1..6 覆盖（D1-PREREG-2 §5）。
+    if FG.CONTRACT_VERSION == "D1-1":
+        # C1 极性翻转包排第一：rho 并列 -> 锚包取小序号，可能选中翻转包
+        res = FG.fold_group(make_group(np.stack([flip, pkt, pkt, pkt])))
+        anchor = int(res.meta["anchor_index"])
+        check("C1a 锚包=0（翻转包，rho 并列取小）", 0, anchor)
+        check("C1b 仅接受翻转包", [True, False, False, False], res.accepted.tolist())
+        check("C1c 其余包按相位拒绝", ["inter_packet_phase_offset"], res.packet_log[1]["reject_reasons"])
+        finding("F1", "medium",
+                "锚包选择只用 rho 中位数，极性翻转使 rho=1 并列，翻转包排第一时被选为锚包，"
+                "3 个正常包被相位门控拒绝（n_accepted=1，输出=翻转包）。折叠本身仍自洽，"
+                "但结果依赖包顺序且丢弃多数正常包；建议锚包评分加入 phi 一致性（如通过相位门控的"
+                "同伴数），或先按 |phi| 聚类再取最大簇。非阻断：默认数据无极性翻转。")
 
-    # C1x 顺序敏感性：同一批包换个顺序，接受集不同
-    res2 = FG.fold_group(make_group(np.stack([pkt, flip, pkt, pkt])))
-    check("C1x 顺序改变接受集", [True, False, True, True], res2.accepted.tolist())
-    check("C1y 恒等包折叠一致", 0.0,
-          float(np.max(np.abs(res2.signals_folded - s.astype(np.float64)))), tol=0.0)
+        # C1x 顺序敏感性：同一批包换个顺序，接受集不同
+        res2 = FG.fold_group(make_group(np.stack([pkt, flip, pkt, pkt])))
+        check("C1x 顺序改变接受集", [True, False, True, True], res2.accepted.tolist())
+        check("C1y 恒等包折叠一致", 0.0,
+              float(np.max(np.abs(res2.signals_folded - s.astype(np.float64)))), tol=0.0)
+    else:
+        print("[SKIP] C1a/C1b/C1c/C1x 为 D1-1 缺陷刻画（当前 %s，由 D1-2 套件替代）"
+              % FG.CONTRACT_VERSION)
 
     # C2 非参考通道 NaN 传播（D0 int16 输入下不可达，只作为鲁棒性观察记录）
     bad = np.stack([pkt, pkt]).astype(np.float64)

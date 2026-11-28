@@ -1,0 +1,512 @@
+{
+  "contract_version": "D1-1",
+  "env": {
+    "python": "3.11.5",
+    "numpy": "1.26.4"
+  },
+  "results": [
+    {
+      "name": "F1-1.0 接受集（翻转@0）",
+      "status": "FAIL",
+      "expected": "{'s3', 's1', 's2'}",
+      "actual": "{'flip'}"
+    },
+    {
+      "name": "F1-1.0 锚包属于一致簇（翻转@0）",
+      "status": "FAIL",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "F1-1.0 翻转包按相位拒绝（翻转@0）",
+      "status": "FAIL",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "F1-1.0 折叠值逐点等于 s（翻转@0）",
+      "status": "FAIL",
+      "expected": 0.0,
+      "actual": 24000.0
+    },
+    {
+      "name": "F1-1.1 接受集（翻转@1）",
+      "status": "PASS",
+      "expected": "{'s3', 's1', 's2'}",
+      "actual": "{'s3', 's1', 's2'}"
+    },
+    {
+      "name": "F1-1.1 锚包属于一致簇（翻转@1）",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F1-1.1 翻转包按相位拒绝（翻转@1）",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F1-1.1 折叠值逐点等于 s（翻转@1）",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "F1-1.2 接受集（翻转@2）",
+      "status": "PASS",
+      "expected": "{'s3', 's1', 's2'}",
+      "actual": "{'s3', 's1', 's2'}"
+    },
+    {
+      "name": "F1-1.2 锚包属于一致簇（翻转@2）",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F1-1.2 翻转包按相位拒绝（翻转@2）",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F1-1.2 折叠值逐点等于 s（翻转@2）",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "F1-1.3 接受集（翻转@3）",
+      "status": "PASS",
+      "expected": "{'s3', 's1', 's2'}",
+      "actual": "{'s3', 's1', 's2'}"
+    },
+    {
+      "name": "F1-1.3 锚包属于一致簇（翻转@3）",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F1-1.3 翻转包按相位拒绝（翻转@3）",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F1-1.3 折叠值逐点等于 s（翻转@3）",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "F1-2a 接受多数簇（3/4）",
+      "status": "PASS",
+      "expected": 3,
+      "actual": 3
+    },
+    {
+      "name": "F1-2b 拒绝少数包",
+      "status": "PASS",
+      "expected": "{'s1'}",
+      "actual": "{'s1'}"
+    },
+    {
+      "name": "F1-2c 输出为 ±s 之一",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "F1-3a 并列时接受 2 包",
+      "status": "PASS",
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "F1-3b 并列时输出为 ±s",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "F1-3c 并列结果确定",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F1-4.0 接受集按标签不变（循环0）",
+      "status": "PASS",
+      "expected": "{'s3', 'd', 's1', 's2'}",
+      "actual": "{'s3', 'd', 's1', 's2'}"
+    },
+    {
+      "name": "F1-4.0 折叠值=(3s+d)/4（循环0）",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "F1-4.1 接受集按标签不变（循环1）",
+      "status": "PASS",
+      "expected": "{'s3', 'd', 's1', 's2'}",
+      "actual": "{'s3', 'd', 's1', 's2'}"
+    },
+    {
+      "name": "F1-4.1 折叠值=(3s+d)/4（循环1）",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "F1-4.2 接受集按标签不变（循环2）",
+      "status": "PASS",
+      "expected": "{'s3', 'd', 's1', 's2'}",
+      "actual": "{'s3', 'd', 's1', 's2'}"
+    },
+    {
+      "name": "F1-4.2 折叠值=(3s+d)/4（循环2）",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "F1-4.3 接受集按标签不变（循环3）",
+      "status": "FAIL",
+      "expected": "{'s3', 'd', 's1', 's2'}",
+      "actual": "{'flip'}"
+    },
+    {
+      "name": "F1-4.3 折叠值=(3s+d)/4（循环3）",
+      "status": "FAIL",
+      "expected": 0.0,
+      "actual": 24008.0
+    },
+    {
+      "name": "F1-4.4 接受集按标签不变（循环4）",
+      "status": "PASS",
+      "expected": "{'s3', 'd', 's1', 's2'}",
+      "actual": "{'s3', 'd', 's1', 's2'}"
+    },
+    {
+      "name": "F1-4.4 折叠值=(3s+d)/4（循环4）",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "F1-5a 延迟 20 ps 包接受",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F1-5b 折叠=(s+d)/2（未做时移补偿）",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "F2-1 NaN@ch5 输出全有限",
+      "status": "FAIL",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "F2-1 NaN@ch5 异常显式登记",
+      "status": "FAIL",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "F2-1 NaN@ch5 坏包被接受时不得含该通道污染",
+      "status": "FAIL",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "F2-1 NaN@ch5 好包仍参与折叠",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "F2-1 NaN@ch5 输入未被修改",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F2-1 NaN@ch5 诊断 JSON 无裸 NaN",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F2-2 单车坏包 输出全有限",
+      "status": "FAIL",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "F2-2 单车坏包 异常显式登记",
+      "status": "FAIL",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "F2-2 单车坏包 坏包被接受时不得含该通道污染",
+      "status": "FAIL",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "F2-2 单车坏包 输入未被修改",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F2-2 单车坏包 诊断 JSON 无裸 NaN",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F2-3 Inf@ch5 输出全有限",
+      "status": "FAIL",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "F2-3 Inf@ch5 异常显式登记",
+      "status": "FAIL",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "F2-3 Inf@ch5 坏包被接受时不得含该通道污染",
+      "status": "FAIL",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "F2-3 Inf@ch5 好包仍参与折叠",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "F2-3 Inf@ch5 输入未被修改",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F2-3 Inf@ch5 诊断 JSON 无裸 NaN",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F2-4a 参考通道 NaN 拒绝",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F2-4b 好包仍接受",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F2-4c 输出=好包段",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "F2-5 无效通道 NaN 输出全有限",
+      "status": "FAIL",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "F2-5 无效通道 NaN 异常显式登记",
+      "status": "FAIL",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "F2-5 无效通道 NaN 输入未被修改",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F2-5 无效通道 NaN 诊断 JSON 无裸 NaN",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "F2-6 正常输入全有限且接受",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "R-4 默认阈值不变",
+      "status": "PASS",
+      "expected": [
+        0.99,
+        0.95,
+        0.99,
+        50.0,
+        0.1,
+        3.0
+      ],
+      "actual": [
+        0.99,
+        0.95,
+        0.99,
+        50.0,
+        0.1,
+        3.0
+      ]
+    },
+    {
+      "name": "R-5 契约版本 D1-2",
+      "status": "FAIL",
+      "expected": "D1-2",
+      "actual": "D1-1"
+    },
+    {
+      "name": "R-1 data1 接受集 4/4",
+      "status": "PASS",
+      "expected": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "actual": [
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "name": "R-1b data1 sync",
+      "status": "PASS",
+      "expected": [
+        114,
+        115,
+        116,
+        117
+      ],
+      "actual": [
+        114,
+        115,
+        116,
+        117
+      ]
+    },
+    {
+      "name": "R-2a 形状/dtype",
+      "status": "PASS",
+      "expected": [
+        [
+          64,
+          4000
+        ],
+        "float64"
+      ],
+      "actual": [
+        [
+          64,
+          4000
+        ],
+        "float64"
+      ]
+    },
+    {
+      "name": "R-2b 全有限",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "R-2c 折叠=接受包双重平均",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "R-2d0 段相干矩阵全有限",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "R-2d 段相干矩阵一致",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "R-2e gamma_ref 一致",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "R-3a rho 独立一致",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "R-3b delta 独立一致",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "R-3c phi 独立一致",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "R-3d gain 独立一致",
+      "status": "PASS",
+      "expected": 0.0,
+      "actual": 0.0
+    },
+    {
+      "name": "R-6 重复运行逐位一致",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "R-7 接受/拒绝账本闭合",
+      "status": "PASS",
+      "expected": 4,
+      "actual": 4
+    },
+    {
+      "name": "R-8 接受包无拒绝原因",
+      "status": "PASS",
+      "expected": true,
+      "actual": true
+    }
+  ],
+  "findings": []
+}
