@@ -1,0 +1,44 @@
+{
+ "contract": "E0-C-C12-REPEAT-1",
+ "n_runs": 2,
+ "synthetic": true,
+ "citable": false,
+ "entry": "solutions/A/run_n0_synthetic.py",
+ "allowed_exit_codes": [
+  0,
+  3,
+  4
+ ],
+ "total_wall_time_s": 214.581,
+ "total_wall_time_max_s": 600.0,
+ "peak_rss_max_mib": 4096.0,
+ "runs": [
+  {
+   "run_id": "run-1",
+   "pid": 39248,
+   "started_at": "2026-11-28T16:05:12.355Z",
+   "finished_at": "2026-11-28T16:07:02.855Z",
+   "results_file": "e0c_results.json",
+   "results_sha256": "256d47a56eb84351ce1c850c6ecc9778f38563032ea90f056a80e2fb40cb75a1",
+   "arrays_file": "e0c_arrays.npz",
+   "arrays_sha256": "95fae44accb132afe0515a7986369b303a45960e213e2b2d2f46b58b75d04794",
+   "wall_time_s": 110.499,
+   "exit_code": 0,
+   "peak_rss_mib": 257.922
+  },
+  {
+   "run_id": "run-2",
+   "pid": 2972,
+   "started_at": "2026-11-28T16:07:05.327Z",
+   "finished_at": "2026-11-28T16:08:49.408Z",
+   "results_file": "repeat/e0c_results.json",
+   "results_sha256": "256d47a56eb84351ce1c850c6ecc9778f38563032ea90f056a80e2fb40cb75a1",
+   "arrays_file": "repeat/e0c_arrays.npz",
+   "arrays_sha256": "95fae44accb132afe0515a7986369b303a45960e213e2b2d2f46b58b75d04794",
+   "wall_time_s": 104.082,
+   "exit_code": 0,
+   "peak_rss_mib": 257.711
+  }
+ ],
+ "note": "两次证据为同一合成入口的两个独立进程；摘要均取自实际落盘字节。N0 实测未放行。"
+}

@@ -1,0 +1,175 @@
+{
+ "contract": "E0-C-PREFLIGHT-1",
+ "mode": "n0-synthetic",
+ "synthetic": true,
+ "citable": false,
+ "real_dat_files_opened": 0,
+ "started_at": "2026-11-28T16:05:13.935Z",
+ "finished_at": "2026-11-28T16:05:13.935Z",
+ "checks": [
+  {
+   "id": "repo_root",
+   "ok": true,
+   "detail": "D:/数模/tmp/n0iface-wt"
+  },
+  {
+   "id": "head_sha_40hex",
+   "ok": true,
+   "detail": "4383591a241ffb5a920ba6cd2d0706d6b44463ab"
+  },
+  {
+   "id": "origin_main_sha_40hex",
+   "ok": true,
+   "detail": "c7b841efe67192a73a96894fb5a0243b336a9468"
+  },
+  {
+   "id": "origin_main_ancestor_of_head",
+   "ok": true,
+   "detail": "origin/main=c7b841efe67192a73a96894fb5a0243b336a9468"
+  },
+  {
+   "id": "worktree_clean_tracked",
+   "ok": true,
+   "detail": "clean"
+  },
+  {
+   "id": "n0_config_exists",
+   "ok": true,
+   "detail": "D:/数模/tmp/n0iface-wt\\experiments\\A\\A-Q1-E0\\n0\\n0_config.json"
+  },
+  {
+   "id": "n0_config_lf_sha256_frozen",
+   "ok": true,
+   "detail": "ec39673787e5dd05986095bca8f7c6cb41904dc13265e40798157ad9efadd32d"
+  },
+  {
+   "id": "n0_config_parses",
+   "ok": true,
+   "detail": "A-Q1-N0-CONFIG-1"
+  },
+  {
+   "id": "identity_method_scope",
+   "ok": true,
+   "detail": "M0-DW-Subspace/rank-2/in-window-2coef"
+  },
+  {
+   "id": "p4_sign_rule",
+   "ok": true,
+   "detail": "peak_loss_db := -peak_retention_db"
+  },
+  {
+   "id": "phase_unit_rule",
+   "ok": true,
+   "detail": "shift_ns := shifts_s * 1e9"
+  },
+  {
+   "id": "fold_order_rule",
+   "ok": true,
+   "detail": "[fold][held_out_index]"
+  },
+  {
+   "id": "prereg_exists",
+   "ok": true,
+   "detail": "D:\\数模\\tmp\\acc3\\tree\\checks\\A\\e0_n0_prereg.json"
+  },
+  {
+   "id": "prereg_contract",
+   "ok": true,
+   "detail": "E0-N0-ACCEPT-3/frozen"
+  },
+  {
+   "id": "prereg_thresholds_match_config",
+   "ok": true,
+   "detail": "{'p1_min_db': 10.0, 'p1_hard_stop_db': 6.0, 'p2_min_db': 10.0, 'p2_median_db': 10.0, 'p3_db_tol': 0.05, 'p3_cm_tol': 0.05, 'p4_peak_loss_db': 0.1, 'p4_range_shift_mm': 2.0, 'l2_pslr_db': 3.0, 'l2_pnr_db': 6.0, 'l2_abs_err_cm': 5.0, 'gray_err_cm': 10.71, 'supp_db_tol': 1e-06, 'eta_wall': 0.25, 'rank': 2, 'lambda': [0.001, 0.001]}"
+  },
+  {
+   "id": "prereg_air_groups_10",
+   "ok": true,
+   "detail": "10"
+  },
+  {
+   "id": "prereg_clusters_5_pairs",
+   "ok": true,
+   "detail": "5"
+  },
+  {
+   "id": "prereg_repeat_block",
+   "ok": true,
+   "detail": "E0-C-C12-REPEAT-1"
+  },
+  {
+   "id": "inputs_oracle_exists",
+   "ok": true,
+   "detail": "D:/数模/tmp/n0iface-wt\\checks\\A\\e0_c_data_oracle.json"
+  },
+  {
+   "id": "inputs_oracle_groups_12",
+   "ok": true,
+   "detail": "12"
+  },
+  {
+   "id": "inputs_oracle_files_96",
+   "ok": true,
+   "detail": "96"
+  },
+  {
+   "id": "inputs_oracle_total_bytes",
+   "ok": true,
+   "detail": "88073632"
+  },
+  {
+   "id": "frozen_e0c_results_ledger",
+   "ok": true,
+   "detail": "7d3fbcd582de301127cb5200d20093f4efcfa8adc295a6c1cb6fdd618f0aeba8"
+  },
+  {
+   "id": "frozen_e0c_arrays_ledger",
+   "ok": true,
+   "detail": "03084cffe041900d6a9aa82b5492e6fb64474d971c37e0560adbd115ce4962ff"
+  },
+  {
+   "id": "frozen_e0c_air_loo_ledger",
+   "ok": true,
+   "detail": "dc31ffdd9d043f134305c2617d89d282102114717f80a474b6f9790534969a27"
+  },
+  {
+   "id": "synthetic_prototype_ledger",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "id": "no_n0_frozen_artifact",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "id": "out_dir_not_frozen_dir",
+   "ok": true,
+   "detail": "D:/数模/tmp/n0iface-wt/tmp/n0_acc3_runs/run1"
+  },
+  {
+   "id": "out_dir_writable_contract",
+   "ok": true,
+   "detail": "exists_nonempty=False overwrite=False"
+  },
+  {
+   "id": "environment_recorded",
+   "ok": true,
+   "detail": "python 3.13.5 / numpy 2.1.3"
+  },
+  {
+   "id": "solver_entry_api",
+   "ok": true,
+   "detail": "N0-SYN-1"
+  },
+  {
+   "id": "package_module_api",
+   "ok": true,
+   "detail": "E0-N0-PRODUCER-CONTRACT-1"
+  }
+ ],
+ "passed": 32,
+ "total": 32,
+ "ok": true,
+ "note": "N0 合成模式 preflight：32 项真实断言；不是 E0-C 实测 preflight 的转发。"
+}

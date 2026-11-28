@@ -1,0 +1,106 @@
+{
+ "prereg": "E0-N0-1",
+ "folds": [
+  {
+   "index": 0,
+   "held_out": "空场数据/data1"
+  },
+  {
+   "index": 1,
+   "held_out": "空场数据/data2"
+  },
+  {
+   "index": 2,
+   "held_out": "空场数据/data3"
+  },
+  {
+   "index": 3,
+   "held_out": "空场数据/data4"
+  },
+  {
+   "index": 4,
+   "held_out": "空场数据/data5"
+  },
+  {
+   "index": 5,
+   "held_out": "空场数据/data6"
+  },
+  {
+   "index": 6,
+   "held_out": "空场数据/data7"
+  },
+  {
+   "index": 7,
+   "held_out": "空场数据/data8"
+  },
+  {
+   "index": 8,
+   "held_out": "空场数据/data9"
+  },
+  {
+   "index": 9,
+   "held_out": "空场数据/data10"
+  }
+ ],
+ "grid": [
+  {
+   "lambdas": [
+    0.001,
+    0.001
+   ],
+   "folds": [
+    {
+     "held_out": "空场数据/data1",
+     "supp_db": 30.319624958887076
+    },
+    {
+     "held_out": "空场数据/data2",
+     "supp_db": 30.10827105697264
+    },
+    {
+     "held_out": "空场数据/data3",
+     "supp_db": 30.326414651729706
+    },
+    {
+     "held_out": "空场数据/data4",
+     "supp_db": 29.83307600511108
+    },
+    {
+     "held_out": "空场数据/data5",
+     "supp_db": 30.27676169009957
+    },
+    {
+     "held_out": "空场数据/data6",
+     "supp_db": 30.251312648513043
+    },
+    {
+     "held_out": "空场数据/data7",
+     "supp_db": 28.395716070064104
+    },
+    {
+     "held_out": "空场数据/data8",
+     "supp_db": 28.522324148723506
+    },
+    {
+     "held_out": "空场数据/data9",
+     "supp_db": 29.173633618176233
+    },
+    {
+     "held_out": "空场数据/data10",
+     "supp_db": 29.030151678632844
+    }
+   ],
+   "min_db": 28.395716070064104,
+   "median_db": 29.97067353104186
+  }
+ ],
+ "selected": [
+  0.001,
+  0.001
+ ],
+ "switched": false,
+ "min_supp_db": 28.395716070064104,
+ "median_supp_db": 29.97067353104186,
+ "eligibility": "eligible",
+ "switch_reason": "N0 固定默认 lambda（C8' 只复算，不选参）"
+}

@@ -1,0 +1,70 @@
+{
+ "contract": "E0-C-DRYRUN-1",
+ "mode": "n0-synthetic",
+ "synthetic": true,
+ "citable": false,
+ "real_dat_files_opened": 0,
+ "started_at": "2026-11-28T16:05:18.210Z",
+ "finished_at": "2026-11-28T16:05:18.210Z",
+ "checks": [
+  {
+   "id": "config_load",
+   "ok": true,
+   "detail": "A-Q1-E0"
+  },
+  {
+   "id": "setup_geometry",
+   "ok": true,
+   "detail": "n_f=1401 d=[0.15,2]"
+  },
+  {
+   "id": "synth_pool_shapes",
+   "ok": true,
+   "detail": "air=10 targets=2"
+  },
+  {
+   "id": "calibrate_inverse",
+   "ok": true,
+   "detail": "(63, 1401)"
+  },
+  {
+   "id": "align_shapes_finite",
+   "ok": true,
+   "detail": "(10, 63, 1401)"
+  },
+  {
+   "id": "basis_rank2",
+   "ok": true,
+   "detail": "rank=2 near_parallel=False"
+  },
+  {
+   "id": "phase_evidence_ranges",
+   "ok": true,
+   "detail": "rho_n=10 d1_rank=2 d1_min=0"
+  },
+  {
+   "id": "fixture_mapping_35",
+   "ok": true,
+   "detail": "inputs=96 xcluster=5x2 arrays=6"
+  },
+  {
+   "id": "toy_package_selfcheck",
+   "ok": true,
+   "detail": "SELF_OK"
+  },
+  {
+   "id": "frozen_artifacts_unchanged",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "id": "no_real_dat_opened",
+   "ok": true,
+   "detail": "real_dat_files_opened=0"
+  }
+ ],
+ "passed": 11,
+ "total": 11,
+ "ok": true,
+ "note": "N0 合成模式 dryrun：真跑生成/校准/对齐/基/相位 + 夹具映射 + 玩具包自检；不读 .dat。"
+}
