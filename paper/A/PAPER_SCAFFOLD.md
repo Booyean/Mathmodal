@@ -133,15 +133,15 @@
 
 ### 九、参考文献（依 A 题 PDF 第 2 页要求列示；正文逐条引用，仅采用已核验学术来源）
 *(完整来源核验、DOI 链接与 Ch.1–Ch.7 逐条支撑断言对照表见 [REFERENCES_AND_CITATIONS.md](REFERENCES_AND_CITATIONS.md)。)*
-- `[1]` Grove R L, Dall J, Leth-Espensen P. Mutual Coupling and Channel Imbalance Calibration of Colocated MIMO Radars[J]. *IEEE Open Journal of Antennas and Propagation*, 2022, 3: 511–522. DOI: `10.1109/OJAP.2022.3174246`
+- `[1]` Grove R L, Dall J, Leth-Espensen P. Mutual Coupling and Channel Imbalance Calibration of Colocated MIMO Radars[J]. *IEEE Open Journal of Antennas and Propagation*, 2022, 3: 511–522. DOI: `10.1109/OJAP.2022.3170795`
 - `[2]` Hao X, Chen J, Guo S, Li N, Yao Y, Qiu C, Cui G. A Robust Multichannel Calibration Method for MIMO Through-the-Wall Radar Systems[J]. *IEEE Transactions on Antennas and Propagation*, 2026, 74(7): 7118–7123. DOI: `10.1109/TAP.2026.3684987`
-- `[3]` Tivive F H C, Bouzerdoum A, Amin M G. A Subspace Projection Approach for Wall Clutter Mitigation in Through-the-Wall Radar Imaging[J]. *IEEE Transactions on Geoscience and Remote Sensing*, 2015, 53(4): 2108–2122. DOI: `10.1109/TGRS.2014.2354755`
+- `[3]` Tivive F H C, Bouzerdoum A, Amin M G. A Subspace Projection Approach for Wall Clutter Mitigation in Through-the-Wall Radar Imaging[J]. *IEEE Transactions on Geoscience and Remote Sensing*, 2015, 53(4): 2108–2122. DOI: `10.1109/TGRS.2014.2355211`
 - `[4]` Jol H M (Ed.). *Ground Penetrating Radar: Theory and Applications*[M]. Amsterdam: Elsevier, 2009. ISBN 978-0-444-53348-7. DOI: `10.1016/B978-0-444-53348-7.X0001-4`
 - `[5]` Ahmad F, Amin M G, Kassam S A. Synthetic aperture beamformer for imaging through a dielectric wall[J]. *IEEE Transactions on Aerospace and Electronic Systems*, 2005, 41(1): 271–283. DOI: `10.1109/TAES.2005.1413761`
 - `[6]` Ahmad F, Amin M G, Mandapati G. Autofocusing of through-the-wall radar imagery under unknown wall characteristics[J]. *IEEE Transactions on Image Processing*, 2007, 16(7): 1785–1795. DOI: `10.1109/TIP.2007.899030`
 - `[7]` Zhang W, Hoorfar A. Three-Dimensional Real-Time Through-the-Wall Radar Imaging With Diffraction Tomographic Algorithm[J]. *IEEE Transactions on Geoscience and Remote Sensing*, 2013, 51(7): 4155–4163. DOI: `10.1109/TGRS.2012.2227059`
-- `[8]` Hu J, Song Y, Jin T, Lu B, Zhu G, Zhou Z. Shadow Effect Mitigation in Indication of Moving Human Behind Wall via MIMO TWIR[J]. *IEEE Geoscience and Remote Sensing Letters*, 2015, 12(3): 453–457. DOI: `10.1109/LGRS.2014.2346766`
-- `[9]` Leigsnering M, Ahmad F, Amin M G, Zoubir A M. Multipath Exploitation and Suppression for SAR Imaging of Building Interiors[J]. *IEEE Signal Processing Magazine*, 2014, 31(4): 110–119. DOI: `10.1109/MSP.2014.2312683`
+- `[8]` Hu J, Song Y, Jin T, Lu B, Zhu G, Zhou Z. Shadow Effect Mitigation in Indication of Moving Human Behind Wall via MIMO TWIR[J]. *IEEE Geoscience and Remote Sensing Letters*, 2015, 12(3): 453–457. DOI: `10.1109/LGRS.2014.2345777`
+- `[9]` Leigsnering M, Amin M G, Ahmad F, Zoubir A M. Multipath Exploitation and Suppression for SAR Imaging of Building Interiors: An Overview of Recent Advances[J]. *IEEE Signal Processing Magazine*, 2014, 31(4): 110–119. DOI: `10.1109/MSP.2014.2312203`
 - `[10]` Amin M G (Ed.). *Through-the-Wall Radar Imaging*[M]. Boca Raton, FL: CRC Press, 2011. ISBN 978-1-4398-1476-5. DOI: `10.1201/9781315218144`
 
 ---
