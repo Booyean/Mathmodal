@@ -60,20 +60,27 @@ class TestQ2Q3OutputContract(unittest.TestCase):
         self.assertIn("shadow_ratio_db", q3m["shadow_diagnostics"]["item_keys"])
         self.assertIn("centroid_10db_xyz_m", q3m["metal_objects"]["item_keys"])
 
-        # Fig 3-2 vertical axis mapping + linear-to-dB reference contract
+        # Fig 3-2 vertical axis mapping + unique global multi-target dB reference contract
         self.assertEqual(q3m_npz["y_wall_band_m"]["shape"], ["N_y_wall"])
         self.assertEqual(q3m_npz["shadow_profile_x_y"]["shape"], ["N_y_wall", "N_x"])
         self.assertEqual(q3m_npz["shadow_profile_x_y"]["y_axis_key"], "y_wall_band_m")
         self.assertEqual(q3m_npz["shadow_profile_x_y"]["x_axis_key"], "x_grid_m")
-        self.assertEqual(q3m_npz["shadow_profile_x_y"]["db_ref_key"], "i_unocc_med")
+        self.assertEqual(q3m_npz["shadow_profile_x_y"]["db_ref_key"], "shadow_unocc_global_med")
+        self.assertEqual(q3m["shadow_unocc_global_med"]["type"], "float")
+        self.assertEqual(q3m["shadow_unocc_global_med"]["unit"], "normalized_energy")
         self.assertIn("y_wall_band_m", self.data["paper_slots"]["Fig 3-2"]["required_fields"])
+        self.assertIn("shadow_unocc_global_med", self.data["paper_slots"]["Fig 3-2"]["required_fields"])
         self.assertIn("shadow_profile_axis_spec", self.data["paper_slots"]["Fig 3-2"]["required_fields"])
-        self.assertEqual(q3m["shadow_profile_axis_spec"]["defaults"]["ref_energy_key"], "i_unocc_med")
+        axis_defaults = q3m["shadow_profile_axis_spec"]["defaults"]
+        self.assertEqual(axis_defaults["ref_energy_key"], "shadow_unocc_global_med")
+        self.assertEqual(axis_defaults["multi_target_rule"], "exclude_union_of_all_metal_x_boxes")
+        self.assertIn("object_id", axis_defaults["per_object_ratio_source"])
 
         # All NPZ energy arrays store linear normalized energy with locked dB plotting reference
         db_norm = self.data["unit_conventions"]["plot_db_normalization"]
         self.assertIn("10 * log10", db_norm["formula"])
-        self.assertIn("i_unocc_med", db_norm["fig_3_2_shadow_profile_i_ref"])
+        self.assertIn("shadow_unocc_global_med", db_norm["fig_3_2_shadow_profile_i_ref"])
+        self.assertIn("object_id", db_norm["fig_3_2_shadow_profile_i_ref"])
         for c_name in ("q2_contract", "q3_wall_contract", "q3_metal_contract"):
             for arr_key, meta in self.data[c_name]["npz_arrays"].items():
                 if arr_key.startswith(("image_", "slice_", "proj_", "shadow_profile_")):
