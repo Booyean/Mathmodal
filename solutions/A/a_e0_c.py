@@ -66,6 +66,7 @@ for _thread_env in (
 
 import argparse
 import json
+import math
 import platform
 import re
 import sys
@@ -119,6 +120,19 @@ TARGET_SPECS: Tuple[Dict[str, Any], ...] = (
 
 _ROW_FILE_RE = re.compile(r"^(?P<prefix>.+)_(?P<row>[0-7])\.dat$", re.IGNORECASE)
 _REF_POS = 27  # rx63 中的参考通道位置：rx63[27] == ref_idx == 28
+
+#: E0-PREREG-3 §2.3 冻结的交付数组契约。
+AIR_LOO_PREFIX = "air_loo"
+#: τ 轴非均匀：DW 窗与目标峰附近 0.05 ns（与 PLAN §5.1 的 41 点窗同分辨率），
+#: 背景代理窗 [50,950] ns 取 0.25 ns（PLAN §5.1 的 m=200..3800 原生网格），
+#: 跨 0/Tp 循环边界处保留 0.05 ns 以防止左半主瓣被截断。
+DELIVERY_DENSE_STEP_NS = 0.05
+DELIVERY_COARSE_STEP_NS = 0.25
+DELIVERY_DENSE_SPAN_NS = 20.0
+DELIVERY_BG_STOP_NS = 950.0
+DELIVERY_D_STEP_M = 1e-4  # 0.1 mm 细网格（E0-PREREG-3 §2.3）
+PSLR_HALF_WIDTH_M = 0.1606031
+DATA_REL_PREFIX = PF.DATA_SUBDIR.as_posix()  # "附件/附件2-测距数据"
 
 
 class E0CStop(RuntimeError):
@@ -322,6 +336,193 @@ def load_group_spectrum(
 # --------------------------------------------------------------------------
 # 求解（纯数组，无文件访问）：与 E0-S 共用同一套数学原语
 # --------------------------------------------------------------------------
+def delivery_tau_axis(setup: "E0S.Setup") -> Tuple[np.ndarray, float]:
+    """E0-PREREG-3 §2.3 的压缩延迟轴（单调、非均匀、覆盖一个 Tp）。
+
+    * ``[0, 20)`` ns：0.05 ns 密集采样，覆盖全部直射波窗与目标峰（τ_dir ≤ 1.33 ns）；
+    * ``[20, 950]`` ns：0.25 ns 采样，``[50,950]`` 与 PLAN §5.1 的 ``m=200..3800`` 对齐；
+    * ``[999, 1000)`` ns：0.05 ns 密集采样，保留跨 0/Tp 边界的左半主瓣。
+
+    返回 ``(tau_ns, dense_step_ns)``。窗口中心按 ``dense_step_ns`` 量化（≤0.025 ns），
+    使每个通道的直射波窗恰为 PLAN 的 41 个采样点。
+    """
+    dense = np.arange(0.0, DELIVERY_DENSE_SPAN_NS, DELIVERY_DENSE_STEP_NS)
+    n_coarse = int(round((DELIVERY_BG_STOP_NS - DELIVERY_DENSE_SPAN_NS) / DELIVERY_COARSE_STEP_NS))
+    coarse = DELIVERY_DENSE_SPAN_NS + DELIVERY_COARSE_STEP_NS * np.arange(n_coarse + 1)
+    tp_ns = float(np.round(float(setup.tp) * 1e9, 6))
+    tail_start = tp_ns - 1.0
+    tail = tail_start + DELIVERY_DENSE_STEP_NS * np.arange(
+        int(round(1.0 / DELIVERY_DENSE_STEP_NS))
+    )
+    tau = np.concatenate([dense, coarse, tail])
+    if not np.all(np.diff(tau) > 0):
+        raise E0CStop("交付 tau 轴非严格单调")
+    if tau[-1] >= setup.tp * 1e9:
+        raise E0CStop("交付 tau 轴越出一个 Tp")
+    return tau, DELIVERY_DENSE_STEP_NS
+
+
+def z_at_tau_axis(
+    x: np.ndarray,
+    tpl: np.ndarray,
+    f_r: np.ndarray,
+    tau_ns: np.ndarray,
+) -> np.ndarray:
+    """在任意（非均匀）τ 轴上逐通道评估 ``z_i(tau)``（复用 E0S.z_at_delays）。"""
+    delays = np.tile(np.asarray(tau_ns, dtype=np.float64) * 1e-9, (x.shape[0], 1))
+    return E0S.z_at_delays(x, tpl, f_r, delays)
+
+
+def profile_fine(
+    x_after: np.ndarray,
+    s_eff: np.ndarray,
+    r_dir: np.ndarray,
+    f_r: np.ndarray,
+    c0: float,
+    d_grid: np.ndarray,
+    chunk: int = 1024,
+) -> np.ndarray:
+    """0.1 mm 网格上的 ``P_norm,eff``；分块求值以避免 (63, M, 1401) 峰值内存。"""
+    out = np.empty(d_grid.size, dtype=np.float64)
+    for start in range(0, d_grid.size, chunk):
+        stop = min(start + chunk, d_grid.size)
+        out[start:stop] = E0S.profile_p_norm_eff(
+            x_after, s_eff, r_dir, f_r, c0, d_grid[start:stop]
+        )[0]
+    return out
+
+
+def bg_from_z(z_after: np.ndarray, tau_ns: np.ndarray) -> float:
+    """``BG_proxy = mean_{i, tau in [50,950] ns} |z_after|^2``（E0-PREREG-3 §5）。"""
+    idx = np.flatnonzero((tau_ns >= 50.0) & (tau_ns <= 950.0))
+    if idx.size == 0:
+        raise E0CStop("交付 tau 轴不含背景代理窗 [50,950] ns")
+    return float(np.mean(np.abs(z_after[:, idx]) ** 2))
+
+
+def supp_from_z(
+    z_before: np.ndarray,
+    z_after: np.ndarray,
+    tau_ns: np.ndarray,
+    tau_dir_ns: np.ndarray,
+    tp_ns: float = 1000.0,
+) -> Tuple[float, int]:
+    """按交付网格重算 ``Supp_dw-win``：逐通道取 ``|wrap(tau-tau_dir)|<=1 ns`` 的样本。"""
+    before = 0.0
+    after = 0.0
+    samples = 0
+    for i in range(z_before.shape[0]):
+        delta = (tau_ns - float(tau_dir_ns[i]) + 0.5 * tp_ns) % tp_ns - 0.5 * tp_ns
+        idx = np.flatnonzero(np.abs(delta) <= 1.0)
+        if idx.size == 0:
+            raise E0CStop("通道 %d 的直射波窗为空（tau_dir=%.3f ns）" % (i, tau_dir_ns[i]))
+        samples += int(idx.size)
+        before += float(np.sum(np.abs(z_before[i, idx]) ** 2))
+        after += float(np.sum(np.abs(z_after[i, idx]) ** 2))
+    if after <= 0.0:
+        raise E0CStop("直射波窗内 after 功率非正")
+    return 10.0 * math.log10(before / after), samples
+
+
+def select_d_hat(
+    p: np.ndarray,
+    d_m: np.ndarray,
+    target_type: str,
+    eta_wall: float,
+    bg_proxy: float,
+) -> Tuple[float, str]:
+    """在交付的 0.1 mm 剖面上按 E0-PREREG-3 §5 重选 ``d_hat``。"""
+    if target_type == "metal":
+        return float(d_m[int(np.argmax(p))]), "global_argmax"
+    if target_type != "wall":
+        raise E0CStop("未登记的 target_type=%r" % target_type)
+    p_max = float(np.max(p))
+    thr = max(float(eta_wall) * p_max, (10.0 ** 0.6) * float(bg_proxy))
+    for k in range(1, len(p) - 1):
+        if p[k] >= p[k - 1] and p[k] >= p[k + 1] and p[k] >= thr:
+            return float(d_m[k]), "wall_first_peak"
+    raise E0CStop(
+        "墙体首峰规则在 0.1 mm 网格上无候选（thr=%.6g, P_max=%.6g）" % (thr, p_max)
+    )
+
+
+def pslr_from_p(p: np.ndarray, d_m: np.ndarray, d_hat: float) -> float:
+    pk = int(np.argmin(np.abs(d_m - d_hat)))
+    sidelobe = p[np.abs(d_m - d_hat) > PSLR_HALF_WIDTH_M]
+    if sidelobe.size == 0:
+        raise E0CStop("PSLR 旁瓣区为空")
+    return 10.0 * math.log10(float(p[pk]) / float(np.max(sidelobe)))
+
+
+def pnr_from_z(
+    z_after: np.ndarray,
+    tau_ns: np.ndarray,
+    d_hat: float,
+    c0: float,
+    bg_proxy: float,
+) -> float:
+    tau_tgt_ns = 2.0 * float(d_hat) / float(c0) * 1e9
+    k = int(np.argmin(np.abs(tau_ns - tau_tgt_ns)))
+    p_tgt = float(np.mean(np.abs(z_after[:, k]) ** 2))
+    if p_tgt <= 0.0:
+        raise E0CStop("目标时延采样点功率非正")
+    return 10.0 * math.log10(p_tgt / float(bg_proxy))
+
+
+def build_air_loo_document(
+    loo: Dict[str, Any],
+    gates: Dict[str, Any],
+    air_min_db: float,
+    air_median_db: float,
+) -> Dict[str, Any]:
+    """按 E0-PREREG-3 §2.4 生成 ``e0c_air_loo.json`` 的字段结构。"""
+    rows = loo["grid_rows"]
+    grid: List[Dict[str, Any]] = []
+    for row in rows:
+        grid.append(
+            {
+                "lambdas": [float(row["lambda_cal"]), float(row["lambda_inv"])],
+                "folds": [
+                    {"held_out": str(g), "supp_db": float(v)}
+                    for g, v in zip(AIR_GROUPS, row["supp_db"])
+                ],
+                "j_air_db": float(row["J_air_db"]),
+                "min_db": float(row["min_supp_db"]),
+                "median_db": float(row["median_supp_db"]),
+            }
+        )
+    elig_min = float(gates["air_loo_eligible_min_suppression_db"])
+    hard = float(gates["air_loo_hard_stop_suppression_db"])
+    if float(air_min_db) >= elig_min:
+        eligibility = "eligible"
+    elif float(air_min_db) >= hard:
+        eligibility = "gray"
+    else:
+        eligibility = "hard_stop"
+    return {
+        "prereg": "E0-PREREG-3",
+        "folds": [
+            {"index": i, "held_out": str(g)} for i, g in enumerate(AIR_GROUPS)
+        ],
+        "grid": grid,
+        "selected": [
+            float(loo["selected"]["lambda_cal"]),
+            float(loo["selected"]["lambda_inv"]),
+        ],
+        "switched": bool(loo["triggered"]),
+        "min_supp_db": float(air_min_db),
+        "median_supp_db": float(air_median_db),
+        "j_air_default_db": float(loo["default"]["J_air_db"]),
+        "j_air_best_db": float(loo["best"]["J_air_db"]),
+        "eligibility": eligibility,
+        "switch_reason": str(loo["trigger_reason"]),
+        "tie_tolerance_db": float(loo["tie_tolerance_db"]),
+        "near_tie": bool(loo.get("near_tie", False)),
+        "tied_candidates": loo.get("tied_candidates", []),
+        "budget_pairs": int(loo["budget_pairs"]),
+    }
+
+
 def solve_bundle(
     air: Sequence[np.ndarray],
     targets: Sequence[Dict[str, Any]],
@@ -342,7 +543,6 @@ def solve_bundle(
     r_dir = setup.r_dir_all[setup.rx63]
     tau_dir = setup.tau_dir_all[setup.rx63]
     f_r = setup.f_r
-    s_band = setup.s_band
 
     # ---- 空场对齐（相对 air[0]）→ 纯空场 LOO 选参
     shifts = [0.0]
@@ -407,7 +607,6 @@ def solve_bundle(
         "inv_op": cal["inv"],
         "xbar_air_cal": cal["xbar_cal"],
         "air_shifts_s": np.asarray(shifts, dtype=np.float64),
-        "air_aligned_cal": np.stack([a * cal["inv"] for a in aligned_air]),
         "lambda_grid_cal": np.asarray([r["lambda_cal"] for r in loo["grid_rows"]]),
         "lambda_grid_inv": np.asarray([r["lambda_inv"] for r in loo["grid_rows"]]),
         "lambda_grid_J_air_db": np.asarray([r["J_air_db"] for r in loo["grid_rows"]]),
@@ -430,66 +629,103 @@ def solve_bundle(
     # 按“最接近默认值，其次更小值”定序（PLAN §3.3 的确定性裁决）。
     eta_order = sorted(eta_candidates, key=lambda v: (round(abs(v - eta_default), 12), v))
 
+    # ---- 交付网格（E0-PREREG-3 §2.3）：0.05 ns 压缩延迟轴 + 0.1 mm 距离网格
+    tau_ns, tau_step_ns = delivery_tau_axis(setup)
+    # 窗口中心对齐到交付网格：保证每通道恰为 PLAN §5.1 的 41 点窗（量化 ≤0.025 ns）。
+    tau_dir_ns = np.round(tau_dir * 1e9 / tau_step_ns) * tau_step_ns
+    d_fine = np.arange(
+        setup.d_min, setup.d_max + 0.5 * DELIVERY_D_STEP_M, DELIVERY_D_STEP_M
+    )
+
     cases: List[Dict[str, Any]] = []
     for tgt in targets:
         prefix = str(tgt["array_prefix"])
         peak_rule = str(tgt["peak_rule"])
         d_true_cm = float(tgt["d_true_cm"])
-        solved = E0S.solve_case(
-            tgt["x"],
-            cal,
-            s_band,
-            r_dir,
-            tau_dir,
-            f_r,
-            setup.c0,
-            setup,
-            peak_rule,
-            float(eta_default),
-            cfg,
+
+        # ---- M0-DW-Base(alpha=1.0) 与 S_eff（复用 E0-S 已验收原语）
+        x_cal = tgt["x"] * cal["inv"]
+        dt0_s = E0S.align_lag(
+            cal["xbar_cal"], x_cal, f_r, setup.band_idx, setup.np_n, setup.ts, setup.tp
+        )
+        xair_aligned = cal["xbar_cal"] * np.exp(1j * 2.0 * np.pi * f_r * dt0_s)[None, :]
+        alpha = float(
+            cfg["methods_classic_baseline_only"]["direct_wave_suppression"][
+                "alpha_fixed_value"
+            ]
+        )
+        if alpha != 1.0:
+            raise E0CStop("alpha_fixed_value=%r ≠ 1.0（违反方法范围）" % alpha)
+        x_after = x_cal - alpha * xair_aligned
+        s_eff = E0S.build_s_eff(xair_aligned, r_dir, tau_dir, f_r)
+
+        z_before = z_at_tau_axis(x_cal, s_eff, f_r, tau_ns)
+        z_after = z_at_tau_axis(x_after, s_eff, f_r, tau_ns)
+        if not (
+            np.all(np.isfinite(z_before))
+            and np.all(np.isfinite(z_after))
+            and np.all(np.isfinite(x_after))
+        ):
+            raise E0CStop("交付数组含 NaN/Inf：%s" % tgt["group_key"])
+
+        bg_proxy = bg_from_z(z_after, tau_ns)
+        supp_db, win_samples = supp_from_z(z_before, z_after, tau_ns, tau_dir_ns)
+        p_fine = profile_fine(x_after, s_eff, r_dir, f_r, setup.c0, d_fine)
+        if not np.all(np.isfinite(p_fine)):
+            raise E0CStop("0.1 mm 剖面含 NaN/Inf：%s" % tgt["group_key"])
+
+        valid_rx = int(np.sum(np.all(np.isfinite(x_cal), axis=1)))
+        finite = bool(
+            np.all(np.isfinite(z_before))
+            and np.all(np.isfinite(z_after))
+            and np.all(np.isfinite(p_fine))
+            and math.isfinite(supp_db)
+            and math.isfinite(bg_proxy)
         )
 
+        def _metrics_for_eta(eta_value: float) -> Tuple[float, str, float, float]:
+            d_hat_v, rule_v = select_d_hat(
+                p_fine, d_fine, peak_rule, eta_value, bg_proxy
+            )
+            return (
+                d_hat_v,
+                rule_v,
+                pslr_from_p(p_fine, d_fine, d_hat_v),
+                pnr_from_z(z_after, tau_ns, d_hat_v, setup.c0, bg_proxy),
+            )
+
+        d_hat, d_rule, pslr_db, pnr_db = _metrics_for_eta(float(eta_default))
         eta_records: List[Dict[str, Any]] = []
         selected_eta = float(eta_default)
         if peak_rule == "wall":
             # PLAN §3.3：仅在本校准组上核对 {0.15,0.25,0.35}，取满足条件且最接近
-            # 默认 0.25 者；逐个用同一条已验收求解链重算，结果全部入档。
+            # 默认 0.25 者；所有候选结果全部入档。
             chosen: Optional[Dict[str, Any]] = None
             for eta in eta_order:
-                cand = E0S.solve_case(
-                    tgt["x"],
-                    cal,
-                    s_band,
-                    r_dir,
-                    tau_dir,
-                    f_r,
-                    setup.c0,
-                    setup,
-                    peak_rule,
-                    float(eta),
-                    cfg,
-                )
-                err = abs(float(cand["d_hat_m"]) - d_true_cm / 100.0) * 100.0
+                d_v, rule_v, pslr_v, pnr_v = _metrics_for_eta(float(eta))
+                err_v = abs(d_v - d_true_cm / 100.0) * 100.0
                 record = {
                     "eta_wall": float(eta),
-                    "d_hat_m": float(cand["d_hat_m"]),
-                    "abs_err_cm": err,
-                    "pslr_db": float(cand["pslr_db"]),
-                    "pnr_db": float(cand["pnr_db"]),
+                    "d_hat_m": float(d_v),
+                    "abs_err_cm": float(err_v),
+                    "pslr_db": float(pslr_v),
+                    "pnr_db": float(pnr_v),
                     "eligible": bool(
-                        err <= float(gates["cal_pilot_eligible_max_range_err_cm"])
-                        and float(cand["pslr_db"]) >= float(gates["target_echo_min_pslr_db"])
-                        and float(cand["pnr_db"]) >= float(gates["target_echo_min_pnr_db"])
-                        and int(cand["valid_rx"]) == int(gates["required_valid_rx_channels"])
-                        and bool(cand["finite"])
+                        err_v <= float(gates["cal_pilot_eligible_max_range_err_cm"])
+                        and pslr_v >= float(gates["target_echo_min_pslr_db"])
+                        and pnr_v >= float(gates["target_echo_min_pnr_db"])
+                        and valid_rx == int(gates["required_valid_rx_channels"])
+                        and finite
                     ),
-                    "solved": cand,
                 }
-                eta_records.append({k: v for k, v in record.items() if k != "solved"})
+                eta_records.append(record)
                 if record["eligible"] and chosen is None:
-                    chosen = record
+                    chosen = dict(record, rule=rule_v)
             if chosen is not None:
-                solved = chosen["solved"]
+                d_hat = float(chosen["d_hat_m"])
+                d_rule = str(chosen["rule"])
+                pslr_db = float(chosen["pslr_db"])
+                pnr_db = float(chosen["pnr_db"])
                 selected_eta = float(chosen["eta_wall"])
             log.append(
                 "wall eta candidates: %s -> selected %.2f"
@@ -502,36 +738,47 @@ def solve_bundle(
                 )
             )
 
-        d_hat = float(solved["d_hat_m"])
-        abs_err_cm = abs(d_hat - d_true_cm / 100.0) * 100.0
+        abs_err_cm = abs(float(d_hat) - d_true_cm / 100.0) * 100.0
+        p_before_hat = float(
+            E0S.profile_p_norm_eff(
+                x_cal, s_eff, r_dir, f_r, setup.c0, np.asarray([d_hat])
+            )[0][0]
+        )
+        p_after_hat = float(
+            E0S.profile_p_norm_eff(
+                x_after, s_eff, r_dir, f_r, setup.c0, np.asarray([d_hat])
+            )[0][0]
+        )
+        echo_ret_db = 10.0 * math.log10(p_after_hat / p_before_hat)
+
         case = {
             "case_id": str(tgt["case_id"]),
             "group_key": str(tgt.get("group_key", "")),
             "target_type": str(tgt["target_type"]),
             "in_split": tgt.get("in_split"),
             "peak_rule": peak_rule,
+            "d_hat_rule": d_rule,
             "eta_wall": selected_eta if peak_rule == "wall" else None,
             "eta_wall_candidates": eta_records if peak_rule == "wall" else [],
             "d_true_cm_nominal": d_true_cm,
-            "d_hat_m": d_hat,
-            "d_hat_cm": d_hat * 100.0,
-            "abs_err_cm": abs_err_cm,
-            "supp_dw_win_db": float(solved["supp_dw_win_db"]),
-            "pslr_db": float(solved["pslr_db"]),
-            "pnr_db": float(solved["pnr_db"]),
-            "echo_ret_db": float(solved["echo_ret_db"]),
-            "bg_proxy": float(solved["bg_proxy"]),
-            "valid_rx": int(solved["valid_rx"]),
-            "finite": bool(solved["finite"]),
-            "dt0_samples": float(solved["dt0_samples"]),
-            "t_anchor_samples": float(solved["t_anchor_samples"]),
-            "d_hat_p_norm_m": float(solved["d_hat_p_norm_m"]),
-            "d_hat_p_env_m": float(solved["d_hat_p_env_m"]),
-            "arrays_sha256": {
-                "x_cal": E0S.array_sha256(solved["x_cal"]),
-                "x_after": E0S.array_sha256(solved["x_after"]),
-                "s_eff": E0S.array_sha256(solved["s_eff"]),
-                "profile_p_norm_eff": E0S.array_sha256(solved["profile_p_norm_eff"]),
+            "d_hat_m": float(d_hat),
+            "d_hat_cm": float(d_hat) * 100.0,
+            "abs_err_cm": float(abs_err_cm),
+            "supp_dw_win_db": float(supp_db),
+            "pslr_db": float(pslr_db),
+            "pnr_db": float(pnr_db),
+            "echo_ret_db": float(echo_ret_db),
+            "bg_proxy": float(bg_proxy),
+            "valid_rx": int(valid_rx),
+            "finite": bool(finite),
+            "dt0_samples": float(dt0_s / setup.ts),
+            "dw_window_samples": int(win_samples),
+            "metric_grid": {
+                "tau_step_ns": float(tau_step_ns),
+                "d_step_m": float(DELIVERY_D_STEP_M),
+                "supp_window": "|wrap(tau-tau_dir)|<=1.0 ns on delivered tau grid",
+                "pnr_sample": "nearest delivered tau sample to 2*d_hat/c0",
+                "bg_window_ns": [50.0, 950.0],
             },
         }
         case["gate_results"] = evaluate_case_gates(case, gates)
@@ -540,46 +787,35 @@ def solve_bundle(
 
         arrays.update(
             {
-                "%s_x_cal" % prefix: solved["x_cal"],
-                "%s_x_after" % prefix: solved["x_after"],
-                "%s_s_eff" % prefix: solved["s_eff"],
-                "%s_z_dw_before" % prefix: solved["z_dw_before"],
-                "%s_z_dw_after" % prefix: solved["z_dw_after"],
-                "%s_z_after_tgt" % prefix: solved["z_after_tgt"],
-                "%s_profile_d_grid_m" % prefix: solved["profile_d_grid_m"],
-                "%s_profile_p_norm_eff" % prefix: solved["profile_p_norm_eff"],
-                "%s_profile_p_norm" % prefix: solved["profile_p_norm"],
-                "%s_profile_p_env" % prefix: solved["profile_p_env"],
-                "%s_d_hat_m" % prefix: np.asarray([d_hat]),
-                "%s_bg_proxy" % prefix: np.asarray([float(solved["bg_proxy"])]),
-                "%s_t_anchor_s" % prefix: np.asarray([float(solved["t_anchor_s"])]),
+                "%s__tau_ns" % prefix: tau_ns,
+                "%s__tau_dir_ns" % prefix: tau_dir_ns,
+                "%s__z_before" % prefix: z_before,
+                "%s__z_after" % prefix: z_after,
+                "%s__d_m" % prefix: d_fine,
+                "%s__P_after" % prefix: p_fine,
             }
         )
 
-    air_gate = evaluate_air_gate(air_min_db, air_median_db, gates)
+    arrays["%s__p_cal" % AIR_LOO_PREFIX] = np.asarray(loo["p_cal"], dtype=np.float64)
+    arrays["%s__p_sup" % AIR_LOO_PREFIX] = np.asarray(loo["p_sup"], dtype=np.float64)
+
     return {
-        "lambda_loo": {
-            "grid": [
-                [float(v) for v in cal_cfg["lambda_cal_grid_air_loo"]],
-                [float(v) for v in cal_cfg["lambda_inv_grid_air_loo"]],
-            ],
+        "lambda_loo": build_air_loo_document(loo, gates, air_min_db, air_median_db),
+        "air_loo_raw": {
             "budget_pairs": int(loo["budget_pairs"]),
             "folds": int(loo["folds"]),
-            "rows": loo["grid_rows"],
             "best": loo["best"],
             "default": loo["default"],
-            "selected": loo["selected"],
-            "triggered": bool(loo["triggered"]),
             "trigger_reason": loo["trigger_reason"],
-            "selected_min_supp_db": air_min_db,
-            "selected_median_supp_db": air_median_db,
-            "air_gate": air_gate,
+            "tie_tolerance_db": float(loo["tie_tolerance_db"]),
+            "near_tie": bool(loo.get("near_tie", False)),
+            "tied_candidates": loo.get("tied_candidates", []),
         },
         "cal": {
             "shifts_s": [float(s) for s in shifts],
             "lambda_cal": float(lam["lambda_cal"]),
             "lambda_inv": float(lam["lambda_inv"]),
-            "eta_wall": float(eta_default),
+            "eta_wall_default": float(eta_default),
             "eta_candidates": [float(v) for v in eta_order],
         },
         "cases": cases,
@@ -834,27 +1070,26 @@ def run_execute(
 
     solved = solve_bundle(air, targets, cfg, setup, log, eta_wall=eta_wall)
     ctx["lambda_loo"] = solved["lambda_loo"]
+    ctx["air_loo_raw"] = solved.get("air_loo_raw")
     ctx["cal"] = solved["cal"]
     ctx["cases"] = solved["cases"]
     ctx["arrays"] = solved["arrays"]
 
     # ---- 3) 硬停止 / 灰区判定
-    air_gate = solved["lambda_loo"]["air_gate"]
-    ctx["air_gate"] = air_gate
+    loo_doc = solved["lambda_loo"]
+    ctx["air_loo_eligibility"] = loo_doc["eligibility"]
     hard_stops: List[str] = []
     gray_reasons: List[str] = []
-    if air_gate["status"] == "failed":
+    if loo_doc["eligibility"] == "hard_stop":
         hard_stops.append(
             "air_loo_hard_stop: min=%.4f dB < %.1f dB"
-            % (air_gate["min_supp_db"], air_gate["hard_stop_below"])
+            % (loo_doc["min_supp_db"], float(cfg["gates_and_thresholds"]["air_loo_hard_stop_suppression_db"]))
         )
-    elif air_gate["status"] == "gray":
-        grid_min = float(
-            min(row["min_supp_db"] for row in solved["lambda_loo"]["rows"])
-        )
+    elif loo_doc["eligibility"] == "gray":
+        grid_min = min(float(g["min_db"]) for g in loo_doc["grid"])
         gray_reasons.append(
             "air_loo_gray: selected min=%.4f dB in [6,10); 9-pair grid min=%.4f dB -> 不冻结、禁入 E0-T"
-            % (air_gate["min_supp_db"], grid_min)
+            % (loo_doc["min_supp_db"], grid_min)
         )
 
     for case in ctx["cases"]:
@@ -910,26 +1145,365 @@ def run_execute(
 # --------------------------------------------------------------------------
 # 产物
 # --------------------------------------------------------------------------
+METRIC_KEYS = (
+    "group_key",
+    "d_hat_m",
+    "abs_err_cm",
+    "supp_dw_win_db",
+    "pslr_db",
+    "pnr_db",
+    "valid_rx",
+    "finite",
+)
+
+E0S_RESULTS_REL = "experiments/A/A-Q1-E0/s1s2/results/e0_s1s2_results.json"
+
+
+def metrics_digest(groups: Sequence[Dict[str, Any]]) -> str:
+    """E0-PREREG-3 §2.2 的 ``metrics_sha256``：按 groups 顺序取 8 个键规范化。"""
+    rows = [{k: g.get(k) for k in METRIC_KEYS} for g in groups]
+    return E0S.canonical_json_sha256(rows)
+
+
+def save_npz_deterministic(path: Path, arrays: Dict[str, np.ndarray]) -> None:
+    """确定性 npz（固定 zip 时间戳），使同一组数组两次序列化逐字节可比。"""
+    import io
+    import zipfile
+
+    with zipfile.ZipFile(
+        path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6
+    ) as zf:
+        for key in sorted(arrays):
+            arr = np.ascontiguousarray(np.asarray(arrays[key]))
+            info = zipfile.ZipInfo(
+                filename=key + ".npy", date_time=(1980, 1, 1, 0, 0, 0)
+            )
+            info.compress_type = zipfile.ZIP_DEFLATED
+            buf = io.BytesIO()
+            np.lib.format.write_array(buf, arr, allow_pickle=False)
+            zf.writestr(info, buf.getvalue())
+
+
+def verify_delivery_metrics(
+    result: Dict[str, Any],
+    arrays: Dict[str, np.ndarray],
+    c0: float = 299792458.0,
+) -> Dict[str, float]:
+    """按 E0-PREREG-3 §5 从交付数组重算目标指标，核对 JSON 值（C10 前置自检）。
+
+    任何不一致都会抛 ``E0CStop``，绝不写出“实现自洽、数组不符”的结果。
+    """
+    problems: List[str] = []
+    deltas: Dict[str, float] = {}
+    by_group = {c["group_key"]: c for c in result.get("cases", [])}
+    for grp in result.get("groups", []):
+        key = str(grp.get("group_key"))
+        if key not in by_group:
+            continue
+        case = by_group[key]
+        prefix = None
+        for spec in TARGET_SPECS:
+            if str(spec["group"]) == key:
+                prefix = str(spec["array_prefix"])
+        if prefix is None:
+            continue
+        tau = np.asarray(arrays["%s__tau_ns" % prefix], dtype=np.float64)
+        tau_dir = np.asarray(arrays["%s__tau_dir_ns" % prefix], dtype=np.float64)
+        zb = np.asarray(arrays["%s__z_before" % prefix])
+        za = np.asarray(arrays["%s__z_after" % prefix])
+        d_m = np.asarray(arrays["%s__d_m" % prefix], dtype=np.float64)
+        p = np.asarray(arrays["%s__P_after" % prefix], dtype=np.float64)
+        bg = bg_from_z(za, tau)
+        supp, _ = supp_from_z(zb, za, tau, tau_dir)
+        d_hat, _ = select_d_hat(
+            p, d_m, str(case["target_type"]), float(result["eta_wall"]), bg
+        )
+        pslr = pslr_from_p(p, d_m, d_hat)
+        pnr = pnr_from_z(za, tau, d_hat, c0, bg)
+        checks = {
+            "supp_dw_win_db": (supp, 1e-6),
+            "pslr_db": (pslr, 1e-6),
+            "pnr_db": (pnr, 1e-6),
+            "d_hat_m": (d_hat, 1e-9),
+        }
+        for field, (want, tol) in checks.items():
+            got = float(grp.get(field))
+            delta = abs(got - want)
+            deltas["%s.%s" % (key, field)] = delta
+            if delta > tol:
+                problems.append(
+                    "%s.%s: JSON=%.12g 重算=%.12g (Δ=%.3g)"
+                    % (key, field, got, want, delta)
+                )
+    if problems:
+        raise E0CStop("交付指标与数组重算不一致：" + "; ".join(problems[:5]))
+    return deltas
+
+
+def collect_inputs(data_groups: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """把 12 组 × 8 行文件展开成 E0-PREREG-3 §2.2 的 ``inputs[96]``。"""
+    rows: List[Dict[str, Any]] = []
+    order = list(AIR_GROUPS) + [str(t["group"]) for t in TARGET_SPECS]
+    by_key = {g["group_key"]: g for g in data_groups}
+    for key in order:
+        grp = by_key.get(key)
+        if grp is None:
+            raise E0CStop("缺少已读组元数据：%s" % key)
+        files = grp.get("files") or []
+        if len(files) != 8:
+            raise E0CStop("组 %s 的文件数 %d≠8" % (key, len(files)))
+        for f in files:
+            rows.append(
+                {
+                    "rel_path": "%s/%s/%s" % (DATA_REL_PREFIX, key, f["file"]),
+                    "size_bytes": int(f["size_bytes"]),
+                    "sha256": str(f["sha256"]),
+                }
+            )
+    if len(rows) != 96:
+        raise E0CStop("inputs 数量 %d≠96" % len(rows))
+    return rows
+
+
+def build_groups(
+    cases: Sequence[Dict[str, Any]],
+    data_groups: Sequence[Dict[str, Any]],
+    gates_cfg: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """E0-PREREG-3 §2.2 的 ``groups[12]``。空场组只填通道/有限性，指标为 null。"""
+    by_case = {c["group_key"]: c for c in cases}
+    meta = {g["group_key"]: g for g in data_groups}
+    groups: List[Dict[str, Any]] = []
+    for key in AIR_GROUPS:
+        m = meta.get(key) or {}
+        groups.append(
+            {
+                "group_key": key,
+                "target_type": "air",
+                "split": "air",
+                "d_true_cm": None,
+                "d_hat_m": None,
+                "abs_err_cm": None,
+                "supp_dw_win_db": None,
+                "pslr_db": None,
+                "pnr_db": None,
+                "echo_ret_db": None,
+                "valid_rx": int(m.get("valid_rx", 0)),
+                "finite": True,
+                "status": "eligible",
+                "gate_results": {},
+                "stop_reason": None,
+            }
+        )
+    for spec in TARGET_SPECS:
+        key = str(spec["group"])
+        case = by_case.get(key)
+        if case is None:
+            raise E0CStop("缺少目标组结果：%s" % key)
+        gate_detail = case["gate_results"]
+        named = {
+            "pslr_ge_3db": bool(gate_detail["pslr_db"]["passed"]),
+            "pnr_ge_6db": bool(gate_detail["pnr_db"]["passed"]),
+            "abs_err_eligible": bool(gate_detail["abs_err_cm"]["passed"]),
+            "abs_err_not_hard": bool(
+                float(case["abs_err_cm"])
+                <= float(gates_cfg["cal_pilot_hard_stop_range_err_cm"])
+            ),
+            "detail": gate_detail,
+        }
+        failed = [
+            name for name, gate in gate_detail.items() if gate.get("status") == "failed"
+        ]
+        groups.append(
+            {
+                "group_key": key,
+                "target_type": str(case["target_type"]),
+                "split": case.get("in_split"),
+                "d_true_cm": float(case["d_true_cm_nominal"]),
+                "d_hat_m": float(case["d_hat_m"]),
+                "abs_err_cm": float(case["abs_err_cm"]),
+                "supp_dw_win_db": float(case["supp_dw_win_db"]),
+                "pslr_db": float(case["pslr_db"]),
+                "pnr_db": float(case["pnr_db"]),
+                "echo_ret_db": float(case["echo_ret_db"]),
+                "valid_rx": int(case["valid_rx"]),
+                "finite": bool(case["finite"]),
+                "status": str(case["freeze_status"]),
+                "gate_results": named,
+                "stop_reason": (", ".join(failed) or None)
+                if case["freeze_status"] != "eligible"
+                else None,
+            }
+        )
+    return groups
+
+
+def assemble_results(
+    ctx: Dict[str, Any],
+    cfg: Dict[str, Any],
+    config_path: Path,
+    repo: Path,
+    approval_ref: str,
+    implementation_sha: Optional[str],
+    parent_commit: Optional[str],
+    main_commit: Optional[str],
+    branch: Optional[str],
+    command: str,
+    elapsed: float,
+    peak: Optional[float],
+    out_dir: Path,
+) -> Dict[str, Any]:
+    """组装 E0-PREREG-3 §2.2 的 ``e0c_results.json``（数组与文件摘要稍后补）。"""
+    e0s_path = repo / E0S_RESULTS_REL
+    freeze = dict(ctx.get("freeze") or {})
+    stop_reasons = [str(s) for s in (ctx.get("stop_reasons") or [])]
+    data_groups = list((ctx.get("data") or {}).get("groups") or [])
+    cases = list(ctx.get("cases") or [])
+
+    partial = len(data_groups) != 12 or len(cases) != 2
+    if partial:
+        # 硬停止/异常路径也保留可追溯的结果骨架；此时不由 C3/C7-C11 判通过。
+        groups: List[Dict[str, Any]] = []
+        inputs: List[Dict[str, Any]] = []
+    else:
+        groups = build_groups(cases, data_groups, cfg["gates_and_thresholds"])
+        inputs = collect_inputs(data_groups)
+
+    config_sha = lf_sha256(config_path)
+    plan_sha = lf_sha256(repo / "experiments/A/A-Q1-E0/PLAN.md")
+    split_sha = lf_sha256(repo / "coordination/A_Q1_SPLIT.json")
+    e0s_sha = lf_sha256(e0s_path) if e0s_path.is_file() else None
+
+    env = environment_info()
+    result: Dict[str, Any] = {
+        "contract_version": CONTRACT_VERSION,
+        "experiment_id": "A-Q1-E0",
+        "phase": "E0-C",
+        "scope": (
+            "真实校准组（10 空场 + 2 已披露校准目标），非盲测，不含 E0-T；"
+            "标称距离仅用于事后评价与 PLAN §3.3 的 eta_wall 校准组筛选"
+        ),
+        "generated_at": now_iso(),
+        "approval_ref": approval_ref,
+        "implementation_sha": implementation_sha,
+        "parent_commit": parent_commit,
+        "main_commit": main_commit,
+        "branch": branch,
+        "output_dir": str(out_dir),
+        "config_sha256": config_sha,
+        "config_sha256_match": config_sha == PF.APPROVED_ANCHORS["config_sha256_lf"],
+        "plan_sha256": plan_sha,
+        "plan_sha256_match": plan_sha == PF.APPROVED_ANCHORS["plan_sha256"],
+        "split_sha256": split_sha,
+        "split_sha256_match": split_sha == PF.APPROVED_ANCHORS["split_sha256_lf"],
+        "e0_s_results_sha256": e0s_sha,
+        "e0_s_results_sha256_match": e0s_sha
+        == "171f55f75e464d289815af7352fb6fcb6635b8d73db97b3af2dcbb687eab3fdf",
+        "fold_gate_contract_version": getattr(D1, "CONTRACT_VERSION", None),
+        "environment": env,
+        "command": command,
+        "resource": {
+            "wall_time_s": round(float(elapsed), 3),
+            "peak_rss_mib": peak,
+            "single_process": True,
+            "budget": {
+                "max_wall_time_sec": cfg["resource_budget"]["max_wall_time_sec"],
+                "max_peak_rss_mib": cfg["resource_budget"]["max_peak_rss_mib"],
+            },
+        },
+        "methods": {
+            "alpha_mode": "fixed_1.0",
+            "n0_improvements_enabled": False,
+            "adaptive_alpha": False,
+            "subspace_suppression": False,
+            "wls_ranging": False,
+            "nonuniform_channel_weights": False,
+        },
+        "inputs": inputs,
+        "air_loo_folds": list(AIR_GROUPS),
+        "array_map": {
+            "air_loo_prefix": AIR_LOO_PREFIX,
+            "group_prefix": {
+                str(spec["group"]): str(spec["array_prefix"]) for spec in TARGET_SPECS
+            },
+        },
+        "lambda_selected": [
+            float(freeze.get("lambda_cal")),
+            float(freeze.get("lambda_inv")),
+        ]
+        if freeze.get("lambda_cal") is not None
+        else None,
+        "eta_wall": freeze.get("eta_wall"),
+        "freeze": {
+            "status": freeze.get("status"),
+            "eligible": bool(freeze.get("status") == "eligible"),
+            "written": False,
+            "lambda_cal": freeze.get("lambda_cal"),
+            "lambda_inv": freeze.get("lambda_inv"),
+            "eta_wall": freeze.get("eta_wall"),
+            "eta_selection_rule": freeze.get("eta_selection_rule"),
+            "reasons": list(stop_reasons),
+        },
+        "groups": groups,
+        "metrics_sha256": metrics_digest(groups),
+        "d_true_usage": "evaluation_only",
+        "d_true_usage_note": (
+            "标称距离只进入 abs_err 与 PLAN §3.3 的 eta_wall 校准组筛选；"
+            "不参与 lambda 选参、DW 减除或统计量计算"
+        ),
+        "stop_reason": ("; ".join(stop_reasons) if stop_reasons else None),
+        "hard_stops": [str(s) for s in (ctx.get("hard_stops") or [])],
+        "gray_reasons": [str(s) for s in (ctx.get("gray_reasons") or [])],
+        "stop_reasons": stop_reasons,
+        "air_loo_eligibility": ctx.get("air_loo_eligibility"),
+        "lambda_loo": ctx.get("lambda_loo"),
+        "air_loo_raw": ctx.get("air_loo_raw"),
+        "cal": ctx.get("cal"),
+        "cases": cases,
+        "preflight": ctx.get("preflight"),
+        "data": ctx.get("data"),
+        "partial": bool(partial),
+    }
+    return result
+
+
 def write_outputs(
     out_dir: Path,
     result: Dict[str, Any],
     arrays: Optional[Dict[str, np.ndarray]],
     log: List[str],
+    c0: float = 299792458.0,
 ) -> Dict[str, str]:
     """落盘全部产物；返回 SHA256SUMS 的映射。
 
-    顺序：二进制/子表 → run.log → 把已算出的摘要写进 ``result["files_sha256"]``
-    → 写 ``e0c_results.json``（自身摘要只能进 ``SHA256SUMS.txt``，不能自引用）。
+    顺序：数组（两次确定性序列化并比对摘要）→ ``e0c_air_loo.json`` → 冻结文件
+    → ``run.log`` → ``files_sha256`` → ``e0c_results.json`` → ``SHA256SUMS.txt``。
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     sums: Dict[str, str] = {}
 
     if arrays:
+        verify_delivery_metrics(result, arrays, c0=c0)
         npz_path = out_dir / "e0c_arrays.npz"
-        np.savez_compressed(npz_path, **arrays)
+        repeat_path = out_dir / ".e0c_arrays.repeat.npz"
+        save_npz_deterministic(repeat_path, arrays)
+        save_npz_deterministic(npz_path, arrays)
+        sha_second = file_sha256(npz_path)
+        sha_first = file_sha256(repeat_path)
+        repeat_path.unlink()
+        if sha_first != sha_second:
+            raise E0CStop("e0c_arrays.npz 两次序列化摘要不同（非确定性）")
         result["arrays_file"] = npz_path.name
-        result["arrays_file_sha256"] = file_sha256(npz_path)
-        sums[npz_path.name] = result["arrays_file_sha256"]
+        result["arrays_sha256"] = sha_second
+        result["arrays_file_sha256"] = sha_second
+        result["repeat_run"] = {
+            "arrays_sha256": sha_second,
+            "arrays_sha256_second_serialization": sha_first,
+            "metrics_sha256": result.get("metrics_sha256"),
+            "metrics_recomputed_from_delivered_arrays": True,
+            "note": "两次独立序列化逐字节一致；指标已由交付数组按 E0-PREREG-3 §5 重算核对",
+        }
+        sums[npz_path.name] = sha_second
 
     loo = result.get("lambda_loo")
     if loo:
@@ -939,12 +1513,17 @@ def write_outputs(
         result["air_loo_file_sha256"] = file_sha256(loo_path)
         sums[loo_path.name] = result["air_loo_file_sha256"]
 
-    if result.get("freeze", {}).get("eligible"):
+    freeze = result.get("freeze") or {}
+    if freeze.get("eligible"):
         frozen = {
             "contract_version": CONTRACT_VERSION,
             "experiment_id": "A-Q1-E0",
             "phase": "E0-Freeze",
-            "frozen_at": now_iso(),
+            "frozen_at_utc": now_iso(),
+            "lambdas": [
+                result["freeze"]["lambda_cal"],
+                result["freeze"]["lambda_inv"],
+            ],
             "lambda_cal": result["freeze"]["lambda_cal"],
             "lambda_inv": result["freeze"]["lambda_inv"],
             "eta_wall": result["freeze"]["eta_wall"],
@@ -965,6 +1544,7 @@ def write_outputs(
         write_json(frozen_path, frozen)
         result["frozen_file_sha256"] = file_sha256(frozen_path)
         sums[frozen_path.name] = result["frozen_file_sha256"]
+        result["freeze"]["written"] = True
 
     log_path = out_dir / "run.log"
     log_path.write_text("\n".join(log) + "\n", encoding="utf-8")
@@ -1135,39 +1715,25 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     elapsed = time.perf_counter() - started
     peak = E0S.peak_rss_mib()
     prov = E0S.git_info(repo)
-    result = {
-        "contract_version": CONTRACT_VERSION,
-        "experiment_id": "A-Q1-E0",
-        "phase": "E0-C",
-        "scope": "真实校准组（10 空场 + 2 已披露校准目标），非盲测，不含 E0-T；标签只用于事后评价",
-        "generated_at": now_iso(),
-        "approval_ref": args.approval_ref,
-        "implementation_sha": args.implementation_sha or args.runtime_sha or prov.get("head_sha"),
-        "parent_commit": args.parent_commit or prov.get("parent_sha"),
-        "main_commit": args.main_commit or prov.get("origin_main_sha"),
-        "branch": prov.get("branch"),
-        "git": prov,
-        "config_sha256": lf_sha256(config_path),
-        "config_sha256_match": lf_sha256(config_path) == PF.APPROVED_ANCHORS["config_sha256_lf"],
-        "plan_sha256": file_sha256(repo / "experiments/A/A-Q1-E0/PLAN.md"),
-        "plan_sha256_match": file_sha256(repo / "experiments/A/A-Q1-E0/PLAN.md")
-        == PF.APPROVED_ANCHORS["plan_sha256"],
-        "split_sha256": lf_sha256(repo / "coordination/A_Q1_SPLIT.json"),
-        "split_sha256_match": lf_sha256(repo / "coordination/A_Q1_SPLIT.json")
-        == PF.APPROVED_ANCHORS["split_sha256_lf"],
-        "environment": environment_info(),
-        "command": "python solutions/A/a_e0_c.py --mode execute --approval-ref %s --out %s"
+    result = assemble_results(
+        ctx,
+        cfg,
+        config_path,
+        repo,
+        str(args.approval_ref).strip(),
+        args.implementation_sha or args.runtime_sha or prov.get("head_sha"),
+        args.parent_commit or prov.get("parent_sha"),
+        args.main_commit or prov.get("origin_main_sha"),
+        prov.get("branch"),
+        "python solutions/A/a_e0_c.py --mode execute --approval-ref %s --out %s"
         % (args.approval_ref, args.out),
-        "resource": {
-            "wall_time_s": round(elapsed, 3),
-            "peak_rss_mib": peak,
-            "budget": {
-                "max_wall_time_sec": cfg["resource_budget"]["max_wall_time_sec"],
-                "max_peak_rss_mib": cfg["resource_budget"]["max_peak_rss_mib"],
-            },
-        },
-    }
-    result.update({k: v for k, v in ctx.items() if k not in result})
+        elapsed,
+        peak,
+        out_dir,
+    )
+    result["git"] = prov
+    result["stop_detail"] = ctx.get("stop_detail")
+    result["partial"] = ctx.get("partial")
 
     over_budget = elapsed > float(cfg["resource_budget"]["max_wall_time_sec"]) or (
         peak is not None and peak > float(cfg["resource_budget"]["max_peak_rss_mib"])
@@ -1189,14 +1755,27 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     result["hard_stops"] = hard_stops
     result["gray_reasons"] = gray_reasons
     result["stop_reasons"] = hard_stops + gray_reasons
+    result["stop_reason"] = "; ".join(hard_stops + gray_reasons) or None
     result["freeze"] = {
         **(result.get("freeze") or {}),
         "status": freeze_status,
         "eligible": freeze_status == "eligible",
+        "reasons": list(hard_stops + gray_reasons),
     }
 
-    arrays = result.pop("arrays", None)
-    write_outputs(out_dir, result, arrays, log)
+    arrays = ctx.get("arrays")
+    try:
+        write_outputs(out_dir, result, arrays, log, c0=float(setup.c0))
+    except E0CStop as exc:
+        # 交付自检失败：保留日志与错误证据，不写“通过”结果。
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "run_error.log").write_text(
+            "E0CStop during write_outputs: %s\n" % exc, encoding="utf-8"
+        )
+        log.append("write_outputs stopped: %s" % exc)
+        (out_dir / "run.log").write_text("\n".join(log) + "\n", encoding="utf-8")
+        print("交付自检失败：%s" % exc, file=sys.stderr)
+        return 3
 
     freeze = result["freeze"]
     print(
@@ -1206,7 +1785,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     "phase": "E0-C",
                     "freeze_status": freeze.get("status"),
                     "freeze_eligible": bool(freeze.get("eligible")),
-                    "air_gate": (result.get("air_gate") or {}).get("status"),
+                    "air_loo_eligibility": result.get("air_loo_eligibility"),
                     "cases": [
                         {
                             "case_id": c["case_id"],

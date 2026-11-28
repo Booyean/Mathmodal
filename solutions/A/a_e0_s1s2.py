@@ -838,6 +838,12 @@ def select_lambdas_air_loo(
     default_inv = float(cal_cfg["lambda_inv_default"])
     n_air = len(aligned_air)
     rows: List[Dict[str, Any]] = []
+    # E0-PREREG-3 §2.3：逐候选对 / 逐折 / 逐通道的校准后与减除后带内功率和。
+    # C8 只用这两个数组独立重算 90 个 Supp_air-LOO 值，验收方无需导入生产代码。
+    n_ch = int(np.asarray(aligned_air[0]).shape[0])
+    p_cal = np.zeros((len(grid_cal) * len(grid_inv), n_air, n_ch), dtype=np.float64)
+    p_sup = np.zeros_like(p_cal)
+    pair = 0
 
     for lc in grid_cal:
         for li in grid_inv:
@@ -850,9 +856,12 @@ def select_lambdas_air_loo(
                 inv = inverse_op(h, li)
                 xcal = aligned_air[g] * inv
                 residual = xcal - tmpl * inv
+                p_cal[pair, g, :] = np.sum(np.abs(xcal) ** 2, axis=1)
+                p_sup[pair, g, :] = np.sum(np.abs(residual) ** 2, axis=1)
                 num = float(np.sum(np.abs(xcal) ** 2))
                 den = float(np.sum(np.abs(residual) ** 2))
                 supps.append(10.0 * math.log10(num / den))
+            pair += 1
             supps_arr = np.asarray(supps)
             j_air = float(np.median(supps_arr) + 0.5 * float(np.min(supps_arr)))
             rows.append(
@@ -900,6 +909,10 @@ def select_lambdas_air_loo(
         "n_air": n_air,
         "folds": n_air,
         "budget_pairs": len(rows),
+        "p_cal": p_cal,
+        "p_sup": p_sup,
+        "lambda_cal_grid": list(grid_cal),
+        "lambda_inv_grid": list(grid_inv),
         "tie_tolerance_db": ranked["tie_tolerance_db"],
         "near_tie": bool(ranked["near_tie"]),
         "tied_candidates": [

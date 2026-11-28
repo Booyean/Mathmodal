@@ -1,7 +1,7 @@
 {
   "contract_version": "E0C-PREFLIGHT-2",
   "scope": "metadata_only_no_signal_parse",
-  "generated_at": "2026-11-28T13:13:31+08:00",
+  "generated_at": "2026-11-28T13:59:00+08:00",
   "repo": "D:\\数模\\Mathmodal",
   "data_root": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题",
   "manifest": "recon/manifests/a_dat_manifest.csv",
@@ -589,7 +589,7 @@
     "failed": 0,
     "failed_ids": [],
     "blocking_ids": [],
-    "elapsed_s": 0.306
+    "elapsed_s": 0.321
   },
   "preconditions_pass": true,
   "execution_ready": true,

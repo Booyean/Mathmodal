@@ -4,16 +4,18 @@
 
 覆盖
 ----
-* **数学链**：直接调用已验收的 ``a_e0_s1s2`` 合成器生成 10 空场 + 2 目标频谱，
-  走 ``solve_bundle`` 的 LOO 选参 → 校准 → DW 抑制 → 测距 → 门槛，验证
-  `d_hat` 与已知 `d_true` 一致、冻结判定可用；
+* **数学/交付链**：直接调用已验收的 ``a_e0_s1s2`` 合成器生成 10 空场 + 2 目标
+  频谱，走 ``solve_bundle`` 的 LOO 选参 → 校准 → DW 抑制 → 0.1 mm 测距 → 门槛，
+  验证 ``d_hat`` 与已知 ``d_true`` 一致，且交付数组（0.05 ns τ、0.1 mm d、
+  ``p_cal/p_sup``）能按 E0-PREREG-3 §5 重算出同一组指标；
 * **I/O 链**：按 D0 契约自行写 8 行 × 2 包的合法 ``.dat`` 合成组，
   用 ``guarded_group_ref`` + ``load_group_spectrum`` 读回，验证
-  `valid_rx == 63`、频谱与写入值一致、且**不调用** ``discover_groups``；
+  ``valid_rx == 63``、频谱与写入值一致、且**不调用** ``discover_groups``；
 * **编排链**：在临时数据根上桩掉 ``run_preflight`` 后跑完整 ``run_execute``，
-  核对 96 文件、两例误差、冻结判定、产物与 `SHA256SUMS.txt`；
-* **边界**：`--mode execute` 缺 `--approval-ref` 必须拒绝；已有结果必须拒绝覆盖；
-  check 模式不解析采样。
+  用 ``assemble_results`` 组装 E0-PREREG-3 的 ``groups[12]``/``inputs[96]``/
+  ``array_map``/``repeat_run``，核对 96 文件、两例误差、冻结判定与产物摘要；
+* **边界**：``--mode execute`` 缺 ``--approval-ref`` 必须拒绝；已有结果必须拒绝
+  覆盖；check 模式不解析采样。
 
 用法::
 
@@ -24,6 +26,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import shutil
 import struct
 import sys
@@ -46,6 +49,9 @@ WORK = REPO / "tmp"
 WORK.mkdir(parents=True, exist_ok=True)
 DAT_MAGIC = 963072
 PREFIX = "2026-01-01-00-00-00_16000"
+DUMMY_IMPL = "0" * 40
+DUMMY_PARENT = "1" * 40
+DUMMY_MAIN = "2" * 40
 
 
 def check(name: str, ok: bool, note: str = "") -> bool:
@@ -115,7 +121,7 @@ def build_synthetic_root(
 
 
 # --------------------------------------------------------------------------
-# 1) 数学链
+# 1) 数学/交付链
 # --------------------------------------------------------------------------
 def test_solve_bundle_synthetic() -> Dict[str, Any]:
     cfg = A.load_config(A.CONFIG_PATH)
@@ -146,31 +152,53 @@ def test_solve_bundle_synthetic() -> Dict[str, Any]:
     ]
     out = A.solve_bundle(gen["air"], targets, cfg, setup, log)
 
-    rows = out["lambda_loo"]["rows"]
-    check("bundle.loo_grid_9", len(rows) == 9 and out["lambda_loo"]["folds"] == 10,
-          "%d pairs" % len(rows))
-    check("bundle.loo_has_switch_flag", isinstance(out["lambda_loo"]["triggered"], bool))
-    check("bundle.arrays_air_aligned", out["arrays"]["air_aligned_cal"].shape == (10, 63, setup.n_band))
+    loo = out["lambda_loo"]
+    check("bundle.loo_grid_9", len(loo["grid"]) == 9 and len(loo["folds"]) == 10,
+          "%d pairs" % len(loo["grid"]))
+    check("bundle.loo_switch_flag", isinstance(loo["switched"], bool))
+    check("bundle.loo_eligibility", loo["eligibility"] in ("eligible", "gray", "hard_stop"),
+          loo["eligibility"])
+    check("bundle.loo_folds_10_each",
+          all(len(g["folds"]) == 10 for g in loo["grid"]))
+    check("bundle.arrays_p_cal", out["arrays"]["air_loo__p_cal"].shape == (9, 10, 63),
+          str(out["arrays"]["air_loo__p_cal"].shape))
+    check("bundle.arrays_p_sup", out["arrays"]["air_loo__p_sup"].shape == (9, 10, 63))
 
     for case, d_true in zip(out["cases"], (0.42, 0.69)):
+        tag = case["case_id"].split("/")[-1]
         check(
-            "bundle.%s_err_lt_1cm" % case["case_id"].split("/")[-1],
+            "bundle.%s_err_lt_1cm" % tag,
             case["abs_err_cm"] <= 1.0,
             "d_hat=%.5f m err=%.4f cm" % (case["d_hat_m"], case["abs_err_cm"]),
         )
         check(
-            "bundle.%s_gates_present" % case["case_id"].split("/")[-1],
+            "bundle.%s_gates_present" % tag,
             set(case["gate_results"]) == {"abs_err_cm", "pslr_db", "pnr_db", "valid_rx", "finite"},
         )
         check(
-            "bundle.%s_supp" % case["case_id"].split("/")[-1],
+            "bundle.%s_supp" % tag,
             case["supp_dw_win_db"] > 0.0,
             "supp=%.2f dB" % case["supp_dw_win_db"],
+        )
+        check(
+            "bundle.%s_metric_grid" % tag,
+            abs(case["metric_grid"]["tau_step_ns"] - 0.05) < 1e-12
+            and abs(case["metric_grid"]["d_step_m"] - 1e-4) < 1e-15,
         )
     check("bundle.wall_eta_candidates", len(out["cases"][0]["eta_wall_candidates"]) == 3,
           str([r["eta_wall"] for r in out["cases"][0]["eta_wall_candidates"]]))
     check("bundle.freeze_candidate", all(c["freeze_status"] == "eligible" for c in out["cases"]),
           str([c["freeze_status"] for c in out["cases"]]))
+
+    # p_cal/p_sup 必须能独立还原 LOO 的 90 个抑制值（E0-PREREG-3 C8）
+    p_cal = out["arrays"]["air_loo__p_cal"]
+    p_sup = out["arrays"]["air_loo__p_sup"]
+    worst = 0.0
+    for f, g in enumerate(loo["grid"]):
+        for gi, fold in enumerate(g["folds"]):
+            recomputed = 10.0 * math.log10(float(p_cal[f, gi].sum()) / float(p_sup[f, gi].sum()))
+            worst = max(worst, abs(recomputed - float(fold["supp_db"])))
+    check("bundle.p_arrays_reproduce_supp", worst < 1e-9, "max |Δ|=%.3g dB" % worst)
     return {"cfg": cfg, "setup": setup, "gen": gen, "bundle": out}
 
 
@@ -225,9 +253,9 @@ def test_dat_io(ctx: Dict[str, Any]) -> None:
 
 
 # --------------------------------------------------------------------------
-# 3) 编排链：桩掉 preflight，跑完整 run_execute
+# 3) 编排链：桩掉 preflight，跑完整 run_execute + assemble_results
 # --------------------------------------------------------------------------
-def test_run_execute_synthetic(ctx: Dict[str, Any]) -> None:
+def test_run_execute_synthetic(ctx: Dict[str, Any]) -> Dict[str, Any]:
     tmp = work_tmp()
     try:
         root = tmp / "data_root"
@@ -248,45 +276,62 @@ def test_run_execute_synthetic(ctx: Dict[str, Any]) -> None:
         A.PF.run_preflight = lambda *a, **k: stub
         log: List[str] = []
         try:
-            result = A.run_execute(
+            result_ctx = A.run_execute(
                 REPO, root, REPO / "recon/manifests/a_dat_manifest.csv", cfg, setup,
                 "TEST-APPROVAL-REF", None, log,
             )
         finally:
             A.PF.run_preflight = saved
 
-        check("exec.opened_96", result["data"]["opened_files"] == 96,
-              str(result["data"]["opened_files"]))
-        check("exec.two_cases", len(result["cases"]) == 2, str(len(result["cases"])))
+        check("exec.opened_96", result_ctx["data"]["opened_files"] == 96,
+              str(result_ctx["data"]["opened_files"]))
+        check("exec.two_cases", len(result_ctx["cases"]) == 2, str(len(result_ctx["cases"])))
         check(
             "exec.errors_lt_1cm",
-            all(c["abs_err_cm"] <= 1.0 for c in result["cases"]),
-            str([round(c["abs_err_cm"], 4) for c in result["cases"]]),
+            all(c["abs_err_cm"] <= 1.0 for c in result_ctx["cases"]),
+            str([round(c["abs_err_cm"], 4) for c in result_ctx["cases"]]),
         )
-        check("exec.air_gate_passed", result["air_gate"]["status"] == "passed",
-              result["air_gate"]["status"])
-        check("exec.freeze_eligible", result["freeze"]["eligible"] is True, result["freeze"]["status"])
-        check("exec.no_hard_stops", result["hard_stops"] == [], str(result["hard_stops"]))
-        check("exec.arrays_keys", "wall_profile_p_norm_eff" in result["arrays"]
-              and "metal_x_after" in result["arrays"])
+        check("exec.air_loo_eligible", result_ctx["air_loo_eligibility"] == "eligible",
+              str(result_ctx["air_loo_eligibility"]))
+        check("exec.freeze_eligible", result_ctx["freeze"]["eligible"] is True,
+              result_ctx["freeze"]["status"])
+        check("exec.no_hard_stops", result_ctx["hard_stops"] == [], str(result_ctx["hard_stops"]))
+        check("exec.arrays_keys",
+              {"wall__z_before", "metal__z_after", "wall__P_after",
+               "air_loo__p_cal"} <= set(result_ctx["arrays"]))
 
         out_dir = tmp / "out"
-        payload = {
-            "contract_version": A.CONTRACT_VERSION,
-            "experiment_id": "A-Q1-E0",
-            "phase": "E0-C",
-            "approval_ref": "TEST-APPROVAL-REF",
-            "config_sha256_match": True,
-            "plan_sha256_match": True,
-            "split_sha256_match": True,
-            "cases": result["cases"],
-            "lambda_loo": result["lambda_loo"],
-            "cal": result["cal"],
-            "freeze": result["freeze"],
-            "data": result["data"],
-            "arrays": result["arrays"],
-        }
-        sums = A.write_outputs(out_dir, payload, payload.pop("arrays"), list(log))
+        result = A.assemble_results(
+            result_ctx,
+            cfg,
+            A.CONFIG_PATH,
+            REPO,
+            "TEST-APPROVAL-REF",
+            DUMMY_IMPL,
+            DUMMY_PARENT,
+            DUMMY_MAIN,
+            "test-branch",
+            "python solutions/A/a_e0_c.py --mode execute",
+            1.0,
+            10.0,
+            out_dir,
+        )
+        check("exec.groups_12", len(result["groups"]) == 12, str(len(result["groups"])))
+        check("exec.inputs_96", len(result["inputs"]) == 96, str(len(result["inputs"])))
+        check("exec.inputs_rel_prefix",
+              all(r["rel_path"].startswith("附件/附件2-测距数据/") for r in result["inputs"]))
+        check("exec.air_loo_folds_10", len(result["air_loo_folds"]) == 10)
+        check("exec.array_map_groups",
+              set(result["array_map"]["group_prefix"]) == {"墙体数据/data1-42cm", "金属板数据/data1-69cm"})
+        check("exec.methods_fixed_alpha", result["methods"]["alpha_mode"] == "fixed_1.0"
+              and result["methods"]["n0_improvements_enabled"] is False)
+        check("exec.single_process", result["resource"]["single_process"] is True)
+        check("exec.ancestor_anchors",
+              result["config_sha256_match"] and result["plan_sha256_match"]
+              and result["split_sha256_match"] and result["e0_s_results_sha256_match"])
+        check("exec.metrics_digest_64", len(result["metrics_sha256"]) == 64)
+
+        sums = A.write_outputs(out_dir, result, result_ctx["arrays"], list(log), c0=setup.c0)
         check("exec.out_files", all((out_dir / n).is_file() for n in (
             "e0c_results.json", "e0c_arrays.npz", "e0c_air_loo.json",
             "e0c_frozen.json", "run.log", "SHA256SUMS.txt")))
@@ -294,10 +339,25 @@ def test_run_execute_synthetic(ctx: Dict[str, Any]) -> None:
             check("exec.sum_%s" % name, sha256_file(out_dir / name) == digest)
         lines = (out_dir / "SHA256SUMS.txt").read_text(encoding="utf-8").strip().splitlines()
         check("exec.sums_cover_json", any("e0c_results.json" in ln for ln in lines))
+        check("exec.sums_cover_arrays", any("e0c_arrays.npz" in ln for ln in lines))
         raw = json.loads((out_dir / "e0c_results.json").read_text(encoding="utf-8"))
-        check("exec.json_files_sha256", "files_sha256" in raw and raw["files_sha256"])
+        check("exec.repeat_run_bound",
+              raw["repeat_run"]["arrays_sha256"] == raw["arrays_sha256"] == sha256_file(out_dir / "e0c_arrays.npz")
+              and raw["repeat_run"]["metrics_sha256"] == raw["metrics_sha256"])
+        check("exec.freeze_written", raw["freeze"]["written"] is True
+              and raw["freeze"]["status"] == "eligible")
+        check("exec.d_true_usage", raw["d_true_usage"] == "evaluation_only")
+        check("exec.npz_tau_step",
+              raw["cases"][0]["metric_grid"]["tau_step_ns"] == 0.05)
         frozen = json.loads((out_dir / "e0c_frozen.json").read_text(encoding="utf-8"))
-        check("exec.frozen_triplet", {"lambda_cal", "lambda_inv", "eta_wall"} <= set(frozen))
+        check("exec.frozen_triplet", {"lambda_cal", "lambda_inv", "eta_wall", "lambdas"} <= set(frozen))
+        check("exec.results_no_arrays", "arrays" not in raw)
+
+        # 交付指标必须能由交付数组按 C10 口径复算（write_outputs 已调用一次）
+        deltas = A.verify_delivery_metrics(raw, result_ctx["arrays"], c0=setup.c0)
+        check("exec.delivery_metrics_recompute", len(deltas) == 8 and max(deltas.values()) < 1e-9,
+              "max |Δ|=%.3g" % max(deltas.values()))
+        return {"result": raw, "out_dir": out_dir}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -334,7 +394,41 @@ def test_gate_logic(ctx: Dict[str, Any]) -> None:
 
 
 # --------------------------------------------------------------------------
-# 5) CLI 边界
+# 5) 交付工具：确定性 npz / 输入清单 / 指标摘要
+# --------------------------------------------------------------------------
+def test_delivery_utils() -> None:
+    tmp = work_tmp()
+    try:
+        arrays = {
+            "b": np.arange(6, dtype=np.float64).reshape(2, 3),
+            "a": np.asarray([1 + 2j, 3 - 4j], dtype=np.complex128),
+        }
+        p1, p2 = tmp / "a1.npz", tmp / "a2.npz"
+        A.save_npz_deterministic(p1, arrays)
+        A.save_npz_deterministic(p2, arrays)
+        check("delivery.npz_deterministic", sha256_file(p1) == sha256_file(p2))
+        loaded = np.load(p1)
+        check("delivery.npz_roundtrip",
+              np.array_equal(loaded["b"], arrays["b"]) and np.array_equal(loaded["a"], arrays["a"]))
+
+        groups = [
+            {"group_key": "g%d" % i, "d_hat_m": float(i), "abs_err_cm": None,
+             "supp_dw_win_db": None, "pslr_db": None, "pnr_db": None,
+             "valid_rx": 63, "finite": True, "extra": "ignored"}
+            for i in range(2)
+        ]
+        d1 = A.metrics_digest(groups)
+        groups2 = [dict(g) for g in groups]
+        groups2[0]["extra"] = "changed"
+        check("delivery.metrics_digest_stable", d1 == A.metrics_digest(groups2))
+        groups2[0]["d_hat_m"] = 9.0
+        check("delivery.metrics_digest_sensitive", d1 != A.metrics_digest(groups2))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+# --------------------------------------------------------------------------
+# 6) CLI 边界
 # --------------------------------------------------------------------------
 def test_cli_boundaries() -> None:
     tmp = work_tmp()
@@ -371,6 +465,7 @@ def main() -> int:
     test_dat_io(ctx)
     test_run_execute_synthetic(ctx)
     test_gate_logic(ctx)
+    test_delivery_utils()
     test_cli_boundaries()
 
     failed = [name for name, ok, _ in RESULTS if not ok]
