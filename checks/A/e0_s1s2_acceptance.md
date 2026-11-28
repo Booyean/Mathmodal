@@ -74,3 +74,10 @@ python checks/A/e0_acceptance/p15_tamper.py <out-dir>
 
 - 建议统筹 `codex` 复核后合并 `5d14b7b`（或实现方补 PR 后合并），并把 `E0-S` 的通过状态与上述差异说明记入控制表。
 - `E0-C`（真实空场/校准）与 `E0-T`（留出盲评）仍未放行；本报告不构成对二者的任何通过意见。
+
+## 6. PR #26 对齐补记（2026-11-28）
+
+- PR #26（`data/a-q1-e0-s` → `main`）的 head 为 `5d14b7b`，两个提交恰为 `652fc53` + `5d14b7b`，base 为 `df24c44`；`commits=2`、`mergeable_state=clean`，`git merge-tree df24c44 5d14b7b` 仍为 `0cabd318…`。
+- 因此 PR #26 与本文 §1 的验收对象**逐位同一**：P1–P17 结论、命令与差异说明继续有效，不因补开 PR 而需要重验。
+- 噪声摘要两种口径的完整对照（oracle 原始字节 vs 交付 `array_sha256`，含 raw/scaled）见 `checks/A/e0_s1s2_pr26_alignment.md` 与 `checks/A/e0_acceptance/noise_digest_calibers.json`；12/12 组两套摘要均独立复建一致。
+- §4 第 4 条“交付分支尚无 PR”是验收当时的状态；本条补记后以 PR #26 为准。
