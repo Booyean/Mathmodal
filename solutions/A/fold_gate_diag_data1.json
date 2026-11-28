@@ -1,7 +1,7 @@
 {
   "status": "ok",
   "meta": {
-    "contract_version": "D1-1",
+    "contract_version": "D1-2",
     "group_key": "附件2-测距数据/空场数据/data1",
     "dataset": "附件2-测距数据/空场数据",
     "name": "data1",
@@ -38,7 +38,7 @@
       "delta_max_ps": 50.0,
       "phase_max_rad": 0.1,
       "gain_max_db": 3.0,
-      "rationale": "fold_gate_contract.md D1-1 §3（相干增益/相位界/sinc 时延界）"
+      "rationale": "fold_gate_contract.md D1-2 §3（相干增益/相位界/sinc 时延界）"
     },
     "fold": {
       "mode": "coherent_equal_weight",
@@ -55,6 +55,8 @@
       "index": 0,
       "sync": 114,
       "ref_rms": 9704.53379668493,
+      "packet_finite": true,
+      "nonfinite_channels": [],
       "gamma_ref": 0.9998911891706547,
       "gamma_median_rx": 0.9997313112997177,
       "gamma_min_rx": 0.9963129367562812,
@@ -79,6 +81,8 @@
       "index": 1,
       "sync": 115,
       "ref_rms": 9702.897085355487,
+      "packet_finite": true,
+      "nonfinite_channels": [],
       "gamma_ref": 0.9999831671367838,
       "gamma_median_rx": 0.9997328511911889,
       "gamma_min_rx": 0.98961992874477,
@@ -103,6 +107,8 @@
       "index": 2,
       "sync": 116,
       "ref_rms": 9698.328789126506,
+      "packet_finite": true,
+      "nonfinite_channels": [],
       "gamma_ref": 0.9999140541712426,
       "gamma_median_rx": 0.9997290244070121,
       "gamma_min_rx": 0.9844783489494797,
@@ -127,6 +133,8 @@
       "index": 3,
       "sync": 117,
       "ref_rms": 9700.397966217675,
+      "packet_finite": true,
+      "nonfinite_channels": [],
       "gamma_ref": 0.999876141351796,
       "gamma_median_rx": 0.9990242245843878,
       "gamma_min_rx": 0.9865241185868883,

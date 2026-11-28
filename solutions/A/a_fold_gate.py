@@ -17,7 +17,17 @@
   ``solutions/A/model_q1.md`` §1.2（周期边界）、§1.2.3（多包与跨行一致性门控）、
   §7.2（已批复预处理输出：``signals_folded (64,4000) float64`` + 逐包相位漂移日志）；
   ``solutions/A/data_contract.md`` D0-4（输入契约）。
-  公式、阈值与依据见 ``solutions/A/fold_gate_contract.md``（D1-1）。
+  公式、阈值与依据见 ``solutions/A/fold_gate_contract.md``（D1-2）。
+
+D1-2 修订（仅修正已知缺陷，不改变门控口径与阈值）
+  * F1：锚包改为“以候选为锚时可通过 §3.2 的同伴数”最大者，`rho` 中位数
+    只作并列 tie-break；极性/载波翻转包（`rho=1` 但 `|phi|=pi`）不再因
+    `rho` 并列、仅靠包序号被选为锚包。少数极性翻转不再改变接受集。
+  * F2：任一通道出现 NaN/Inf 即整包拒绝（原因码
+    ``packet_nonfinite_samples``）并记录 ``packet_finite`` /
+    ``nonfinite_channels``；折叠输出增加“全有限”不变量，宁可直接失败
+    也不返回含 NaN/Inf 的伪造信号。对 D0 的 int16 原始路径不可达，属
+    外部浮点输入防护。
 
 公开接口
   * ``GateParams``       门控阈值（带默认值与依据链接）
@@ -52,7 +62,7 @@ from a_dat_reader import (
     IncompleteGroupError,
 )
 
-CONTRACT_VERSION = "D1-1"
+CONTRACT_VERSION = "D1-2"
 
 # 工作频带（题面补充说明 2；对应 rfft 整数 bin 300..1700，共 1401 bin）
 BAND_HZ = (0.3e9, 1.7e9)
@@ -78,7 +88,7 @@ class GateParams:
             "delta_max_ps": self.delta_max_ps,
             "phase_max_rad": self.phase_max_rad,
             "gain_max_db": self.gain_max_db,
-            "rationale": "fold_gate_contract.md D1-1 §3（相干增益/相位界/sinc 时延界）",
+            "rationale": "fold_gate_contract.md D1-2 §3（相干增益/相位界/sinc 时延界）",
         }
 
 
@@ -132,10 +142,13 @@ def _spectra(seg: np.ndarray, k_lo: int, k_hi: int) -> np.ndarray:
 
 
 def _rho(ap: np.ndarray, aa: np.ndarray) -> float:
-    """归一化零延迟复相干 ``|sum ap conj(aa)| / sqrt(sum|ap|^2 sum|aa|^2)``。"""
+    """归一化零延迟复相干 ``|sum ap conj(aa)| / sqrt(sum|ap|^2 sum|aa|^2)``。
+
+    D1-2（F2）：非有限输入不再传播为 NaN，统一返回 0（不可用即不相关）。
+    """
     num = np.sum(ap * np.conj(aa))
     den = math.sqrt(float(np.sum(np.abs(ap) ** 2)) * float(np.sum(np.abs(aa) ** 2)))
-    if den <= 0.0:
+    if not math.isfinite(den) or not bool(np.isfinite(num)) or den <= 0.0:
         return 0.0
     return float(abs(num) / den)
 
@@ -176,6 +189,87 @@ def _rms(x: np.ndarray) -> float:
     return float(np.sqrt(np.mean(np.asarray(x, dtype=np.float64) ** 2)))
 
 
+def _gain_db(rms_p: float, rms_a: float) -> Optional[float]:
+    """参考通道包间增益比 ``20·log10(rms_p/rms_a)``；任一非正/非有限则为 None。"""
+    if not (math.isfinite(rms_p) and math.isfinite(rms_a)):
+        return None
+    if rms_p <= 0.0 or rms_a <= 0.0:
+        return None
+    return float(20.0 * math.log10(rms_p / rms_a))
+
+
+def _pair_stats(
+    ap: np.ndarray, aa: np.ndarray, freqs_hz: np.ndarray
+) -> Tuple[float, Optional[float], Optional[float]]:
+    """包 ``p`` 相对候选锚包 ``a`` 的 ``(rho, delta_ps, phi_rad)``。
+
+    与 §2.4 的最终日志使用同一组公式，保证“选锚评分”和“门控判定”同尺。
+    """
+    rho = _rho(ap, aa)
+    delta_s, phi, _ = _delay_and_phase(ap * np.conj(aa), freqs_hz)
+    delta_ps = None if delta_s is None else float(delta_s * 1e12)
+    return rho, delta_ps, phi
+
+
+def _pair_consistent(
+    rho: float,
+    delta_ps: Optional[float],
+    phi: Optional[float],
+    gain_db: Optional[float],
+    p: GateParams,
+) -> bool:
+    """以候选为锚时，同伴包是否同时通过 §3.2 的 rho/delta/phi/gain 四项。"""
+    return bool(
+        math.isfinite(rho)
+        and rho >= p.rho_min
+        and delta_ps is not None
+        and abs(delta_ps) <= p.delta_max_ps
+        and phi is not None
+        and abs(phi) <= p.phase_max_rad
+        and gain_db is not None
+        and abs(gain_db) <= p.gain_max_db
+    )
+
+
+def _select_anchor(
+    intra_idx: np.ndarray,
+    a_ref: np.ndarray,
+    ref_rms: np.ndarray,
+    freqs_hz: np.ndarray,
+    p: GateParams,
+) -> int:
+    """D1-2（F1）锚包选择：按“以候选为锚时可通过包间门控的同伴数”取最大。
+
+    评分 = 1（自身）+ 与其余包成对一致的个数；该判据与 §3.2 完全一致，因此
+    极性翻转（``rho=1`` 但 ``|phi|=pi``）不会因 ``rho`` 并列而被选中。并列时
+    依次取“到其余包的 ``rho`` 中位数”较大者、共同包序号较小者，保证确定性。
+
+    这样锚包落在最大的互一致簇内：极性翻转包在少数时不会被选中，接受集与
+    包输入顺序无关（除并列簇本身无唯一解时按序号定序）。
+    """
+    if intra_idx.size == 1:
+        return int(intra_idx[0])
+    best_key: Optional[Tuple[int, float, int]] = None
+    best_anchor = int(intra_idx[0])
+    for ai, pa in enumerate(intra_idx):
+        n_ok = 1
+        rhos: List[float] = []
+        for bi, pb in enumerate(intra_idx):
+            if bi == ai:
+                continue
+            rho, delta_ps, phi = _pair_stats(a_ref[int(pa)], a_ref[int(pb)], freqs_hz)
+            gain_db = _gain_db(float(ref_rms[int(pb)]), float(ref_rms[int(pa)]))
+            rhos.append(rho)
+            if _pair_consistent(rho, delta_ps, phi, gain_db, p):
+                n_ok += 1
+        med = float(np.median(rhos)) if rhos else 0.0
+        key = (n_ok, med, -int(pa))
+        if best_key is None or key > best_key:
+            best_key = key
+            best_anchor = int(pa)
+    return best_anchor
+
+
 # ---------------------------------------------------------------- 结果容器
 @dataclass
 class FoldedGroup:
@@ -207,7 +301,7 @@ def fold_group(
     n_period_samples: Optional[int] = None,
     band_hz: Tuple[float, float] = BAND_HZ,
 ) -> FoldedGroup:
-    """按 D1-1 契约折迭一个组并做一致性门控。
+    """按 D1-2 契约折迭一个组并做一致性门控。
 
     参数
       params            门控阈值（默认 ``DEFAULT_GATE``）
@@ -252,15 +346,21 @@ def fold_group(
     a_ref = np.zeros((n_packets, k_hi - k_lo + 1), dtype=np.complex128)
     ref_rms = np.zeros(n_packets, dtype=np.float64)
     ref_finite = np.zeros(n_packets, dtype=bool)
+    packet_finite = np.zeros(n_packets, dtype=bool)
+    nonfinite_channels: List[List[int]] = [[] for _ in range(n_packets)]
     seg_delta_ps: List[Optional[List[float]]] = [None] * n_packets
     logs: List[Dict[str, Any]] = []
 
     for pi in range(n_packets):
         xp = packets[pi].astype(np.float64)
+        finite_per_ch = np.isfinite(xp).all(axis=1)
+        packet_finite[pi] = bool(finite_per_ch.all())
+        if not packet_finite[pi]:
+            nonfinite_channels[pi] = [int(i) for i in np.flatnonzero(~finite_per_ch)]
         seg = xp.reshape(N_CHANNELS, n_seg, n_period_samples)
         ref_seg = seg[REF_IDX]
         ref_rms[pi] = _rms(ref_seg)
-        ref_finite[pi] = bool(np.isfinite(ref_seg).all())
+        ref_finite[pi] = bool(finite_per_ch[REF_IDX])
 
         if ref_finite[pi]:
             z = _spectra(seg, k_lo, k_hi)                  # (64, Q, nb)
@@ -285,6 +385,8 @@ def fold_group(
                 "index": int(pi),
                 "sync": int(group.sync[pi]),
                 "ref_rms": float(ref_rms[pi]),
+                "packet_finite": bool(packet_finite[pi]),
+                "nonfinite_channels": list(nonfinite_channels[pi]),
                 "gamma_ref": None,
                 "gamma_median_rx": None,
                 "gamma_min_rx": None,
@@ -329,6 +431,11 @@ def fold_group(
         if ref_rms[pi] <= 0.0 or not gamma_active[pi, REF_IDX]:
             _add_reason(pi, "reference_channel_zero_energy")
             continue
+        # D1-2（F2）：任一通道非有限即整包拒绝，禁止 NaN/Inf 经均值进入输出。
+        # 参考通道的非有限单独由上面 reference_channel_nonfinite 记录。
+        if not packet_finite[pi]:
+            _add_reason(pi, "packet_nonfinite_samples")
+            continue
         # 两条包内判据都检查并记录（AND 门控，但日志要给出全部违反项）
         if seg_gamma[pi, REF_IDX] < p.gamma_ref_min:
             _add_reason(pi, "intra_segment_low_gamma_ref")
@@ -339,25 +446,12 @@ def fold_group(
             lg["intra_pass"] = True
 
     # ---- 包间门控：锚包 + rho/delta/phi/gain
-    en = np.sum(np.abs(a_ref) ** 2, axis=1)
     intra_idx = np.flatnonzero(intra_pass)
     anchor: Optional[int] = None
     if intra_idx.size:
-        if intra_idx.size >= 2:
-            med = np.zeros(intra_idx.size, dtype=np.float64)
-            for ai, pa in enumerate(intra_idx):
-                vals = [
-                    _rho(a_ref[pa], a_ref[pb])
-                    for bi, pb in enumerate(intra_idx)
-                    if bi != ai
-                ]
-                med[ai] = float(np.median(vals)) if vals else 0.0
-            anchor = int(intra_idx[int(np.argmax(med))])
-        else:
-            anchor = int(intra_idx[0])
+        anchor = _select_anchor(intra_idx, a_ref, ref_rms, freqs, p)
 
     if anchor is not None:
-        a_en = float(en[anchor])
         for pi in intra_idx:
             lg = logs[int(pi)]
             lg["inter_evaluated"] = True
@@ -368,24 +462,19 @@ def fold_group(
                 lg["phi_rad"] = 0.0
                 lg["gain_db"] = 0.0
             else:
-                c = a_ref[int(pi)] * np.conj(a_ref[anchor])
-                den = math.sqrt(float(en[int(pi)]) * a_en)
-                lg["rho"] = float(abs(np.sum(c)) / den) if den > 0.0 else 0.0
-                delta_s, phi, _ = _delay_and_phase(c, freqs)
-                lg["delta_ps"] = None if delta_s is None else float(delta_s * 1e12)
+                rho, delta_ps, phi = _pair_stats(a_ref[int(pi)], a_ref[anchor], freqs)
+                gain_db = _gain_db(float(ref_rms[int(pi)]), float(ref_rms[anchor]))
+                lg["rho"] = rho
+                lg["delta_ps"] = delta_ps
                 lg["phi_rad"] = phi
-                lg["gain_db"] = (
-                    float(20.0 * math.log10(float(ref_rms[int(pi)]) / float(ref_rms[anchor])))
-                    if ref_rms[anchor] > 0.0 and ref_rms[int(pi)] > 0.0
-                    else None
-                )
-                if lg["rho"] is not None and lg["rho"] < p.rho_min:
+                lg["gain_db"] = gain_db
+                if rho < p.rho_min:
                     _add_reason(int(pi), "inter_packet_low_coherence")
-                if lg["delta_ps"] is None or abs(lg["delta_ps"]) > p.delta_max_ps:
+                if delta_ps is None or abs(delta_ps) > p.delta_max_ps:
                     _add_reason(int(pi), "inter_packet_delay_drift")
-                if lg["phi_rad"] is None or abs(lg["phi_rad"]) > p.phase_max_rad:
+                if phi is None or abs(phi) > p.phase_max_rad:
                     _add_reason(int(pi), "inter_packet_phase_offset")
-                if lg["gain_db"] is None or abs(lg["gain_db"]) > p.gain_max_db:
+                if gain_db is None or abs(gain_db) > p.gain_max_db:
                     _add_reason(int(pi), "inter_packet_gain_jump")
             lg["inter_pass"] = len(lg["reject_reasons"]) == 0
             lg["accepted"] = bool(lg["inter_pass"])
@@ -410,6 +499,14 @@ def fold_group(
         seg = packets[int(pi)].astype(np.float64).reshape(N_CHANNELS, n_seg, n_period_samples)
         signals += seg.mean(axis=1)
     signals /= float(acc_idx.size)
+
+    # D1-2（F2）输出不变量：正常路径下非有限包已在包内门控被拒，此处是最后防线，
+    # 宁可直接失败也不返回含 NaN/Inf 的折叠信号。
+    if not bool(np.isfinite(signals).all()):
+        raise RuntimeError(
+            "group %r: 折叠输出包含非有限值，拒绝返回伪造信号（D1-2 F2 防护）"
+            % (str(group.group_key),)
+        )
 
     meta = _build_meta(
         group, p, n_period_samples, n_seg, k_lo, k_hi, band_hz, fs_hz, ts_s,
