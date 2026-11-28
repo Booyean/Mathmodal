@@ -23,7 +23,7 @@
      - `C_B/A`（早先清单写法）$\equiv \Delta_{\text{B/A}}$（[model_q2.md](../../solutions/A/model_q2.md) §3.2 记号）$\leftrightarrow$ JSON 字段 `delta_ba_db`；
      - `C_B/bg`（早先清单写法）$\equiv \text{PBR}_B$（[model_q2.md](../../solutions/A/model_q2.md) §3.2 记号）$\leftrightarrow$ JSON 字段 `pbr_b_db`。
 2. **上游冻结契约继承字段（Q2 与 Q3 结果 JSON 顶层必含）**：
-   - `phase`（`"Q2"` / `"Q3-Wall"` / `"Q3-Metal"`）、`implementation_sha`、`main_commit`、`q1_frozen_config_path`、`q1_frozen_config_sha256`、`d0_contract_version`（`"D0-4"`）、`d1_contract_version`（`"D1-2"`）、`groups_used[]`、`anomaly_isolation{}`、`arrays_sha256`、`finite`（全有限布尔门控）、`status`（未验收前保留 `"contract_only"`）。
+   - `phase`（`"Q2"` / `"Q3-Wall"` / `"Q3-Metal"`）、`implementation_sha`、`main_commit`、`q1_frozen_config_path`、`q1_frozen_config_sha256`、`d0_contract_version`（`"D0-4"`）、`d1_contract_version`（`"D1-2"`）、`groups_used[]`、`anomaly_isolation{}`、`arrays_sha256`、`finite`（全有限布尔门控）、`status`（枚举：`["contract_only", "synthetic_baseline_only", "empirical_pending_acceptance", "empirical_accepted", "hard_stop"]`）。
 
 ---
 
@@ -33,6 +33,7 @@
 
 | 产出载体 | 字段 / 数组键名 | 形状 / 类型 | 物理单位 | 物理含义与计算口径 | 对应论文槽位 |
 |---|---|---|---|---|---|
+| `q2_results.json` | `grid_spec.{x_range_m, y_range_m, dx_m, dy_m, nx, ny}` | `dict` | `m`, 个 | 二维网格参数声明（`[-0.20,1.40]×[0,2.50]`，`dx=dy=0.01 m` → `161×251`） | §6.2, `Fig 2-1` |
 | `q2_results.json` | `row_id`, `rx_indices[]`, `z_slice_m` | `int`, `list[int]`, `float` | 无量纲, —, `m` | 主行 `row_id=4`（7 路 `[24..26,28..31]`，`z_slice_m=0.545`）；校验行 `3`/`5`（8 路，`0.615`/`0.475`）须代入三维 $\Delta z$ | §6.1, `Fig 2-2` |
 | `q2_results.json` | `gain_params.{beta, alpha_gain_per_ns, alpha_y_per_m, slope_db_per_m, y0_m, tau0_s, y_sat_m, tau_sat_s, g_cap}` | `dict` (`float`) | —, `ns^-1`, `m^-1`, `dB/m`, `m`, `s`, `m`, `s`, 无量纲 | 锁定 $\tilde{\alpha}_y = \frac{2\times 10^9}{c_0}\alpha_{\text{gain}}$、斜率 $57.946\,\alpha_{\text{gain}}\text{ dB/m}$、$G_{\text{cap}}=20.0$（$+26.02\text{ dB}$） | §6.2, `Fig 2-2` |
 | `q2_results.json` | `gain_selection.{alpha_grid_per_ns[], delta_far_near_db[], c_far_med_db[], selected_alpha_per_ns}` | `dict` (`list[float]`, `float`) | `ns^-1`, `dB`, `dB`, `ns^-1` | 宽域 $\mathcal{Y}_{\text{near}}=[0.25,1.00]\text{ m}$ 与 $\mathcal{Y}_{\text{far}}=[1.20,2.40]\text{ m}$ 无真值拐点选参轨迹（$C_{\text{far/med}}$ 跌落 $>1.5\text{ dB}$ 截断） | §6.2.2, `Fig 2-2` |
@@ -64,9 +65,10 @@
 
 | 产出载体 | 字段 / 数组键名 | 形状 / 类型 | 物理单位 | 物理含义与计算口径 | 对应论文槽位 |
 |---|---|---|---|---|---|
-| `q3_wall_results.json` | `grid_spec.{x_range_m, y_range_m, z_range_m, coarse_step_m, fine_step_m}` | `dict` (`float`) | `m` | 区域 $[-0.20,1.40]\times[0,2.50]\times[0.20,0.80]\text{ m}$；粗网格 `(0.02,0.02,0.02)`，细化 ROI `(0.01,0.01,0.01)` | §7.1–§7.2 |
+| `q3_wall_results.json` | `grid_spec.{x_range_m, y_range_m, z_range_m, dx_m, dy_m, dz_m, nx, ny, nz, coarse_step_m, fine_step_m}` | `dict` | `m`, 个 | 区域 $[-0.20,1.40]\times[0,2.50]\times[0.20,0.80]\text{ m}$；契约 `2 cm` 粗网格 `81×126×31`（声明逐轴步长与点数） | §7.1–§7.2 |
 | `q3_wall_results.json` | `aperture_weights.{theta_x_flat_deg, theta_x_cut_deg, theta_z_flat_deg, theta_z_cut_deg, valid_rx_count}` | `dict` | `deg`, 个 | 水平 $35^\circ\text{–}45^\circ$、垂向 $45^\circ\text{–}55^\circ$ 解耦上升余弦窗，$|\mathcal{I}_{\text{rx}}|=63$ | §7.2.1 |
 | `q3_wall_results.json` | `inherited_gain_params.{beta, alpha_gain_per_ns, g_cap}` | `dict` (`float`) | —, `ns^-1`, 无量纲 | 严格继承 Q2 锁定之墙体增益参数 | §7.2.2 |
+| `q3_wall_results.json` | `slice_z4_spec.{target_z_m, extraction_rule, on_grid, z_low_idx, z_high_idx, z_low_m, z_high_m, weight_high}` | `dict` | `m`, 索引, 权重 | 离网格切片提取规则：`slice_xy_z4 = (1-w)*image_3d_coh[z_low_idx] + w*image_3d_coh[z_high_idx]`（由 `image_3d_coh` 与 `z_grid_m` 线性插值，便于独立逐位复算） | `Fig 3-1`, §7.3 |
 | `q3_wall_results.json` | `wall_a_3d.{x_span_m, y_front_mean_m, y_front_range_m, z_envelope_m, tilt_deg}` | `dict` (`list/float`) | `m`, `deg` | 前墙 A 三维前界面 $\hat{y}_A(x,z)$ 及有限高度包络 $[z_{A,\min}, z_{A,\max}]$ | `Table 3-1`, `Fig 3-1` |
 | `q3_wall_results.json` | `wall_b_3d.{air_y_mean_m, behind_a_y_mean_m, z_consistency_cm, pbr_b_coh_db, pbr_b_env_db}` | `dict` (`float`) | `m`, `cm`, `dB` | 后墙 B 全高一致性、空气段 vs 遮挡段三维视在深度及相干/包络对比度 | `Table 3-1`, `Fig 3-1` |
 | `q3_wall_results.json` | `q2_q3_reconciliation.{z_slice_m, air_segment_max_diff_cm, air_segment_mae_cm, passed_le_2cm}` | `dict` | `m`, `cm`, `bool` | $z=z_4=0.545\text{ m}$ 切片与 Q2 二维空气段位置交叉对账（门槛 $\le 2.0\text{ cm}$） | `Table 3-1`, §7.3 |
@@ -78,15 +80,15 @@
 
 | 产出载体 | 字段 / 数组键名 | 形状 / 类型 | 物理单位 | 物理含义与计算口径 | 对应论文槽位 |
 |---|---|---|---|---|---|
-| `q3_metal_results.json` | `grid_spec.{x_range_m, y_range_m, z_range_m, coarse_step_m, fine_step_m}` | `dict` (`float`) | `m` | $[0.00,1.30]\times[0,2.50]\times[0.20,0.80]\text{ m}$（$J_{\text{metal}}=27$，$x_j=0.05(j-1)$） | §7.1–§7.2 |
-| `q3_metal_results.json` | `anomaly_isolation.{orphan_skipped, group8_sync_common, group8_int16_min_count, group8_d1_gate_action}` | `dict` | —, 个 | 跳过 `22-50-31_16000_7.dat`（0 B）；第 8 组 `22-09-58_16000` 交集 `P=3` 及末包 `46` 个 `-32768` `D1-2` 核查结论 | `Table 3-2`, §7.1 |
+| `q3_metal_results.json` | `grid_spec.{x_range_m, y_range_m, z_range_m, dx_m, dy_m, dz_m, nx, ny, nz, coarse_step_m, fine_step_m}` | `dict` | `m`, 个 | $[0.00,1.30]\times[0,2.50]\times[0.20,0.80]\text{ m}$（`2 cm` 粗网格 `66×126×31`，$J_{\text{metal}}=27$） | §7.1–§7.2 |
+| `q3_metal_results.json` | `anomaly_isolation.{orphan_skipped, group8_sync_common, group8_int16_min_count, group8_d1_gate_action}` | `dict` | —, 个 | 由输入/预检元数据动态生成（合成夹具未覆盖项显式标 `"not_covered_by_synthetic_fixture"`，严禁硬编码实测计数） | `Table 3-2`, §7.1 |
 | `q3_metal_results.json` | `gain_modes.{primary_localization, shadow_diagnostic}` | `dict` | `ns^-1` | 定位基线固定纯几何扩散 `beta=1.0, alpha_gain=0.0`；遮挡诊断保留高增益对比 profile | §7.2.2 |
 | `q3_metal_results.json` | `nms_params.{radius_x_m, radius_y_m, min_peak_above_med_db, contour_drop_db}` | `dict` (`float`) | `m`, `m`, `dB`, `dB` | $(x,y)$ 柱域 3D-NMS 半径 `(0.14, 0.18) m`、检测门槛 `+12.0 dB`、包围盒阈值 `-10.0 dB` | §7.3.2 |
-| `q3_metal_results.json` | `metal_objects[].{object_id, inferred_class, peak_xyz_m[3], centroid_10db_xyz_m[3], bbox_10db_m[6], delta_z_10db_m, peak_above_med_db}` | `list[dict]` | `m`, `dB` | 逐检出目标主峰 $(\hat{x}_p,\hat{y}_p,\hat{z}_p)$、$-10\text{ dB}$ 加权质心 $(\hat{x}_c,\hat{y}_c,\hat{z}_c)$、包围盒与垂向跨度 $\Delta\hat{z}_{10\text{dB}}$（高立柱 vs 低金属铲不硬编码先验坐标） | `Table 3-2`, `Fig 3-2` |
-| `q3_metal_results.json` | `shadow_diagnostics[].{object_id, y_shadow_start_m, y_wall_band_m[2], i_shadow_bar, i_unocc_med, shadow_ratio_db, shadow_confirmed}` | `list[dict]` | `m`, 能量, `dB`, `bool` | 后方区间 $y>\hat{y}_p+0.25\text{ m}$ 阴影均能 $\bar{I}_{\text{shadow}}^{(m)}$ 与无遮挡墙面中位数 $\bar{I}_{\text{unocc}}$ 比值（`ShadowRatio <= -6.0 dB` 确证遮挡；注：`ShadowRatio` 指标由本文定义，[8] 支撑遮挡物理机制） | `Table 3-2`, `Fig 3-2` |
+| `q3_metal_results.json` | `metal_objects[].{object_id, inferred_class, peak_xyz_m[3], centroid_10db_xyz_m[3], bbox_10db_m[6], delta_z_10db_m, peak_above_med_db}` | `list[dict]` | `m`, `dB` | 逐检出目标主峰 `[x,y,z]`、$-10\text{ dB}$ 质心、包围盒轴序 `[x_min,x_max,y_min,y_max,z_min,z_max]` 与 $\Delta\hat{z}_{10\text{dB}}$ | `Table 3-2`, `Fig 3-2` |
+| `q3_metal_results.json` | `shadow_diagnostics[].{object_id, y_shadow_start_m, y_wall_band_m[2], i_shadow_bar, i_unocc_med, shadow_ratio_db, shadow_confirmed}` | `list[dict]` | `m`, 能量, `dB`, `bool` | 后方阴影均能与 $\pm 0.45\text{ m}$ 局部无遮挡侧带中位数 `i_unocc_med`（已剔除全目标横向并集，图注须明示）之比（`ShadowRatio <= -6.0 dB` 确证遮挡） | `Table 3-2`, `Fig 3-2` |
 | `q3_metal_results.json` | `shadow_unocc_global_med` | `float` | 归一化聚焦能量 | 整图无遮挡后墙中位数标量（在 `y_wall_band_m` 带内剔除全部检出金属目标横向并集 $\bigcup_m[\hat{x}_{m,\min},\hat{x}_{m,\max}]$ 后计算，专作 `Fig 3-2` 整图 $0\text{ dB}$ 参考） | `Fig 3-2` |
 | `q3_metal_results.json` | `resolution_limits.{dy_res_m, dx_res_m, dz_res_at_08m_m, dz_res_at_20m_m}` | `dict` (`float`) | `m` | 物理分辨边界：$\Delta y\approx 0.1071\text{ m},\ \Delta x\approx 0.0354\text{ m},\ \Delta z(2\text{ m})\approx 0.41\text{ m}$ | §7.4, §8.2 |
-| `q3_metal_results.json` | `shadow_profile_axis_spec.{y_wall_band_idx_start, y_wall_band_idx_end, ref_energy_key, multi_target_rule, per_object_ratio_source, db_floor_ratio}` | `dict` | int, str, float | 锁定 `y_wall_band_m == y_grid_m[idx_start:idx_end]` 切片、整图唯一参考 `ref_energy_key="shadow_unocc_global_med"`、并集剔除规则 `"exclude_union_of_all_metal_x_boxes"`、分目标标注来源 `"shadow_diagnostics[object_id].shadow_ratio_db"` 与底限 `1e-12` | `Fig 3-2` |
+| `q3_metal_results.json` | `shadow_profile_axis_spec.{y_wall_band_idx_start, y_wall_band_idx_end, ref_energy_key, multi_target_rule, per_object_ratio_source, per_object_unocc_window_half_width_m, db_floor_ratio}` | `dict` | int, str, float | 锁定 `y_wall_band_m == y_grid_m[idx_start:idx_end]` 切片、整图唯一参考 `shadow_unocc_global_med`、并集剔除规则、分目标 `±0.45 m` 参考侧带与底限 `1e-12` | `Fig 3-2` |
 | `q3_metal_arrays.npz` | `x_grid_m`, `y_grid_m`, `z_grid_m` | `(N_x,)`, `(N_y,)`, `(N_z,)` `float64` | `m` | $[0.00,1.30]\times[0,2.50]\times[0.20,0.80]\text{ m}$ 三维坐标轴 | `Fig 3-2` |
 | `q3_metal_arrays.npz` | `y_wall_band_m`（**必交**） | `(N_y_wall,)` `float64` | `m` | 阴影剖面纵轴（对应 `y_grid_m[y_wall_band_idx_start:y_wall_band_idx_end]` 连续切片，与 `shadow_profile_x_y` 第一维严格等长） | `Fig 3-2` |
 | `q3_metal_arrays.npz` | `image_3d_coh`, `image_3d_env`, `image_3d_shadow_gain` | `(N_z, N_y, N_x)` `float64` | 归一化聚焦能量 | 主定位 3D 相干能量、包络对照能量及辅助观察后墙阴影的高增益 3D 能量网格 | `Fig 3-2` |

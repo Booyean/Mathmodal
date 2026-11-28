@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import subprocess
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -66,6 +68,64 @@ def array_sha256(arr: np.ndarray) -> str:
 def arrays_dict_sha256(arrays: dict[str, np.ndarray]) -> str:
     digest_map = {k: array_sha256(v) for k, v in sorted(arrays.items())}
     return canonical_json_sha256(digest_map)
+
+
+def save_npz_deterministic(path: Path, arrays: dict[str, np.ndarray]) -> None:
+    """Write compressed NPZ with fixed ZipInfo timestamp so runs are byte-for-byte repeatable."""
+    fixed_dt = (2026, 11, 28, 0, 0, 0)
+    with zipfile.ZipFile(path, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for key in sorted(arrays.keys()):
+            buf = io.BytesIO()
+            np.lib.format.write_array(buf, np.ascontiguousarray(arrays[key]), allow_pickle=False)
+            zinfo = zipfile.ZipInfo(filename=f"{key}.npy", date_time=fixed_dt)
+            zinfo.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(zinfo, buf.getvalue())
+
+
+def compute_anomaly_isolation(scene: dict[str, Any], phase: str) -> dict[str, Any]:
+    """Build anomaly_isolation purely from input scene metadata (never hardcoded fixture constants)."""
+    gids = [str(g) for g in scene["j_group_ids"].tolist()]
+    p_counts = [int(p) for p in scene["j_p_common"].tolist()]
+    max_p = max(p_counts) if p_counts else 0
+    mismatch = [
+        {"group_index": idx + 1, "group_id": gid, "p_common": p}
+        for idx, (gid, p) in enumerate(zip(gids, p_counts))
+        if p < max_p
+    ]
+    raw_anomalies = scene.get("anomaly_inputs", {})
+    real_dat_count = int(raw_anomalies.get("real_dat_files_read", 0))
+
+    if phase == "Q3-Metal":
+        orphans = raw_anomalies.get("orphan_files")
+        orphan_entry: Any = (
+            orphans if orphans is not None else {"status": "not_covered_by_synthetic_fixture", "count": 0}
+        )
+        g8_idx = 7
+        if g8_idx < len(p_counts) and raw_anomalies.get("packet_mismatch_exercised", False):
+            g8_sync: Any = int(p_counts[g8_idx])
+        else:
+            g8_sync = {"status": "not_covered_by_synthetic_fixture", "count": None}
+
+        g8_int16 = raw_anomalies.get("group8_int16_min_count")
+        if g8_int16 is None:
+            g8_int16 = {"status": "not_covered_by_synthetic_fixture", "count": 0}
+        g8_gate = raw_anomalies.get("group8_d1_gate_action")
+        if g8_gate is None:
+            g8_gate = {"status": "not_covered_by_synthetic_fixture", "action": "none"}
+        return {
+            "real_dat_files_read": real_dat_count,
+            "packet_mismatch_groups": mismatch,
+            "orphan_skipped": orphan_entry,
+            "group8_sync_common": g8_sync,
+            "group8_int16_min_count": g8_int16,
+            "group8_d1_gate_action": g8_gate,
+        }
+
+    return {
+        "real_dat_files_read": real_dat_count,
+        "packet_mismatch_groups": mismatch,
+        "orphan_skipped": raw_anomalies.get("orphan_files", {"status": "not_covered_by_synthetic_fixture", "count": 0}),
+    }
 
 
 def all_arrays_finite_and_valid(arrays: dict[str, np.ndarray], energy_prefixes: tuple[str, ...]) -> bool:
@@ -247,6 +307,15 @@ def simulate_scatter_scene_63rx(
     }
 
 
+def interval_union_mask(axis: np.ndarray, ranges: list[list[float]], tol: float = 1.0e-9) -> np.ndarray:
+    """Boolean mask selecting coordinate grid points inside any [lo, hi] interval with FP tolerance."""
+    mask = np.zeros_like(axis, dtype=bool)
+    for lo, hi in ranges:
+        if lo <= hi + tol:
+            mask |= (axis >= float(lo) - tol) & (axis <= float(hi) + tol)
+    return mask
+
+
 def parabolic_ridge_y(y_axis: np.ndarray, profile_yx: np.ndarray) -> np.ndarray:
     """Estimate sub-grid peak positions along axis 0 via 3-point quadratic refinement."""
     idx = np.argmax(profile_yx, axis=0)
@@ -303,6 +372,11 @@ def build_synthetic_wall_scene_63rx(seed: int = SYNTHETIC_SEED) -> dict[str, Any
         prefix="syn-wall",
         packet_counts=p_counts,
     )
+    scene["anomaly_inputs"] = {
+        "real_dat_files_read": 0,
+        "packet_mismatch_exercised": True,
+        "orphan_files": {"status": "not_covered_by_synthetic_fixture", "count": 0},
+    }
     scene["planted"] = {
         "wall_a_x_min_m": 0.25,
         "wall_a_x_max_m": 1.06,
@@ -337,7 +411,7 @@ def build_synthetic_metal_scene_63rx(seed: int = SYNTHETIC_SEED) -> dict[str, An
     all_pts = np.vstack([col_pts, shv_pts, wall_pts])
     all_amps = np.concatenate([amps_col, amps_shv, amps_wall])
     p_counts = np.full(len(x_scan), 4, dtype=np.int64)
-    p_counts[7] = 3  # Mirror metal-group 8 packet intersection P_common=3
+    p_counts[7] = 3  # Exercise group-8 packet intersection P_common=3 in synthetic j_p_common vector
     scene = simulate_scatter_scene_63rx(
         x_scan=x_scan,
         all_pts=all_pts,
@@ -348,6 +422,13 @@ def build_synthetic_metal_scene_63rx(seed: int = SYNTHETIC_SEED) -> dict[str, An
         prefix="syn-metal",
         packet_counts=p_counts,
     )
+    scene["anomaly_inputs"] = {
+        "real_dat_files_read": 0,
+        "packet_mismatch_exercised": True,
+        "orphan_files": {"status": "not_covered_by_synthetic_fixture", "count": 0},
+        "group8_int16_min_count": {"status": "not_covered_by_synthetic_fixture", "count": 0},
+        "group8_d1_gate_action": {"status": "not_covered_by_synthetic_fixture", "action": "none"},
+    }
     scene["planted"] = {
         "column_xyz_m": [0.35, 1.15, 0.50],
         "shovel_xyz_m": [0.90, 0.75, 0.35],

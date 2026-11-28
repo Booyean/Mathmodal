@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
-import statistics
 from pathlib import Path
 from typing import Any
 
@@ -57,12 +57,15 @@ def _validate_single_contract(
     arrays: dict[str, np.ndarray],
     expected_phase: str,
     energy_prefixes: tuple[str, ...],
+    allowed_statuses: set[str],
 ) -> None:
     for up_key in REQUIRED_UPSTREAM_KEYS:
         if up_key not in results:
             raise AssertionError(f"{expected_phase}: missing upstream key {up_key!r}")
     if results["phase"] != expected_phase:
         raise AssertionError(f"Expected phase={expected_phase!r}, got {results['phase']!r}")
+    if results["status"] not in allowed_statuses:
+        raise AssertionError(f"{expected_phase}: invalid status {results['status']!r}; allowed={sorted(allowed_statuses)}")
     if results.get("real_dat_files_read") != 0:
         raise AssertionError(f"{expected_phase}: real_dat_files_read must be 0")
     if not bool(results["finite"]):
@@ -74,6 +77,21 @@ def _validate_single_contract(
     recomputed_sha = arrays_dict_sha256(arrays)
     if results["arrays_sha256"] != recomputed_sha:
         raise AssertionError(f"{expected_phase}: arrays_sha256 mismatch ({results['arrays_sha256']} != {recomputed_sha})")
+
+    # Verify grid_spec axis counts and uniform spacing match actual NPZ coordinate grids
+    gs = results["grid_spec"]
+    for axis_char, arr_key in (("x", "x_grid_m"), ("y", "y_grid_m"), ("z", "z_grid_m")):
+        if arr_key in arrays:
+            arr = arrays[arr_key]
+            if int(gs[f"n{axis_char}"]) != int(arr.size):
+                raise AssertionError(f"{expected_phase}.grid_spec.n{axis_char} != {arr_key}.size")
+            if not math.isclose(float(arr[0]), float(gs[f"{axis_char}_range_m"][0]), abs_tol=1e-9):
+                raise AssertionError(f"{expected_phase}.{arr_key}[0] mismatch with {axis_char}_range_m[0]")
+            if not math.isclose(float(arr[-1]), float(gs[f"{axis_char}_range_m"][1]), abs_tol=1e-9):
+                raise AssertionError(f"{expected_phase}.{arr_key}[-1] mismatch with {axis_char}_range_m[1]")
+            diffs = np.diff(arr)
+            if not np.allclose(diffs, float(gs[f"d{axis_char}_m"]), atol=1e-9):
+                raise AssertionError(f"{expected_phase}.{arr_key} spacing != d{axis_char}_m")
 
     # Check JSON fields and nested keys against schema
     for field_path, meta in contract_section["json_fields"].items():
@@ -142,6 +160,7 @@ def validate_output_dir(out_dir: Path, contract_path: Path = CONTRACT_JSON_PATH)
 
     loaded_results: dict[str, dict[str, Any]] = {}
     loaded_arrays: dict[str, dict[str, np.ndarray]] = {}
+    allowed_statuses = set(schema["unit_conventions"]["runtime_status_enum"])
 
     for contract_key, (phase, json_name, npz_name, prefixes) in bundles.items():
         json_path = out_dir / json_name
@@ -151,11 +170,24 @@ def validate_output_dir(out_dir: Path, contract_path: Path = CONTRACT_JSON_PATH)
         res = json.loads(json_path.read_text(encoding="utf-8"))
         with np.load(npz_path, allow_pickle=False) as npz:
             arrs = {k: npz[k] for k in npz.files}
-        _validate_single_contract(schema[contract_key], res, arrs, phase, prefixes)
+        _validate_single_contract(schema[contract_key], res, arrs, phase, prefixes, allowed_statuses)
         loaded_results[contract_key] = res
         loaded_arrays[contract_key] = arrs
 
-    # Cross-check Q2 gain bounds and Q3 reconciliation
+    # Verify per-file SHA256SUMS.txt ledger when present
+    sha_file = out_dir / "SHA256SUMS.txt"
+    if sha_file.exists():
+        for line in sha_file.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            digest, fname = line.split(None, 1)
+            target = out_dir / fname.strip()
+            actual = hashlib.sha256(target.read_bytes()).hexdigest()
+            if actual != digest:
+                raise AssertionError(f"SHA256SUMS mismatch for {fname}: {actual} != {digest}")
+
+    # Cross-check Q2 gain bounds and Q3 reconciliation + deterministic slice_xy_z4 + 3D projections
     q2_res = loaded_results["q2_contract"]
     q2_arr = loaded_arrays["q2_contract"]
     if float(np.max(q2_arr["w_comp_curve"])) > float(q2_res["gain_params"]["g_cap"]) + 1e-12:
@@ -164,8 +196,23 @@ def validate_output_dir(out_dir: Path, contract_path: Path = CONTRACT_JSON_PATH)
         raise AssertionError("Q2 w_comp_curve drops below 1.0")
 
     q3w_res = loaded_results["q3_wall_contract"]
+    q3w_arr = loaded_arrays["q3_wall_contract"]
     if not bool(q3w_res["q2_q3_reconciliation"]["passed_le_2cm"]):
         raise AssertionError("Q2/Q3 air-segment reconciliation failed <= 2.0 cm check")
+
+    # Verify slice_xy_z4 strictly from image_3d_coh and z_grid_m using slice_z4_spec
+    sz = q3w_res["slice_z4_spec"]
+    lo, hi = int(sz["z_low_idx"]), int(sz["z_high_idx"])
+    w_hi = float(sz["weight_high"])
+    expected_slice = (1.0 - w_hi) * q3w_arr["image_3d_coh"][lo] + w_hi * q3w_arr["image_3d_coh"][hi]
+    if not np.allclose(q3w_arr["slice_xy_z4"], expected_slice, atol=1e-12, rtol=1e-12):
+        raise AssertionError("Q3-Wall slice_xy_z4 does not match slice_z4_spec linear interpolation of image_3d_coh")
+    if not np.allclose(q3w_arr["proj_xy_max"], np.max(q3w_arr["image_3d_coh"], axis=0), atol=1e-12):
+        raise AssertionError("Q3-Wall proj_xy_max != max(image_3d_coh, axis=0)")
+    if not np.allclose(q3w_arr["proj_xz_max"], np.max(q3w_arr["image_3d_coh"], axis=1), atol=1e-12):
+        raise AssertionError("Q3-Wall proj_xz_max != max(image_3d_coh, axis=1)")
+    if not np.allclose(q3w_arr["proj_yz_max"], np.max(q3w_arr["image_3d_coh"], axis=2), atol=1e-12):
+        raise AssertionError("Q3-Wall proj_yz_max != max(image_3d_coh, axis=2)")
 
     # Strict PR #38 multi-target Fig 3-2 check on Q3-Metal
     q3m_res = loaded_results["q3_metal_contract"]
@@ -188,18 +235,41 @@ def validate_output_dir(out_dir: Path, contract_path: Path = CONTRACT_JSON_PATH)
     if {o["object_id"] for o in objs} != {d["object_id"] for d in diags}:
         raise AssertionError("Q3-Metal object_id set mismatch between metal_objects and shadow_diagnostics")
 
-    unocc_vals = []
-    for row in prof:
-        for xi, val in zip(xg_m, row):
-            if not any(o["bbox_10db_m"][0] <= float(xi) <= o["bbox_10db_m"][1] for o in objs):
-                unocc_vals.append(float(val))
-    if not unocc_vals:
+    unocc_col_mask = np.array(
+        [
+            not any(o["bbox_10db_m"][0] - 1e-9 <= float(xi) <= o["bbox_10db_m"][1] + 1e-9 for o in objs)
+            for xi in xg_m
+        ],
+        dtype=bool,
+    )
+    if not np.any(unocc_col_mask):
         raise AssertionError("No unoccluded columns remaining after excluding union of metal x-boxes")
-    recomputed_global_med = float(statistics.median(unocc_vals))
+    recomputed_global_med = float(np.median(prof[:, unocc_col_mask]))
     if not math.isclose(recomputed_global_med, float(q3m_res["shadow_unocc_global_med"]), rel_tol=1e-9, abs_tol=1e-12):
         raise AssertionError(
             f"shadow_unocc_global_med mismatch: recomputed {recomputed_global_med} != reported {q3m_res['shadow_unocc_global_med']}"
         )
+
+    # Verify per-object sideband reference and ShadowRatio formulas
+    half_w = float(axis_spec["per_object_unocc_window_half_width_m"])
+    obj_by_id = {o["object_id"]: o for o in objs}
+    for diag in diags:
+        obj = obj_by_id[diag["object_id"]]
+        px = float(obj["peak_xyz_m"][0])
+        bx0, bx1 = float(obj["bbox_10db_m"][0]), float(obj["bbox_10db_m"][1])
+        obj_cols = (xg_m >= bx0 - 1e-9) & (xg_m <= bx1 + 1e-9)
+        if not np.any(obj_cols):
+            obj_cols = np.zeros_like(xg_m, dtype=bool)
+            obj_cols[int(np.argmin(np.abs(xg_m - px)))] = True
+        re_i_shadow = float(np.mean(prof[:, obj_cols]))
+        local_cols = unocc_col_mask & (np.abs(xg_m - px) <= half_w + 1e-9)
+        ref_cols = local_cols if np.any(local_cols) else unocc_col_mask
+        re_i_unocc = float(np.median(prof[:, ref_cols]))
+        re_ratio = 10.0 * math.log10(max(re_i_shadow, 1e-30) / max(re_i_unocc, 1e-30))
+        if not math.isclose(re_i_unocc, float(diag["i_unocc_med"]), rel_tol=1e-9, abs_tol=1e-12):
+            raise AssertionError(f"i_unocc_med mismatch for {diag['object_id']}")
+        if not math.isclose(re_ratio, float(diag["shadow_ratio_db"]), rel_tol=1e-9, abs_tol=1e-12):
+            raise AssertionError(f"shadow_ratio_db mismatch for {diag['object_id']}")
 
     # Verify every paper slot's required fields exist in actual JSON/NPZ outputs
     for slot, slot_meta in schema["paper_slots"].items():

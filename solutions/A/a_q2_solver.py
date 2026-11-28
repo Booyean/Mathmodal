@@ -14,12 +14,78 @@ from a_q2q3_common import (
     Y0_DEFAULT_M,
     Y_SAT_DEFAULT_M,
     Z_SLICE_ROW4_M,
+    compute_anomaly_isolation,
     gain_bsec,
     interp_rf_response,
+    interval_union_mask,
     parabolic_ridge_y,
     taper_cos,
     upstream_synthetic_metadata,
 )
+
+
+def sweep_row_2d_gains(
+    scene: dict[str, Any],
+    row_id: int,
+    xg: np.ndarray,
+    yg: np.ndarray,
+    gain_configs: list[tuple[float, float]],
+    z_slice_m: float | None = None,
+) -> list[tuple[np.ndarray, np.ndarray]]:
+    """Reconstruct multiple (beta, alpha_gain) 2D maps for one row in a single geometry/interpolation pass."""
+    coords = scene["coords"]
+    all_rx = scene["all_rx"]
+    rx_global = scene["row_rx"][row_id]
+    rx_pos_in_all = [all_rx.index(idx) for idx in rx_global]
+    p_tx_loc = coords[27]
+    p_rx_loc = coords[rx_global]
+    if z_slice_m is None:
+        z_slice_m = float(p_rx_loc[0, 2])
+
+    x_scan = scene["x_scan_m"]
+    z_traces_row = scene["z_base_over"][:, rx_pos_in_all, :]
+    xx, yy = np.meshgrid(xg, yg, indexing="xy")
+
+    n_cfg = len(gain_configs)
+    num_coh = np.zeros((n_cfg,) + xx.shape, dtype=np.complex128)
+    num_env = np.zeros((n_cfg,) + xx.shape, dtype=np.float64)
+    den = np.zeros_like(xx, dtype=np.float64)
+
+    dz_tx = z_slice_m - float(p_tx_loc[2])
+    dz_rx = z_slice_m - p_rx_loc[:, 2]
+
+    for j_idx, xj in enumerate(x_scan):
+        dx_tx = xx - xj
+        ang_x = np.degrees(np.arctan2(np.abs(dx_tx), np.maximum(yy, 0.05)))
+        w_ap = taper_cos(ang_x, 35.0, 45.0)
+        py, px = np.where(w_ap > 0.0)
+        if py.size == 0:
+            continue
+
+        w_act = w_ap[py, px]
+        yy_act = yy[py, px]
+        r_tx = np.sqrt(dx_tx[py, px] ** 2 + yy_act ** 2 + dz_tx ** 2)
+        x_rx = xj + p_rx_loc[:, 0]
+        r_rx = np.sqrt((xx[py, px][None, :] - x_rx[:, None]) ** 2 + yy_act[None, :] ** 2 + (dz_rx ** 2)[:, None])
+        tau = (r_tx[None, :] + r_rx) / C0  # (M_row, M_act)
+        val = interp_rf_response(z_traces_row[j_idx], tau)
+        abs_val = np.abs(val)
+        den[py, px] += float(len(rx_global)) * w_act
+
+        for c_idx, (beta_c, alpha_c) in enumerate(gain_configs):
+            gain = gain_bsec(tau, beta=beta_c, alpha_gain_per_ns=alpha_c) if (alpha_c > 0.0 or beta_c > 0.0) else 1.0
+            w_tot = w_act[None, :] * gain
+            num_coh[c_idx, py, px] += np.sum(w_tot * val, axis=0)
+            num_env[c_idx, py, px] += np.sum(w_tot * abs_val, axis=0)
+
+    safe_den = np.maximum(den, 1e-12)
+    valid = den > 0.0
+    out: list[tuple[np.ndarray, np.ndarray]] = []
+    for c_idx in range(n_cfg):
+        i_coh = np.where(valid, np.abs(num_coh[c_idx] / safe_den) ** 2, 0.0)
+        i_env = np.where(valid, (num_env[c_idx] / safe_den) ** 2, 0.0)
+        out.append((i_coh, i_env))
+    return out
 
 
 def reconstruct_row_2d(
@@ -32,49 +98,7 @@ def reconstruct_row_2d(
     z_slice_m: float | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Reconstruct 2D (Ny, Nx) coherent and envelope energy maps for a given row with exact 3D z geometry."""
-    coords = scene["coords"]
-    all_rx = scene["all_rx"]
-    rx_global = scene["row_rx"][row_id]
-    rx_pos_in_all = [all_rx.index(idx) for idx in rx_global]
-    p_tx_loc = coords[27]
-    p_rx_loc = coords[rx_global]
-    if z_slice_m is None:
-        z_slice_m = float(p_rx_loc[0, 2])
-
-    x_scan = scene["x_scan_m"]
-    z_traces_row = scene["z_base_over"][:, rx_pos_in_all, :]  # (33, M_row, N_over)
-
-    xx, yy = np.meshgrid(xg, yg, indexing="xy")
-    num_coh = np.zeros_like(xx, dtype=np.complex128)
-    num_env = np.zeros_like(xx, dtype=np.float64)
-    den = np.zeros_like(xx, dtype=np.float64)
-
-    dz_tx = z_slice_m - float(p_tx_loc[2])
-    dz_rx = z_slice_m - p_rx_loc[:, 2]  # (M_row,)
-
-    for j_idx, xj in enumerate(x_scan):
-        dx_tx = xx - xj
-        ang_x = np.degrees(np.arctan2(np.abs(dx_tx), np.maximum(yy, 0.05)))
-        w_ap = taper_cos(ang_x, 35.0, 45.0)
-        if not np.any(w_ap > 0.0):
-            continue
-
-        r_tx = np.sqrt(dx_tx ** 2 + yy ** 2 + dz_tx ** 2)  # (Ny, Nx)
-        x_rx = xj + p_rx_loc[:, 0]  # (M_row,)
-        r_rx = np.sqrt((xx[None, :, :] - x_rx[:, None, None]) ** 2 + yy[None, :, :] ** 2 + (dz_rx ** 2)[:, None, None])
-        tau = (r_tx[None, :, :] + r_rx) / C0  # (M_row, Ny, Nx)
-        gain = gain_bsec(tau, beta=beta, alpha_gain_per_ns=alpha_gain) if (alpha_gain > 0.0 or beta > 0.0) else 1.0
-        val = interp_rf_response(z_traces_row[j_idx], tau)  # (M_row, Ny, Nx)
-        w_tot = w_ap[None, :, :] * gain
-        num_coh += np.sum(w_tot * val, axis=0)
-        num_env += np.sum(w_tot * np.abs(val), axis=0)
-        den += float(len(rx_global)) * w_ap
-
-    safe_den = np.maximum(den, 1e-12)
-    valid = den > 0.0
-    i_coh = np.where(valid, np.abs(num_coh / safe_den) ** 2, 0.0)
-    i_env = np.where(valid, (num_env / safe_den) ** 2, 0.0)
-    return i_coh, i_env
+    return sweep_row_2d_gains(scene, row_id, xg, yg, [(beta, alpha_gain)], z_slice_m=z_slice_m)[0]
 
 
 def evaluate_q2_image_metrics(xg: np.ndarray, yg: np.ndarray, img: np.ndarray, include_far_diag: bool = True) -> dict[str, float]:
@@ -169,17 +193,17 @@ def extract_wall_boundaries(xg: np.ndarray, yg: np.ndarray, img: np.ndarray) -> 
     # Partition Wall B into air-path segments outside Wall A and behind-Wall-A segment
     mask_b = (yg >= 1.75) & (yg <= 2.30)
     y_b_sub = yg[mask_b]
-    left_end = max(float(xg.min()) + 0.08, x_min_a - 0.08)
-    right_start = min(float(xg.max()) - 0.08, x_max_a + 0.08)
+    x_lo_air = round(float(xg.min()) + 0.04, 6)
+    x_hi_air = round(float(xg.max()) - 0.04, 6)
+    left_end = round(max(float(xg.min()) + 0.08, x_min_a - 0.08), 6)
+    right_start = round(min(float(xg.max()) - 0.08, x_max_a + 0.08), 6)
     air_ranges = [
-        [float(xg.min()) + 0.04, left_end],
-        [right_start, float(xg.max()) - 0.04],
+        [x_lo_air, left_end],
+        [right_start, x_hi_air],
     ]
-    air_mask = ((xg >= air_ranges[0][0]) & (xg <= air_ranges[0][1])) | (
-        (xg >= air_ranges[1][0]) & (xg <= air_ranges[1][1])
-    )
-    behind_range = [x_min_a + 0.08, x_max_a - 0.08]
-    behind_mask = (xg >= behind_range[0]) & (xg <= behind_range[1])
+    air_mask = interval_union_mask(xg, air_ranges)
+    behind_range = [round(x_min_a + 0.08, 6), round(x_max_a - 0.08, 6)]
+    behind_mask = interval_union_mask(xg, [behind_range])
 
     y_b_air = parabolic_ridge_y(y_b_sub, img[np.ix_(mask_b, air_mask)])
     y_b_behind = parabolic_ridge_y(y_b_sub, img[np.ix_(mask_b, behind_mask)])
@@ -205,25 +229,27 @@ def extract_wall_boundaries(xg: np.ndarray, yg: np.ndarray, img: np.ndarray) -> 
 
 def solve_q2_synthetic(
     scene: dict[str, Any],
-    dx_m: float = 0.04,
-    dy_m: float = 0.02,
+    dx_m: float = 0.01,
+    dy_m: float = 0.01,
     alpha_grid: tuple[float, ...] = (0.0, 0.04, 0.08, 0.12, 0.14, 0.20),
     beta: float = 1.0,
 ) -> tuple[dict[str, Any], dict[str, np.ndarray]]:
     """Run complete Q2 2D synthetic solver and return contract-compliant (results_json, arrays_dict)."""
-    xg = np.round(np.arange(-0.20, 1.40 + 1e-9, dx_m), 6).astype(np.float64)
-    yg = np.round(np.arange(0.05, 2.50 + 1e-9, dy_m), 6).astype(np.float64)
+    nx = int(round((1.40 - (-0.20)) / dx_m)) + 1
+    ny = int(round(2.50 / dy_m)) + 1
+    xg = np.round(np.linspace(-0.20, 1.40, nx), 6).astype(np.float64)
+    yg = np.round(np.linspace(0.00, 2.50, ny), 6).astype(np.float64)
 
-    # 1. Ungained baseline (W_comp == 1)
-    img_before_coh, _ = reconstruct_row_2d(scene, row_id=4, xg=xg, yg=yg, alpha_gain=0.0, beta=0.0, z_slice_m=Z_SLICE_ROW4_M)
+    # 1 & 2. Single-pass sweep over ungained baseline (beta=0, alpha=0) + all candidate alpha_gain values
+    configs = [(0.0, 0.0)] + [(beta, a) for a in alpha_grid]
+    swept = sweep_row_2d_gains(scene, row_id=4, xg=xg, yg=yg, gain_configs=configs, z_slice_m=Z_SLICE_ROW4_M)
+    img_before_coh, _ = swept[0]
     m_before = evaluate_q2_image_metrics(xg, yg, img_before_coh, include_far_diag=True)
 
-    # 2. Data-driven alpha_gain sweep without target-coordinate pinning
     delta_fn_list: list[float] = []
     c_fm_list: list[float] = []
     sweep_imgs: dict[float, tuple[np.ndarray, np.ndarray]] = {}
-    for alpha in alpha_grid:
-        i_c, i_e = reconstruct_row_2d(scene, row_id=4, xg=xg, yg=yg, alpha_gain=alpha, beta=beta, z_slice_m=Z_SLICE_ROW4_M)
+    for alpha, (i_c, i_e) in zip(alpha_grid, swept[1:]):
         sweep_imgs[alpha] = (i_c, i_e)
         met = evaluate_q2_image_metrics(xg, yg, i_c, include_far_diag=True)
         delta_fn_list.append(met["delta_far_near_db"])
@@ -274,11 +300,7 @@ def solve_q2_synthetic(
         "image_row5_coh": img_row5_coh.astype(np.float64),
     }
 
-    anomaly = {
-        "group3_sync_common": 3,
-        "real_dat_files_read": 0,
-        "note": "synthetic mirror of wall-group 3 packet intersection P_common=3; no .dat read",
-    }
+    anomaly = compute_anomaly_isolation(scene, phase="Q2")
     meta = upstream_synthetic_metadata(
         phase="Q2",
         arrays=arrays,
@@ -289,6 +311,14 @@ def solve_q2_synthetic(
 
     results = {
         **meta,
+        "grid_spec": {
+            "x_range_m": [-0.20, 1.40],
+            "y_range_m": [0.00, 2.50],
+            "dx_m": float(dx_m),
+            "dy_m": float(dy_m),
+            "nx": int(xg.size),
+            "ny": int(yg.size),
+        },
         "row_id": 4,
         "rx_indices": [int(i) for i in scene["row_rx"][4]],
         "z_slice_m": float(Z_SLICE_ROW4_M),
