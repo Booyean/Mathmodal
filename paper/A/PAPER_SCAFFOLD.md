@@ -131,14 +131,18 @@
 
 ---
 
-### 九、参考文献（依 A 题 PDF 第 2 页要求列示；正文逐条引用，禁用非学术来源）
-*(注：A 题题面仅规定须包含“参考文献”并计入 25 页总页数上限，未设定具体最低条数；拟优先采用期刊/教材/标准类文献：)*
-1. `[1]` 探地雷达通道不一致性校准与射频信号处理相关核心期刊论文 `[待检索定稿]`
-2. `[2]` 穿墙成像雷达直达波对消与子空间抑制方法（IEEE / 中文核心期刊）`[待检索定稿]`
-3. `[3]` 宽带超宽带阵列雷达后向投影（BPA）/ Kirchhoff 偏移二维及三维成像文献 `[待检索定稿]`
-4. `[4]` 姜启源 等，《数学模型》，高等教育出版社 `[基础教材]`
-5. `[5]` 司守奎，《数学建模算法与应用》，国防工业出版社 `[算法教材]`
-6. `[6]` 超宽带穿墙雷达衰减补偿与多层介质折射校正期刊文献 `[待检索定稿]`
+### 九、参考文献（依 A 题 PDF 第 2 页要求列示；正文逐条引用，仅采用已核验学术来源）
+*(完整来源核验、DOI 链接与 Ch.1–Ch.7 逐条支撑断言对照表见 [REFERENCES_AND_CITATIONS.md](REFERENCES_AND_CITATIONS.md)。)*
+- `[1]` Grove R L, Dall J, Leth-Espensen P. Mutual Coupling and Channel Imbalance Calibration of Colocated MIMO Radars[J]. *IEEE Open Journal of Antennas and Propagation*, 2022, 3: 511–522. DOI: `10.1109/OJAP.2022.3174246`
+- `[2]` Hao X, Chen J, Guo S, Li N, Yao Y, Qiu C, Cui G. A Robust Multichannel Calibration Method for MIMO Through-the-Wall Radar Systems[J]. *IEEE Transactions on Antennas and Propagation*, 2026, 74(7): 7118–7123. DOI: `10.1109/TAP.2026.3684987`
+- `[3]` Tivive F H C, Bouzerdoum A, Amin M G. A Subspace Projection Approach for Wall Clutter Mitigation in Through-the-Wall Radar Imaging[J]. *IEEE Transactions on Geoscience and Remote Sensing*, 2015, 53(4): 2108–2122. DOI: `10.1109/TGRS.2014.2354755`
+- `[4]` Jol H M (Ed.). *Ground Penetrating Radar: Theory and Applications*[M]. Amsterdam: Elsevier, 2009. ISBN 978-0-444-53348-7. DOI: `10.1016/B978-0-444-53348-7.X0001-4`
+- `[5]` Ahmad F, Amin M G, Kassam S A. Synthetic aperture beamformer for imaging through a dielectric wall[J]. *IEEE Transactions on Aerospace and Electronic Systems*, 2005, 41(1): 271–283. DOI: `10.1109/TAES.2005.1413761`
+- `[6]` Ahmad F, Amin M G, Mandapati G. Autofocusing of through-the-wall radar imagery under unknown wall characteristics[J]. *IEEE Transactions on Image Processing*, 2007, 16(7): 1785–1795. DOI: `10.1109/TIP.2007.899030`
+- `[7]` Zhang W, Hoorfar A. Three-Dimensional Real-Time Through-the-Wall Radar Imaging With Diffraction Tomographic Algorithm[J]. *IEEE Transactions on Geoscience and Remote Sensing*, 2013, 51(7): 4155–4163. DOI: `10.1109/TGRS.2012.2227059`
+- `[8]` Hu J, Song Y, Jin T, Lu B, Zhu G, Zhou Z. Shadow Effect Mitigation in Indication of Moving Human Behind Wall via MIMO TWIR[J]. *IEEE Geoscience and Remote Sensing Letters*, 2015, 12(3): 453–457. DOI: `10.1109/LGRS.2014.2346766`
+- `[9]` Leigsnering M, Ahmad F, Amin M G, Zoubir A M. Multipath Exploitation and Suppression for SAR Imaging of Building Interiors[J]. *IEEE Signal Processing Magazine*, 2014, 31(4): 110–119. DOI: `10.1109/MSP.2014.2312683`
+- `[10]` Amin M G (Ed.). *Through-the-Wall Radar Imaging*[M]. Boca Raton, FL: CRC Press, 2011. ISBN 978-1-4398-1476-5. DOI: `10.1201/9781315218144`
 
 ---
 
