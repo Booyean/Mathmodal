@@ -1,0 +1,104 @@
+{
+ "record_id": "E0-C-POSTMERGE-7147FB6",
+ "generated_at": "2026-11-28T08:17:29+00:00",
+ "prereg_id": "E0-PREREG-3",
+ "merged_main": "7147fb6bae9cd9ac9ee34eeadcd8171cdb426660",
+ "merged_main_parents": [
+  "bc90e1b867af17461bbfb413b9103b1468834841",
+  "4a41e6dd138f8b19b6d96f49d254d60e7da10a0f"
+ ],
+ "acceptance_branch_head": "4a41e6d",
+ "tree_sha": "efe6ff1e1cb2a5a5aa6dcf163dcc9e5a1e94103f",
+ "tree_identical_to_branch": true,
+ "diff_vs_branch_empty": true,
+ "self_tests": {
+  "total": 28,
+  "passed": 28,
+  "note": "原 27 项 + test_28_anchor_digest_ignores_line_endings"
+ },
+ "environment": {
+  "python": "3.11.5",
+  "numpy": "1.26.4",
+  "core_autocrlf": "true"
+ },
+ "rerun": {
+  "verdict": "FAIL",
+  "failed_checks": [
+   "C9",
+   "C12"
+  ],
+  "statuses": {
+   "C1": "pass",
+   "C2": "pass",
+   "C3": "pass",
+   "C4": "pass",
+   "C5": "pass",
+   "C6": "pass",
+   "C7": "pass",
+   "C8": "pass",
+   "C9": "fail",
+   "C10": "pass",
+   "C11": "pass",
+   "C12": "fail",
+   "C13": "pass",
+   "C14": "pass",
+   "C15": "pass"
+  },
+  "same_as_merged_report": true,
+  "air_loo_min_supp_db": 2.984433999,
+  "air_loo_selected": [
+   0.001,
+   0.001
+  ],
+  "air_loo_switched": false,
+  "air_loo_eligibility": "hard_stop",
+  "wall": {
+   "group": "墙体数据/data1-42cm",
+   "abs_err_cm": 6.179999999996349,
+   "status": "hard_stop",
+   "pslr_db": 2.664330228102982,
+   "pnr_db": 34.29380923376331
+  },
+  "metal": {
+   "group": "金属板数据/data1-69cm",
+   "abs_err_cm": 4.3699999999935795,
+   "status": "eligible",
+   "pslr_db": 4.17257974985938,
+   "pnr_db": 35.42927899434393
+  },
+  "c10_max_abs_dev_db": 4.810818410305728e-10,
+  "c10_max_abs_dev_cm": 6.420641796012205e-12,
+  "c12_duplicate_serialization_detected": true,
+  "c12_run_evidence": "missing",
+  "air_loo_min_supp_db_selected": 2.984433999,
+  "air_loo_min_supp_db_over_candidates": 2.90936377,
+  "air_loo_min_supp_db_by_candidate": [
+   2.963998464,
+   2.987058304,
+   3.129798648,
+   2.960931175,
+   2.984433999,
+   3.128232582,
+   2.90936377,
+   2.963523003,
+   3.117138545
+  ],
+  "air_loo_note": "selected=(1e-3,1e-3)=index 4=2.984434 dB；候选网格整体最小 2.909364 dB；两者均 < 6.0 硬停线"
+ },
+ "digests": {
+  "prereg_canonical": "da22fbd0d23cea9ac94df91372041306a852933d0b4bf0517ef672ef1f740218",
+  "prereg_raw_worktree": "ae7c41baa550d77a9d7d4919e4b721ba5d5b41191f56c436b334fb6a7206e94f",
+  "repeat_contract_canonical": "a32429e2a7b396c31ed5c4469603008683dded9f80ad65dfd0543a9b2fd9f7b8",
+  "repeat_contract_raw_worktree": "84951702ea948ed814a78c810f346d004bf59298693461691de0af347bbd5d48",
+  "historical_report_prereg": "ae7c41baa550d77a9d7d4919e4b721ba5d5b41191f56c436b334fb6a7206e94f",
+  "historical_report_repeat_contract": "a32429e2a7b396c31ed5c4469603008683dded9f80ad65dfd0543a9b2fd9f7b8",
+  "note": "canonical == git blob (CRLF->LF); 历史报告保留原值不改写"
+ },
+ "flags": {
+  "experiment_rerun": false,
+  "holdout_accessed": false,
+  "thresholds_changed": false,
+  "frozen_file_written": false,
+  "verdict_changed": false
+ }
+}

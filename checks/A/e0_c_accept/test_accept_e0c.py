@@ -397,6 +397,32 @@ class E0CAcceptTests(unittest.TestCase):
         c12 = self._c12(rep)
         self.assertIn("recomputed_from_second_run", c12["detail"])
 
+    # -- 锚点摘要：行尾不得改变身份 ---------------------------------------- #
+    def test_28_anchor_digest_ignores_line_endings(self):
+        anchor_dir = os.path.join(self.root, self._testMethodName + "_anchors")
+        os.makedirs(anchor_dir, exist_ok=True)
+        contract_path = os.path.join(REPO, "checks", "A", "e0_c_repeat_contract.json")
+        crlf_prereg = os.path.join(anchor_dir, "e0_c_prereg.json")
+        crlf_contract = os.path.join(anchor_dir, "e0_c_repeat_contract.json")
+        for src, dst in ((PREREG_PATH, crlf_prereg),
+                         (contract_path, crlf_contract)):
+            with open(src, "rb") as f:
+                data = f.read().replace(b"\r\n", b"\n")
+            with open(dst, "wb") as f:
+                f.write(data.replace(b"\n", b"\r\n"))
+        self.assertNotEqual(acc.sha256_file(crlf_prereg),
+                            acc.sha256_git_text(PREREG_PATH))
+        rep = acc.Checker(self.dir, _load(anchor_dir, "e0_c_prereg.json"),
+                          crlf_prereg, ORACLE, e0s_path=E0S_PATH).evaluate()
+        self.assertEqual(rep["verdict"], "PASS",
+                         json.dumps(rep, ensure_ascii=False)[:1500])
+        self.assertEqual(rep["prereg_sha256"], acc.sha256_git_text(PREREG_PATH))
+        self.assertEqual(rep["repeat_contract_sha256"],
+                         acc.sha256_git_text(contract_path))
+        self.assertNotEqual(rep["prereg_sha256_raw"], rep["prereg_sha256"])
+        self.assertNotEqual(rep["repeat_contract_sha256_raw"],
+                            rep["repeat_contract_sha256"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
