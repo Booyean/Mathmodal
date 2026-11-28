@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "experiment_id": "A-Q1-E0",
   "problem": "A-Q1",
   "phase": "pilot_baseline_verification",
@@ -14,10 +14,11 @@
       "A-Q1-M0"
     ],
     "completed_prerequisites": [
-      "D0_merged (PR #7, PR #11 on main 4a21060)"
+      "D0_merged (PR #7, PR #11 on main)",
+      "D1-1_merged (PR #12 dfdae8ed27065acaf51dcfa67d650ea600bceb67, SPLIT0 audit 15/15 on main f56dbc0)"
     ],
     "blocking_before_execution": [
-      "D1_accepted (folding and consistency gating)",
+      "D1-2_accepted (F1 anchor polarity/order dependence and F2 finite-input/output validation independently retested)",
       "A-Q1-E0_approved"
     ]
   },
@@ -25,16 +26,18 @@
     "raw_data_commit": "d8ee44021dd7acec18e7fd608e50835b0f7e8dd9",
     "a_dat_manifest_overall_sha256": "86305548ac35e44bf07f15fbbfa2e10c30713d0e64721e7ec81d37939f3cfa06",
     "a_dat_manifest_blob_sha256": "d5013e9330ded4464d2d6214b382b9436fc53d1436b0442048a61b25cbade8d4",
-    "main_baseline_commit": "4a210601041e842de361c8b08b398343d2fc934a",
+    "main_baseline_commit": "f56dbc0b472008f3a212bcefa47aa0392343d357",
+    "d1_1_merge_commit": "dfdae8ed27065acaf51dcfa67d650ea600bceb67",
     "m0_spec_commit": "098e17de9f42c843ab48923547d07b80883cf47c",
     "split_file": "coordination/A_Q1_SPLIT.json",
     "split_blob_sha256_lf": "d623da4ea186f372f2be094121c202c55dae0e236f4683005ab88d220a248b3a",
-    "rollback_commit": "4a210601041e842de361c8b08b398343d2fc934a"
+    "rollback_commit": "f56dbc0b472008f3a212bcefa47aa0392343d357"
   },
   "physical_constants": {
     "c0_m_s": 299792458.0,
     "fs_hz": 4000000000.0,
     "np_samples": 4000,
+    "tp_ns": 1000.0,
     "f_start_hz": 300000000.0,
     "f_stop_hz": 1700000000.0,
     "core_band_hz": [
@@ -50,21 +53,45 @@
     "sample_two_way_step_cm": 3.747405725
   },
   "windows_and_metrics": {
-    "direct_wave_window_ns_rel_tau_dir": [
-      -1.0,
-      1.0
-    ],
-    "noise_tail_window_ns_rel_t0_eff": [
-      50.0,
-      950.0
-    ],
+    "response_domain": "circular_range_compressed_matched_filter_delay_z_i",
+    "compressed_delay_spec": {
+      "formula": "z_i(tau) = (1 / ||S_eff_hat||_B) * sum_{f_D in B} X_i(f_D) * conj(S_eff_hat(f_D)) * exp(-j * 2 * pi * f_R * tau)",
+      "reference_template": "S_eff_hat_in_B_reconstructed_from_aligned_cal_air",
+      "normalization": "divide_by_L2_norm_of_S_eff_hat_over_B",
+      "lag_sign": "exp(-j*2*pi*f_R*tau)_with_f_R=f_s-f_D",
+      "delay_zero_mapping": "tau=0 aligns to absorbed (t0^(g), H_ref) in S_eff_hat; direct wave peaks at +tau_dir_i and planar target at +tau_tgt_i(d)",
+      "circular_period_ns": 1000.0,
+      "circular_boundary_rule": "all delay-window checks use wrapped distance wrap_{[-Tp/2, Tp/2)}(tau - center) mod 1000 ns"
+    },
+    "direct_wave_window": {
+      "domain": "circular_range_compressed_delay_z_i",
+      "rel_tau_dir_ns": [
+        -1.0,
+        1.0
+      ],
+      "evaluation_grid": "tau_i_dir + linspace(-1.0, +1.0, 41) ns modulo Tp (covers wraparound across 0/1000 ns on close channels such as ref_idx=28)"
+    },
+    "off_target_late_delay_bg_window": {
+      "domain": "circular_range_compressed_delay_z_i",
+      "delay_interval_ns": [
+        50.0,
+        950.0
+      ],
+      "evaluation_grid": "discrete DFT delay grid tau_m = m * Ts for m in [200, 3800] (50.0 to 950.0 ns)",
+      "is_proven_noise_only": false,
+      "role": "off_target_late_delay_background_proxy",
+      "caveat": "Compressed-delay proxy well beyond 2.00 m (~13.47 ns) and away from circular wraparound; may contain finite-band sidelobes, residual DW/dispersion leakage, or late multipath/rear-wall reflections, NOT proven pure thermal noise."
+    },
     "ranging_search_interval_m": [
       0.15,
       2.0
     ],
     "pslr_mainlobe_half_width_m": 0.1606031,
     "pslr_scale": "10*log10_on_quadratic_profile",
+    "suppression_air_loo_domain": "in_band_frequency_spectrum_over_B_and_63_rx",
+    "suppression_dw_win_domain": "circular_range_compressed_delay_z_i_over_wrapped_W_dw_i",
     "suppression_scale": "10*log10_on_power",
+    "pnr_domain": "circular_range_compressed_delay_z_i_peak_at_tau_tgt_vs_W_bg_proxy",
     "cal_residual_scale": "20*log10_on_rms"
   },
   "methods_classic_baseline_only": {
@@ -116,12 +143,10 @@
       "dw_channel_weights": "uniform_over_rx",
       "fine_search_half_window_samples": 1.0,
       "fine_search_step_samples": 0.001,
-      "alpha_mode_primary": "fixed_1.0",
-      "alpha_mode_diagnostic": "time_windowed_dw_only_ls_on_W_dw",
-      "alpha_diagnostic_bounds": [
-        0.5,
-        2.0
-      ]
+      "alpha_mode": "fixed_1.0",
+      "alpha_fixed_value": 1.0,
+      "alpha_fitting_in_this_pilot": false,
+      "adaptive_alpha_and_dw_projection_deferred_to": "A-Q1-N0 (M0-DW-Subspace)"
     },
     "ranging": {
       "id": "M0-Rng-Base",
@@ -134,7 +159,7 @@
         "P_env"
       ],
       "metal_peak_rule": "global_argmax_in_search_interval",
-      "wall_first_peak_rule": "earliest_local_max_above_eta_wall*P_max_and_noise_plus_6dB",
+      "wall_first_peak_rule": "earliest_local_max_above_eta_wall*P_max_and_BG_proxy_plus_6dB",
       "eta_wall_default": 0.25,
       "eta_wall_candidates_cal_only": [
         0.15,
@@ -188,7 +213,7 @@
         "noise": {
           "placement": "real_time_domain_AWGN_after_H_and_propagation",
           "snr_db": 25.0,
-          "snr_reference": "63_rx_mean_inband_target_echo_only_power"
+          "snr_reference": "63_rx_mean_time_domain_target_echo_only_power"
         }
       }
     ],
@@ -255,6 +280,7 @@
     "air_loo_eligible_min_suppression_db": 10.0,
     "air_loo_hard_stop_suppression_db": 6.0,
     "target_echo_min_pslr_db": 3.0,
+    "target_echo_min_pnr_db": 6.0,
     "cal_pilot_eligible_max_range_err_cm": 5.0,
     "cal_pilot_hard_stop_range_err_cm": 10.71,
     "intermediate_band_policy": "not_eligible_for_freeze_halt_before_E0_T"
