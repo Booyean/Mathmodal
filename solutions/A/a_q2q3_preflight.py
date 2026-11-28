@@ -21,6 +21,7 @@ import math
 import os
 import platform
 import re
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -214,6 +215,10 @@ def check_code_and_contracts(repo: Path, ck: PF.Checker) -> bool:
 
 
 DEFAULT_APPROVAL_RECORD_REL = Path("coordination/A_Q2Q3_APPROVALS.json")
+DEFAULT_TRUSTED_GIT_REF = "origin/main"
+TRUSTED_APPROVERS = ("codex",)
+APPROVAL_REGISTRY_ID = "A-Q2Q3-EMPIRICAL-APPROVALS"
+_SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 def _resolve_inside_dir(base_dir: Path, rel: str) -> Optional[Path]:
@@ -226,6 +231,159 @@ def _resolve_inside_dir(base_dir: Path, rel: str) -> Optional[Path]:
     return cand
 
 
+def _is_sha256_hex(val: Any) -> bool:
+    return isinstance(val, str) and bool(_SHA256_HEX_RE.match(val.strip().lower()))
+
+
+def _run_git(repo: Path, args: Sequence[str]) -> subprocess.CompletedProcess[bytes]:
+    return subprocess.run(
+        ["git", "-c", "core.quotePath=false", *args],
+        cwd=str(repo),
+        capture_output=True,
+        check=False,
+        timeout=15,
+    )
+
+
+def _verify_approval_registry_origin(
+    *,
+    repo: Path,
+    approval_record_path: Optional[Path] = None,
+    trusted_git_ref: str = DEFAULT_TRUSTED_GIT_REF,
+) -> Tuple[bool, Dict[str, Any]]:
+    """Enforce canonical registry path, anti-reparse guard, clean status, and origin/main provenance."""
+    canonical_rel_posix = DEFAULT_APPROVAL_RECORD_REL.as_posix()
+    expected_lex = Path(os.path.abspath(str(repo / DEFAULT_APPROVAL_RECORD_REL)))
+    if approval_record_path is not None:
+        cand_lex = Path(os.path.abspath(str(approval_record_path)))
+        if os.path.normcase(str(cand_lex)) != os.path.normcase(str(expected_lex)):
+            return False, {
+                "reason": (
+                    f"禁止自定义审批文件路径 {approval_record_path}；"
+                    f"仅信任仓库规范登记表 {canonical_rel_posix}"
+                ),
+                "approval_record": str(approval_record_path),
+                "expected_approval_record": str(expected_lex),
+            }
+
+    coord_dir = repo / DEFAULT_APPROVAL_RECORD_REL.parent
+    rec_lex = repo / DEFAULT_APPROVAL_RECORD_REL
+    real_repo = Path(os.path.realpath(str(repo)))
+    try:
+        real_coord_dir = PF.guard_group_dir(coord_dir, repo)
+        real_rec = PF.guard_dat_path(rec_lex, real_coord_dir, real_repo)
+    except PF.PathGuardError as exc:
+        return False, {
+            "reason": f"审批登记路径未通过安全/反重解析校验：{exc}",
+            "approval_record": str(rec_lex),
+        }
+
+    top_proc = _run_git(repo, ["rev-parse", "--show-toplevel"])
+    if top_proc.returncode != 0:
+        return False, {
+            "reason": f"仓库 {repo} 不是有效 Git 工作区，无法核验 {trusted_git_ref} 审批来源",
+            "approval_record": str(real_rec),
+        }
+    top_dir = Path(os.path.realpath(top_proc.stdout.decode("utf-8", errors="replace").strip()))
+    if os.path.normcase(str(top_dir)) != os.path.normcase(str(real_repo)):
+        return False, {
+            "reason": f"Git 根目录 {top_dir} 与 --repo {real_repo} 不一致，拒绝受伪造工作区影响",
+            "approval_record": str(real_rec),
+        }
+
+    st_proc = _run_git(repo, ["status", "--porcelain", "--", canonical_rel_posix])
+    if st_proc.returncode != 0 or st_proc.stdout.strip():
+        dirty_text = st_proc.stdout.decode("utf-8", errors="replace").strip()
+        return False, {
+            "reason": (
+                f"{canonical_rel_posix} 存在未提交或本地修改 ({dirty_text or 'status error'})；"
+                f"审批登记表必须与受信任基线 {trusted_git_ref} 完全一致且工作区干净"
+            ),
+            "approval_record": str(real_rec),
+            "git_status": dirty_text,
+        }
+
+    ref_proc = _run_git(repo, ["rev-parse", "--verify", "--quiet", trusted_git_ref])
+    if ref_proc.returncode != 0 or not ref_proc.stdout.strip():
+        return False, {
+            "reason": f"缺少受信任基线引用 {trusted_git_ref}，无法核验审批签发来源",
+            "approval_record": str(real_rec),
+            "trusted_git_ref": trusted_git_ref,
+        }
+    trusted_tip = ref_proc.stdout.decode("utf-8", errors="replace").strip()
+
+    log_proc = _run_git(repo, ["log", "-n", "1", "--format=%H", "--", canonical_rel_posix])
+    file_commit = log_proc.stdout.decode("utf-8", errors="replace").strip() if log_proc.returncode == 0 else ""
+    if not file_commit:
+        return False, {
+            "reason": f"{canonical_rel_posix} 在 Git 历史中无提交记录，拒绝作为受信任审批",
+            "approval_record": str(real_rec),
+        }
+
+    anc_proc = _run_git(repo, ["merge-base", "--is-ancestor", file_commit, trusted_git_ref])
+    if anc_proc.returncode != 0:
+        return False, {
+            "reason": (
+                f"{canonical_rel_posix} 最近提交 {file_commit[:12]} 尚未合入 {trusted_git_ref}，"
+                "拒绝使用未合入主线的本地/分支审批"
+            ),
+            "approval_record": str(real_rec),
+            "registry_commit": file_commit,
+            "trusted_git_ref": trusted_git_ref,
+        }
+
+    blob_proc = _run_git(repo, ["show", f"{trusted_git_ref}:{canonical_rel_posix}"])
+    if blob_proc.returncode != 0:
+        return False, {
+            "reason": f"{trusted_git_ref} 中不存在 {canonical_rel_posix}，拒绝未经主线合入的审批文件",
+            "approval_record": str(real_rec),
+            "trusted_git_ref": trusted_git_ref,
+        }
+
+    trusted_bytes = blob_proc.stdout
+    trusted_sha_lf = PF.sha256_bytes(trusted_bytes.replace(b"\r\n", b"\n"))
+    actual_sha_lf = PF.sha256_file_lf(real_rec)
+    if trusted_sha_lf != actual_sha_lf:
+        return False, {
+            "reason": (
+                f"{canonical_rel_posix} 内容摘要 ({actual_sha_lf[:12]}) 与 {trusted_git_ref} "
+                f"({trusted_sha_lf[:12]}) 不一致，拒绝未与主线对齐的审批文件"
+            ),
+            "approval_record": str(real_rec),
+            "trusted_git_ref": trusted_git_ref,
+            "trusted_sha256": trusted_sha_lf,
+            "actual_sha256": actual_sha_lf,
+        }
+
+    try:
+        raw = json.loads(trusted_bytes.decode("utf-8-sig"))
+    except Exception as exc:
+        return False, {
+            "reason": f"审批登记文件不可解析：{exc}",
+            "approval_record": str(real_rec),
+        }
+
+    if (
+        not isinstance(raw, dict)
+        or raw.get("schema_version") != 1
+        or raw.get("registry_id") != APPROVAL_REGISTRY_ID
+        or not isinstance(raw.get("approvals"), dict)
+    ):
+        return False, {
+            "reason": f"{canonical_rel_posix} 不符合规范注册表格式（schema_version=1, registry_id={APPROVAL_REGISTRY_ID}, approvals=dict）",
+            "approval_record": str(real_rec),
+        }
+
+    return True, {
+        "real_rec": real_rec,
+        "raw": raw,
+        "sha256_lf": actual_sha_lf,
+        "registry_commit": file_commit,
+        "trusted_git_ref": trusted_git_ref,
+        "trusted_git_tip": trusted_tip,
+    }
+
+
 def verify_approval_authorization(
     *,
     repo: Path,
@@ -235,44 +393,33 @@ def verify_approval_authorization(
     allow_unfrozen_q1_diagnostic: bool = False,
     q1_frozen_sha256: Optional[str] = None,
     q1_arrays_sha256: Optional[str] = None,
+    q1_results_sha256: Optional[str] = None,
+    trusted_git_ref: str = DEFAULT_TRUSTED_GIT_REF,
 ) -> Tuple[bool, Dict[str, Any]]:
-    """Verify approval status, approver, and mode/diagnostic scope from an explicit approval JSON record."""
+    """Verify canonical trusted-origin registry, approver, scope, and mandatory Q1 calibration digests."""
     if not approval_ref or not str(approval_ref).strip():
         return False, {"reason": "缺少非空 --approval-ref", "approval_ref": approval_ref}
     ref = str(approval_ref).strip()
 
-    rec_path = approval_record_path if approval_record_path is not None else (repo / DEFAULT_APPROVAL_RECORD_REL)
-    if not rec_path.is_file():
-        return False, {
-            "reason": f"缺少审批登记文件：{rec_path}（需由统筹签发带状态与范围的审批记录）",
-            "approval_ref": ref,
-            "approval_record": str(rec_path),
-        }
-    try:
-        raw = PF.load_json(rec_path)
-    except Exception as exc:
-        return False, {
-            "reason": f"审批登记文件不可解析：{exc}",
-            "approval_ref": ref,
-            "approval_record": str(rec_path),
-        }
+    ok_origin, origin_info = _verify_approval_registry_origin(
+        repo=repo,
+        approval_record_path=approval_record_path,
+        trusted_git_ref=trusted_git_ref,
+    )
+    if not ok_origin:
+        return False, {"approval_ref": ref, **origin_info}
 
-    record: Optional[Dict[str, Any]] = None
-    if isinstance(raw, dict):
-        if "approval_ref" in raw and str(raw.get("approval_ref")) == ref:
-            record = raw
-        elif isinstance(raw.get("approvals"), dict) and ref in raw["approvals"]:
-            cand = raw["approvals"][ref]
-            if isinstance(cand, dict):
-                record = cand
-        elif ref in raw and isinstance(raw[ref], dict):
-            record = raw[ref]
+    real_rec: Path = origin_info["real_rec"]
+    raw: Dict[str, Any] = origin_info["raw"]
+    approvals_map: Dict[str, Any] = raw["approvals"]
+    cand = approvals_map.get(ref)
+    record: Optional[Dict[str, Any]] = cand if isinstance(cand, dict) else None
 
     if record is None or str(record.get("approval_ref", "")) != ref:
         return False, {
-            "reason": f"审批记录 {rec_path} 中未匹配到 approval_ref={ref!r}",
+            "reason": f"受信任审批登记表 {real_rec} 中未匹配到 approval_ref={ref!r}",
             "approval_ref": ref,
-            "approval_record": str(rec_path),
+            "approval_record": str(real_rec),
         }
 
     status = str(record.get("status", "")).strip()
@@ -284,8 +431,19 @@ def verify_approval_authorization(
         }
 
     approved_by = str(record.get("approved_by", "")).strip()
-    if not approved_by:
-        return False, {"reason": "审批记录缺少非空 approved_by", "approval_ref": ref}
+    reg_trusted_raw = raw.get("trusted_approvers")
+    if reg_trusted_raw is not None:
+        if not isinstance(reg_trusted_raw, list) or not reg_trusted_raw:
+            return False, {"reason": "审批登记表 trusted_approvers 字段格式非法", "approval_ref": ref}
+        reg_trusted = tuple(str(x).strip() for x in reg_trusted_raw)
+    else:
+        reg_trusted = TRUSTED_APPROVERS
+    if not approved_by or approved_by not in TRUSTED_APPROVERS or approved_by not in reg_trusted:
+        return False, {
+            "reason": f"approved_by={approved_by!r} 不在受信任统筹签发名单 {list(TRUSTED_APPROVERS)} 内，拒绝执行",
+            "approval_ref": ref,
+            "approved_by": approved_by,
+        }
 
     allowed_modes = record.get("allowed_modes")
     if not isinstance(allowed_modes, list) or not allowed_modes:
@@ -295,7 +453,9 @@ def verify_approval_authorization(
     diag_flag_allowed = bool(record.get("allow_unfrozen_q1_diagnostic", False))
 
     if mode in ("d1-audit", "d1-audit-worker"):
-        if "d1-audit" not in allowed_modes or diag_only:
+        if allow_unfrozen_q1_diagnostic:
+            return False, {"reason": "d1-audit 不允许同时携带 --allow-unfrozen-q1-diagnostic", "approval_ref": ref}
+        if "d1-audit" not in allowed_modes or diag_only or diag_flag_allowed:
             return False, {
                 "reason": f"审批范围 {allowed_modes!r} (diagnostic_only={diag_only}) 未授权 d1-audit",
                 "approval_ref": ref,
@@ -303,15 +463,48 @@ def verify_approval_authorization(
             }
     elif mode in ("execute", "execute-worker"):
         if allow_unfrozen_q1_diagnostic:
-            if "execute-diagnostic" not in allowed_modes or not diag_only or not diag_flag_allowed:
+            if (
+                "execute-diagnostic" not in allowed_modes
+                or "execute" in allowed_modes
+                or not diag_only
+                or not diag_flag_allowed
+            ):
                 return False, {
                     "reason": (
-                        "诊断试跑（--allow-unfrozen-q1-diagnostic）必须使用单独批准"
-                        "（allowed_modes 含 'execute-diagnostic' 且 diagnostic_only=true, allow_unfrozen_q1_diagnostic=true）"
+                        "诊断试跑（--allow-unfrozen-q1-diagnostic）必须使用单独诊断批准"
+                        "（allowed_modes 含 'execute-diagnostic'、不含 'execute'，且 diagnostic_only=true, allow_unfrozen_q1_diagnostic=true）"
                     ),
                     "approval_ref": ref,
                     "allowed_modes": allowed_modes,
                     "diagnostic_only": diag_only,
+                }
+            bound_frozen_diag = record.get("q1_frozen_sha256")
+            if bound_frozen_diag is not None and str(bound_frozen_diag).strip() != "":
+                return False, {
+                    "reason": "诊断审批不得绑定 q1_frozen_sha256，防止与正式冻结审批混用",
+                    "approval_ref": ref,
+                }
+            bound_arrays_sha = record.get("q1_arrays_sha256")
+            if not _is_sha256_hex(bound_arrays_sha) or not _is_sha256_hex(q1_arrays_sha256):
+                return False, {
+                    "reason": "诊断 execute 强制要求审批记录绑定非空 64 位 SHA256 q1_arrays_sha256",
+                    "approval_ref": ref,
+                }
+            if str(bound_arrays_sha).strip().lower() != str(q1_arrays_sha256).strip().lower():
+                return False, {
+                    "reason": f"审批绑定 q1_arrays_sha256={bound_arrays_sha} 与当前 {q1_arrays_sha256} 不一致",
+                    "approval_ref": ref,
+                }
+            bound_results_sha = record.get("q1_results_sha256")
+            if not _is_sha256_hex(bound_results_sha) or not _is_sha256_hex(q1_results_sha256):
+                return False, {
+                    "reason": "诊断 execute 强制要求审批记录绑定非空 64 位 SHA256 q1_results_sha256",
+                    "approval_ref": ref,
+                }
+            if str(bound_results_sha).strip().lower() != str(q1_results_sha256).strip().lower():
+                return False, {
+                    "reason": f"审批绑定 q1_results_sha256={bound_results_sha} 与当前 {q1_results_sha256} 不一致",
+                    "approval_ref": ref,
                 }
         else:
             if "execute" not in allowed_modes or diag_only or diag_flag_allowed:
@@ -321,25 +514,49 @@ def verify_approval_authorization(
                     "allowed_modes": allowed_modes,
                     "diagnostic_only": diag_only,
                 }
-
-    bound_frozen_sha = record.get("q1_frozen_sha256")
-    if bound_frozen_sha is not None and q1_frozen_sha256 is not None and str(bound_frozen_sha) != str(q1_frozen_sha256):
-        return False, {
-            "reason": f"审批绑定 q1_frozen_sha256={bound_frozen_sha} 与当前 {q1_frozen_sha256} 不一致",
-            "approval_ref": ref,
-        }
-
-    bound_arrays_sha = record.get("q1_arrays_sha256")
-    if bound_arrays_sha is not None and q1_arrays_sha256 is not None and str(bound_arrays_sha) != str(q1_arrays_sha256):
-        return False, {
-            "reason": f"审批绑定 q1_arrays_sha256={bound_arrays_sha} 与当前 {q1_arrays_sha256} 不一致",
-            "approval_ref": ref,
-        }
+            bound_frozen_sha = record.get("q1_frozen_sha256")
+            if not _is_sha256_hex(bound_frozen_sha) or not _is_sha256_hex(q1_frozen_sha256):
+                return False, {
+                    "reason": "正式 execute 强制要求审批记录绑定非空 64 位 SHA256 q1_frozen_sha256",
+                    "approval_ref": ref,
+                }
+            if str(bound_frozen_sha).strip().lower() != str(q1_frozen_sha256).strip().lower():
+                return False, {
+                    "reason": f"审批绑定 q1_frozen_sha256={bound_frozen_sha} 与当前 {q1_frozen_sha256} 不一致",
+                    "approval_ref": ref,
+                }
+            bound_arrays_sha = record.get("q1_arrays_sha256")
+            if not _is_sha256_hex(bound_arrays_sha) or not _is_sha256_hex(q1_arrays_sha256):
+                return False, {
+                    "reason": "正式 execute 强制要求审批记录绑定非空 64 位 SHA256 q1_arrays_sha256",
+                    "approval_ref": ref,
+                }
+            if str(bound_arrays_sha).strip().lower() != str(q1_arrays_sha256).strip().lower():
+                return False, {
+                    "reason": f"审批绑定 q1_arrays_sha256={bound_arrays_sha} 与当前 {q1_arrays_sha256} 不一致",
+                    "approval_ref": ref,
+                }
+            bound_results_sha = record.get("q1_results_sha256")
+            if bound_results_sha is not None and str(bound_results_sha).strip() != "":
+                if not _is_sha256_hex(bound_results_sha) or not _is_sha256_hex(q1_results_sha256):
+                    return False, {
+                        "reason": "审批记录声明的 q1_results_sha256 格式非法或缺失对应 Q1 结果摘要",
+                        "approval_ref": ref,
+                    }
+                if str(bound_results_sha).strip().lower() != str(q1_results_sha256).strip().lower():
+                    return False, {
+                        "reason": f"审批绑定 q1_results_sha256={bound_results_sha} 与当前 {q1_results_sha256} 不一致",
+                        "approval_ref": ref,
+                    }
+    else:
+        return False, {"reason": f"不支持的审批核验模式 {mode!r}", "approval_ref": ref}
 
     return True, {
         "approval_ref": ref,
-        "approval_record": str(rec_path),
-        "approval_record_sha256": PF.sha256_file_lf(rec_path),
+        "approval_record": str(real_rec),
+        "approval_record_sha256": origin_info["sha256_lf"],
+        "registry_commit": origin_info["registry_commit"],
+        "trusted_git_ref": origin_info["trusted_git_ref"],
         "status": status,
         "approved_by": approved_by,
         "scope": record.get("scope"),
@@ -950,6 +1167,7 @@ def run_preflight(
             allow_unfrozen_q1_diagnostic=allow_unfrozen_q1_diagnostic,
             q1_frozen_sha256=q1_info.get("frozen_sha256"),
             q1_arrays_sha256=q1_info.get("arrays_sha256"),
+            q1_results_sha256=q1_info.get("results_sha256"),
         )
         approval_info = {"checked": True, **info_app}
         ck.add(
@@ -1025,8 +1243,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         action="store_true",
         help="execute 模式下允许挂载未冻结 Q1 基线仅作诊断",
     )
-    parser.add_argument("--approval-ref", default=None, help="审批编号（提供时同步核验审批状态与范围）")
-    parser.add_argument("--approval-record", default=None, help="审批登记 JSON 文件路径")
+    parser.add_argument("--approval-ref", default=None, help="审批编号（提供时强制核验仓库 origin/main 受信任审批表）")
     parser.add_argument("--no-hash", action="store_true", help="跳过 SHA256 校验（不作为放行证据）")
     parser.add_argument("--out", default=None, help="输出预检 JSON 路径")
     args = parser.parse_args(argv)
@@ -1045,7 +1262,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             q1_dir=Path(args.q1_dir) if args.q1_dir else None,
             allow_unfrozen_q1_diagnostic=bool(args.allow_unfrozen_q1_diagnostic),
             approval_ref=args.approval_ref,
-            approval_record_path=Path(args.approval_record) if args.approval_record else None,
             check_hashes=not bool(args.no_hash),
         )
     except Exception as exc:

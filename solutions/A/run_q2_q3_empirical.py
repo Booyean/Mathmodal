@@ -208,6 +208,7 @@ def validate_cli_guards(
             allow_unfrozen_q1_diagnostic=allow_unfrozen_q1_diagnostic,
             q1_frozen_sha256=q1_info.get("frozen_sha256"),
             q1_arrays_sha256=q1_info.get("arrays_sha256"),
+            q1_results_sha256=q1_info.get("results_sha256"),
         )
         if not app_ok:
             return str(app_info.get("reason") or "审批状态或范围校验未通过")
@@ -1178,8 +1179,6 @@ def _build_worker_base_argv(args: argparse.Namespace, repo: Path, data_root: Pat
         "--approval-ref",
         str(args.approval_ref),
     ]
-    if args.approval_record:
-        argv += ["--approval-record", str(Path(args.approval_record).resolve())]
     if args.q1_dir:
         argv += ["--q1-dir", str(Path(args.q1_dir).resolve())]
     if args.allow_unfrozen_q1_diagnostic:
@@ -1210,8 +1209,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         default="check",
         help="执行模式（默认 check）",
     )
-    parser.add_argument("--approval-ref", default=None, help="统筹放行编号（d1-audit/execute 必填）")
-    parser.add_argument("--approval-record", default=None, help="统筹审批登记 JSON 文件路径")
+    parser.add_argument("--approval-ref", default=None, help="统筹放行编号（d1-audit/execute 必填，强制核验仓库 origin/main 受信任审批表）")
     parser.add_argument("--repeat-runs", type=int, default=2, help="独立重跑进程数（execute 必须为 2）")
     parser.add_argument("--overwrite", action="store_true", help="允许覆盖已有结果目录")
     parser.add_argument(
@@ -1233,7 +1231,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     data_root = Path(args.data_root).resolve() if args.data_root else (repo / PF2.A_ROOT_DEFAULT)
     manifest_path = Path(args.manifest).resolve() if args.manifest else (repo / "recon/manifests/a_dat_manifest.csv")
     q1_dir = Path(args.q1_dir).resolve() if args.q1_dir else None
-    approval_record_path = Path(args.approval_record).resolve() if args.approval_record else None
+    approval_record_path = None
 
     if args.out:
         out_dir = Path(args.out)

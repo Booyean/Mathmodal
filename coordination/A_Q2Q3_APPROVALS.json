@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "registry_id": "A-Q2Q3-EMPIRICAL-APPROVALS",
+  "trusted_approvers": [
+    "codex"
+  ],
+  "approvals": {}
+}

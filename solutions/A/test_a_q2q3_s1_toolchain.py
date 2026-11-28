@@ -320,48 +320,181 @@ def _make_synthetic_q1_dir(q1_dir: Path, *, frozen: bool, eligible: bool = True)
     )
 
 
-def _write_approval_registry(path: Path) -> Path:
-    payload = {
-        "schema_version": 1,
-        "approvals": {
-            "CODEX-S1-D1-TEST": {
-                "approval_ref": "CODEX-S1-D1-TEST",
-                "status": "approved",
-                "approved_by": "codex",
-                "scope": "S2-d1-audit",
-                "allowed_modes": ["d1-audit"],
-                "diagnostic_only": False,
-            },
-            "CODEX-S1-EXEC-TEST": {
-                "approval_ref": "CODEX-S1-EXEC-TEST",
-                "status": "approved",
-                "approved_by": "codex",
-                "scope": "S3-A-execute",
-                "allowed_modes": ["execute"],
-                "diagnostic_only": False,
-                "allow_unfrozen_q1_diagnostic": False,
-            },
-            "CODEX-S1-DIAG-TEST": {
-                "approval_ref": "CODEX-S1-DIAG-TEST",
-                "status": "approved",
-                "approved_by": "codex",
-                "scope": "S3-B-diagnostic",
-                "allowed_modes": ["execute-diagnostic"],
-                "diagnostic_only": True,
-                "allow_unfrozen_q1_diagnostic": True,
-            },
-            "CODEX-PENDING": {
-                "approval_ref": "CODEX-PENDING",
-                "status": "pending",
-                "approved_by": "codex",
-                "scope": "S2-d1-audit",
-                "allowed_modes": ["d1-audit"],
-                "diagnostic_only": False,
-            },
+def _build_approval_registry_payload(
+    *,
+    q1_frozen_dir: Optional[Path] = None,
+    q1_diag_dir: Optional[Path] = None,
+    include_bad_variants: bool = True,
+) -> Dict[str, Any]:
+    if q1_frozen_dir is not None and (q1_frozen_dir / "e0c_frozen.json").is_file():
+        exec_frz_sha = _sha256_file(q1_frozen_dir / "e0c_frozen.json")
+        exec_arr_sha = _sha256_file(q1_frozen_dir / "e0c_arrays.npz")
+    else:
+        exec_frz_sha = "1" * 64
+        exec_arr_sha = "2" * 64
+
+    if q1_diag_dir is not None and (q1_diag_dir / "e0c_results.json").is_file():
+        diag_arr_sha = _sha256_file(q1_diag_dir / "e0c_arrays.npz")
+        diag_res_sha = _sha256_file(q1_diag_dir / "e0c_results.json")
+    else:
+        diag_arr_sha = "3" * 64
+        diag_res_sha = "4" * 64
+
+    approvals: Dict[str, Any] = {
+        "CODEX-S1-D1-TEST": {
+            "approval_ref": "CODEX-S1-D1-TEST",
+            "status": "approved",
+            "approved_by": "codex",
+            "scope": "S2-d1-audit",
+            "allowed_modes": ["d1-audit"],
+            "diagnostic_only": False,
+        },
+        "CODEX-S1-EXEC-TEST": {
+            "approval_ref": "CODEX-S1-EXEC-TEST",
+            "status": "approved",
+            "approved_by": "codex",
+            "scope": "S3-A-execute",
+            "allowed_modes": ["execute"],
+            "diagnostic_only": False,
+            "allow_unfrozen_q1_diagnostic": False,
+            "q1_frozen_sha256": exec_frz_sha,
+            "q1_arrays_sha256": exec_arr_sha,
+        },
+        "CODEX-S1-DIAG-TEST": {
+            "approval_ref": "CODEX-S1-DIAG-TEST",
+            "status": "approved",
+            "approved_by": "codex",
+            "scope": "S3-B-diagnostic",
+            "allowed_modes": ["execute-diagnostic"],
+            "diagnostic_only": True,
+            "allow_unfrozen_q1_diagnostic": True,
+            "q1_arrays_sha256": diag_arr_sha,
+            "q1_results_sha256": diag_res_sha,
+        },
+        "CODEX-PENDING": {
+            "approval_ref": "CODEX-PENDING",
+            "status": "pending",
+            "approved_by": "codex",
+            "scope": "S2-d1-audit",
+            "allowed_modes": ["d1-audit"],
+            "diagnostic_only": False,
         },
     }
-    path.write_bytes((json.dumps(payload, indent=2) + "\n").encode("utf-8"))
-    return path
+    if include_bad_variants:
+        approvals.update(
+            {
+                "UNTRUSTED-ISSUER": {
+                    "approval_ref": "UNTRUSTED-ISSUER",
+                    "status": "approved",
+                    "approved_by": "antigravity02",
+                    "scope": "S2-d1-audit",
+                    "allowed_modes": ["d1-audit"],
+                    "diagnostic_only": False,
+                },
+                "EXEC-MISSING-FROZEN-SHA": {
+                    "approval_ref": "EXEC-MISSING-FROZEN-SHA",
+                    "status": "approved",
+                    "approved_by": "codex",
+                    "scope": "S3-A-execute",
+                    "allowed_modes": ["execute"],
+                    "diagnostic_only": False,
+                    "allow_unfrozen_q1_diagnostic": False,
+                    "q1_arrays_sha256": exec_arr_sha,
+                },
+                "EXEC-MISSING-ARRAYS-SHA": {
+                    "approval_ref": "EXEC-MISSING-ARRAYS-SHA",
+                    "status": "approved",
+                    "approved_by": "codex",
+                    "scope": "S3-A-execute",
+                    "allowed_modes": ["execute"],
+                    "diagnostic_only": False,
+                    "allow_unfrozen_q1_diagnostic": False,
+                    "q1_frozen_sha256": exec_frz_sha,
+                },
+                "EXEC-WRONG-FROZEN-SHA": {
+                    "approval_ref": "EXEC-WRONG-FROZEN-SHA",
+                    "status": "approved",
+                    "approved_by": "codex",
+                    "scope": "S3-A-execute",
+                    "allowed_modes": ["execute"],
+                    "diagnostic_only": False,
+                    "allow_unfrozen_q1_diagnostic": False,
+                    "q1_frozen_sha256": "f" * 64,
+                    "q1_arrays_sha256": exec_arr_sha,
+                },
+                "DIAG-MISSING-RESULTS-SHA": {
+                    "approval_ref": "DIAG-MISSING-RESULTS-SHA",
+                    "status": "approved",
+                    "approved_by": "codex",
+                    "scope": "S3-B-diagnostic",
+                    "allowed_modes": ["execute-diagnostic"],
+                    "diagnostic_only": True,
+                    "allow_unfrozen_q1_diagnostic": True,
+                    "q1_arrays_sha256": diag_arr_sha,
+                },
+                "DIAG-WITH-FROZEN-SHA": {
+                    "approval_ref": "DIAG-WITH-FROZEN-SHA",
+                    "status": "approved",
+                    "approved_by": "codex",
+                    "scope": "S3-B-diagnostic",
+                    "allowed_modes": ["execute-diagnostic"],
+                    "diagnostic_only": True,
+                    "allow_unfrozen_q1_diagnostic": True,
+                    "q1_frozen_sha256": exec_frz_sha,
+                    "q1_arrays_sha256": diag_arr_sha,
+                    "q1_results_sha256": diag_res_sha,
+                },
+            }
+        )
+
+    return {
+        "schema_version": 1,
+        "registry_id": "A-Q2Q3-EMPIRICAL-APPROVALS",
+        "trusted_approvers": ["codex"],
+        "approvals": approvals,
+    }
+
+
+def _init_trusted_test_repo(repo_dir: Path, payload: Dict[str, Any]) -> Tuple[Path, Path]:
+    bare_origin = repo_dir.parent / f"{repo_dir.name}_origin.git"
+    subprocess.run(["git", "init", "--bare", str(bare_origin)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(bare_origin), "symbolic-ref", "HEAD", "refs/heads/main"], check=True, capture_output=True)
+
+    subprocess.run(["git", "init", str(repo_dir)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo_dir), "symbolic-ref", "HEAD", "refs/heads/main"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo_dir), "config", "user.email", "test@example.com"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo_dir), "config", "user.name", "Test"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo_dir), "config", "core.autocrlf", "false"], check=True, capture_output=True)
+
+    shutil.copy2(REPO / ".gitattributes", repo_dir / ".gitattributes")
+    coord_dir = repo_dir / "coordination"
+    coord_dir.mkdir(parents=True, exist_ok=True)
+    reg_path = coord_dir / "A_Q2Q3_APPROVALS.json"
+    reg_path.write_bytes((json.dumps(payload, indent=2) + "\n").encode("utf-8"))
+
+    sol_dir = repo_dir / "solutions/A"
+    sol_dir.mkdir(parents=True, exist_ok=True)
+    for rel_name in (
+        "a_dat_reader.py",
+        "a_fold_gate.py",
+        "a_q2q3_common.py",
+        "a_q2_solver.py",
+        "a_q3_solver.py",
+        "validate_q2_q3_outputs.py",
+        "q2_q3_output_contract.json",
+        "run_q2_q3_empirical.py",
+    ):
+        shutil.copy2(HERE / rel_name, sol_dir / rel_name)
+
+    subprocess.run(
+        ["git", "-C", str(repo_dir), "add", ".gitattributes", "coordination/A_Q2Q3_APPROVALS.json"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(["git", "-C", str(repo_dir), "commit", "-m", "Add trusted approval registry"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo_dir), "remote", "add", "origin", str(bare_origin)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo_dir), "push", "-u", "origin", "main"], check=True, capture_output=True)
+    return repo_dir, reg_path
 
 
 def _worker_cmd_with_synthetic_anchor(
@@ -541,6 +674,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
         tmp = _make_tmp_dir("cliguards")
         try:
             runner = str(HERE / "run_q2_q3_empirical.py")
+            preflight_cli = str(HERE / "a_q2q3_preflight.py")
             data_root = tmp / "A_ROOT"
             manifest_path, _, _ = _write_dummy_dat_corpus(data_root, n_wall_groups=1, n_metal_groups=1, include_orphan=True)
             out_dir = tmp / "out_guard"
@@ -549,29 +683,46 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             frozen_q1 = tmp / "q1_frozen"
             _make_synthetic_q1_dir(unfrozen_q1, frozen=False, eligible=False)
             _make_synthetic_q1_dir(frozen_q1, frozen=True, eligible=True)
-            app_reg = _write_approval_registry(tmp / "approvals.json")
+
+            payload = _build_approval_registry_payload(q1_frozen_dir=frozen_q1, q1_diag_dir=unfrozen_q1)
+            trusted_repo, app_reg = _init_trusted_test_repo(tmp / "trusted_repo", payload)
+
+            # 0) Removed --approval-record CLI flag must be rejected (exit 2) on both CLIs
+            for cli_path in (runner, preflight_cli):
+                p_removed = subprocess.run(
+                    [sys.executable, cli_path, "--repo", str(trusted_repo), "--approval-ref", "CODEX-S1-D1-TEST", "--approval-record", str(app_reg)],
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(p_removed.returncode, 2, f"{cli_path} must reject removed --approval-record")
 
             # 1) Missing --approval-ref -> exit 2 for both d1-audit and execute
             for mode, extra in (("d1-audit", []), ("execute", ["--q1-dir", str(frozen_q1)])):
                 p = subprocess.run(
-                    [sys.executable, runner, "--mode", mode, "--approval-record", str(app_reg), "--data-root", str(data_root), "--manifest", str(manifest_path), "--out", str(out_dir), *extra],
+                    [sys.executable, runner, "--repo", str(trusted_repo), "--mode", mode, "--data-root", str(data_root), "--manifest", str(manifest_path), "--out", str(out_dir), *extra],
                     capture_output=True,
                     text=True,
                 )
                 self.assertEqual(p.returncode, 2, f"{mode} without approval-ref must exit 2: {p.stderr}")
 
-            # 2) Blank / missing approval-record / pending status / wrong scope / diagnostic isolation -> exit 2
+            # 2) Blank / unknown ref / pending / untrusted issuer / wrong scope / missing required calibration SHA -> exit 2
             bad_cases = [
-                ["--mode", "d1-audit", "--approval-ref", "   ", "--approval-record", str(app_reg)],
-                ["--mode", "d1-audit", "--approval-ref", "CODEX-S1-D1-TEST", "--approval-record", str(tmp / "missing_app.json")],
-                ["--mode", "d1-audit", "--approval-ref", "CODEX-PENDING", "--approval-record", str(app_reg)],
-                ["--mode", "execute", "--approval-ref", "CODEX-S1-D1-TEST", "--approval-record", str(app_reg), "--q1-dir", str(frozen_q1)],
-                ["--mode", "execute", "--approval-ref", "CODEX-S1-EXEC-TEST", "--approval-record", str(app_reg), "--q1-dir", str(unfrozen_q1), "--allow-unfrozen-q1-diagnostic"],
-                ["--mode", "execute", "--approval-ref", "CODEX-S1-DIAG-TEST", "--approval-record", str(app_reg), "--q1-dir", str(frozen_q1)],
+                ["--mode", "d1-audit", "--approval-ref", "   "],
+                ["--mode", "d1-audit", "--approval-ref", "NO-SUCH-REF"],
+                ["--mode", "d1-audit", "--approval-ref", "CODEX-PENDING"],
+                ["--mode", "d1-audit", "--approval-ref", "UNTRUSTED-ISSUER"],
+                ["--mode", "execute", "--approval-ref", "CODEX-S1-D1-TEST", "--q1-dir", str(frozen_q1)],
+                ["--mode", "execute", "--approval-ref", "CODEX-S1-EXEC-TEST", "--q1-dir", str(unfrozen_q1), "--allow-unfrozen-q1-diagnostic"],
+                ["--mode", "execute", "--approval-ref", "CODEX-S1-DIAG-TEST", "--q1-dir", str(frozen_q1)],
+                ["--mode", "execute", "--approval-ref", "EXEC-MISSING-FROZEN-SHA", "--q1-dir", str(frozen_q1)],
+                ["--mode", "execute", "--approval-ref", "EXEC-MISSING-ARRAYS-SHA", "--q1-dir", str(frozen_q1)],
+                ["--mode", "execute", "--approval-ref", "EXEC-WRONG-FROZEN-SHA", "--q1-dir", str(frozen_q1)],
+                ["--mode", "execute", "--approval-ref", "DIAG-MISSING-RESULTS-SHA", "--q1-dir", str(unfrozen_q1), "--allow-unfrozen-q1-diagnostic"],
+                ["--mode", "execute", "--approval-ref", "DIAG-WITH-FROZEN-SHA", "--q1-dir", str(unfrozen_q1), "--allow-unfrozen-q1-diagnostic"],
             ]
             for extra_args in bad_cases:
                 p_bad = subprocess.run(
-                    [sys.executable, runner, *extra_args, "--out", str(out_dir)],
+                    [sys.executable, runner, "--repo", str(trusted_repo), *extra_args, "--out", str(out_dir)],
                     capture_output=True,
                     text=True,
                 )
@@ -579,7 +730,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
 
             # 3) --repeat-runs != 2 on execute -> exit 2
             p_rep = subprocess.run(
-                [sys.executable, runner, "--mode", "execute", "--approval-ref", "CODEX-S1-EXEC-TEST", "--approval-record", str(app_reg), "--repeat-runs", "1", "--q1-dir", str(frozen_q1), "--out", str(out_dir)],
+                [sys.executable, runner, "--repo", str(trusted_repo), "--mode", "execute", "--approval-ref", "CODEX-S1-EXEC-TEST", "--repeat-runs", "1", "--q1-dir", str(frozen_q1), "--out", str(out_dir)],
                 capture_output=True,
                 text=True,
             )
@@ -587,7 +738,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
 
             # 4) execute without e0c_frozen.json -> exit 2
             p_unfrozen = subprocess.run(
-                [sys.executable, runner, "--mode", "execute", "--approval-ref", "CODEX-S1-EXEC-TEST", "--approval-record", str(app_reg), "--repeat-runs", "2", "--q1-dir", str(unfrozen_q1), "--out", str(out_dir)],
+                [sys.executable, runner, "--repo", str(trusted_repo), "--mode", "execute", "--approval-ref", "CODEX-S1-EXEC-TEST", "--repeat-runs", "2", "--q1-dir", str(unfrozen_q1), "--out", str(out_dir)],
                 capture_output=True,
                 text=True,
             )
@@ -602,13 +753,13 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             sha_q2_before = _sha256_file(sentinel_q2)
 
             p_ov1 = subprocess.run(
-                [sys.executable, runner, "--mode", "d1-audit", "--approval-ref", "CODEX-S1-D1-TEST", "--approval-record", str(app_reg), "--out", str(out_dir)],
+                [sys.executable, runner, "--repo", str(trusted_repo), "--mode", "d1-audit", "--approval-ref", "CODEX-S1-D1-TEST", "--out", str(out_dir)],
                 capture_output=True,
                 text=True,
             )
             self.assertEqual(p_ov1.returncode, 2)
             p_ov2 = subprocess.run(
-                [sys.executable, runner, "--mode", "execute", "--approval-ref", "CODEX-S1-EXEC-TEST", "--approval-record", str(app_reg), "--repeat-runs", "2", "--q1-dir", str(frozen_q1), "--out", str(out_dir)],
+                [sys.executable, runner, "--repo", str(trusted_repo), "--mode", "execute", "--approval-ref", "CODEX-S1-EXEC-TEST", "--repeat-runs", "2", "--q1-dir", str(frozen_q1), "--out", str(out_dir)],
                 capture_output=True,
                 text=True,
             )
@@ -625,23 +776,76 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             manifest_path, overall_sha, counts = _write_dummy_dat_corpus(
                 data_root, n_wall_groups=1, n_metal_groups=1, include_orphan=True
             )
-            app_reg = _write_approval_registry(tmp / "approvals.json")
+            q1_ok = tmp / "q1_ok"
+            q1_diag = tmp / "q1_diag"
+            _make_synthetic_q1_dir(q1_ok, frozen=True, eligible=True)
+            _make_synthetic_q1_dir(q1_diag, frozen=False, eligible=False)
+
+            payload = _build_approval_registry_payload(q1_frozen_dir=q1_ok, q1_diag_dir=q1_diag)
+            trusted_repo, app_reg = _init_trusted_test_repo(tmp / "trusted_repo", payload)
 
             # Valid frozen bundle passes
-            q1_ok = tmp / "q1_ok"
-            _make_synthetic_q1_dir(q1_ok, frozen=True, eligible=True)
             ok, info = PF2.verify_q1_calibration_bundle(q1_ok, allow_unfrozen_q1_diagnostic=False)
             self.assertTrue(ok, info)
 
-            # Separate diagnostic approval works ONLY with diagnostic mode
-            ok_diag, _ = PF2.verify_approval_authorization(
-                repo=REPO,
+            # Separate formal & diagnostic approvals pass ONLY with matching mandatory calibration SHAs
+            ok_exec, info_exec = PF2.verify_approval_authorization(
+                repo=trusted_repo,
+                mode="execute",
+                approval_ref="CODEX-S1-EXEC-TEST",
+                allow_unfrozen_q1_diagnostic=False,
+                q1_frozen_sha256=info["frozen_sha256"],
+                q1_arrays_sha256=info["arrays_sha256"],
+                q1_results_sha256=info["results_sha256"],
+            )
+            self.assertTrue(ok_exec, info_exec)
+
+            ok_d, info_d = PF2.verify_q1_calibration_bundle(q1_diag, allow_unfrozen_q1_diagnostic=True)
+            self.assertTrue(ok_d, info_d)
+            ok_diag, info_diag = PF2.verify_approval_authorization(
+                repo=trusted_repo,
                 mode="execute",
                 approval_ref="CODEX-S1-DIAG-TEST",
-                approval_record_path=app_reg,
                 allow_unfrozen_q1_diagnostic=True,
+                q1_arrays_sha256=info_d["arrays_sha256"],
+                q1_results_sha256=info_d["results_sha256"],
             )
-            self.assertTrue(ok_diag)
+            self.assertTrue(ok_diag, info_diag)
+
+            # Custom external approval_record_path override is rejected even internally
+            external_copy = tmp / "forged_approvals.json"
+            external_copy.write_bytes(app_reg.read_bytes())
+            ok_ext, _ = PF2.verify_approval_authorization(
+                repo=trusted_repo,
+                mode="d1-audit",
+                approval_ref="CODEX-S1-D1-TEST",
+                approval_record_path=external_copy,
+            )
+            self.assertFalse(ok_ext)
+
+            # Mandatory calibration digest checks reject missing/empty digests
+            for bad_ref in ("EXEC-MISSING-FROZEN-SHA", "EXEC-MISSING-ARRAYS-SHA", "EXEC-WRONG-FROZEN-SHA"):
+                ok_bad_exec, _ = PF2.verify_approval_authorization(
+                    repo=trusted_repo,
+                    mode="execute",
+                    approval_ref=bad_ref,
+                    allow_unfrozen_q1_diagnostic=False,
+                    q1_frozen_sha256=info["frozen_sha256"],
+                    q1_arrays_sha256=info["arrays_sha256"],
+                    q1_results_sha256=info["results_sha256"],
+                )
+                self.assertFalse(ok_bad_exec, f"Expected reject for {bad_ref}")
+
+            for bad_diag_ref in ("DIAG-MISSING-RESULTS-SHA", "DIAG-WITH-FROZEN-SHA"):
+                ok_bad_diag, _ = PF2.verify_approval_authorization(
+                    repo=trusted_repo,
+                    mode="execute",
+                    approval_ref=bad_diag_ref,
+                    allow_unfrozen_q1_diagnostic=True,
+                    q1_arrays_sha256=info_d["arrays_sha256"],
+                    q1_results_sha256=info_d["results_sha256"],
+                )
+                self.assertFalse(ok_bad_diag, f"Expected reject for {bad_diag_ref}")
 
             # Tamper cases on Q1 frozen <-> results <-> NPZ calibration binding
             # Case A: e0c_results.json has freeze.eligible=False even though e0c_frozen.json exists
@@ -672,18 +876,116 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
 
             # Case D: preflight rejects when q1_frozen_sha256 doesn't match approval record binding
             res_pre = PF2.run_preflight(
-                repo=REPO,
+                repo=trusted_repo,
                 data_root=data_root,
                 manifest_path=manifest_path,
                 mode="execute",
                 q1_dir=q1_arr,
                 approval_ref="CODEX-S1-EXEC-TEST",
-                approval_record_path=app_reg,
                 expected_manifest_overall_sha256=overall_sha,
                 expected_counts=counts,
             )
             self.assertFalse(res_pre["preconditions_pass"])
             self.assertIn("q1.dependency", res_pre["summary"]["blocking_ids"])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_approval_registry_untrusted_git_origin_and_reparse_rejections(self) -> None:
+        tmp = _make_tmp_dir("origin_trust")
+        try:
+            payload = _build_approval_registry_payload()
+            trusted_repo, app_reg = _init_trusted_test_repo(tmp / "trusted_repo", payload)
+
+            # Baseline valid against origin/main
+            ok0, info0 = PF2.verify_approval_authorization(
+                repo=trusted_repo,
+                mode="d1-audit",
+                approval_ref="CODEX-S1-D1-TEST",
+            )
+            self.assertTrue(ok0, info0)
+
+            # 1) Dirty local modification to coordination/A_Q2Q3_APPROVALS.json -> rejected
+            orig_bytes = app_reg.read_bytes()
+            mod_payload = copy.deepcopy(payload)
+            mod_payload["approvals"]["LOCAL-FORGED"] = {
+                "approval_ref": "LOCAL-FORGED",
+                "status": "approved",
+                "approved_by": "codex",
+                "scope": "S2-d1-audit",
+                "allowed_modes": ["d1-audit"],
+                "diagnostic_only": False,
+            }
+            app_reg.write_bytes((json.dumps(mod_payload, indent=2) + "\n").encode("utf-8"))
+            ok_dirty, info_dirty = PF2.verify_approval_authorization(
+                repo=trusted_repo,
+                mode="d1-audit",
+                approval_ref="LOCAL-FORGED",
+            )
+            self.assertFalse(ok_dirty)
+            self.assertIn("未提交或本地修改", info_dirty["reason"])
+            app_reg.write_bytes(orig_bytes)
+
+            # 2) Unmerged branch commit not in origin/main -> rejected even when working copy is clean
+            subprocess.run(["git", "-C", str(trusted_repo), "checkout", "-b", "feature/self-approve"], check=True, capture_output=True)
+            branch_payload = copy.deepcopy(payload)
+            branch_payload["approvals"]["BRANCH-ONLY-SELF"] = {
+                "approval_ref": "BRANCH-ONLY-SELF",
+                "status": "approved",
+                "approved_by": "codex",
+                "scope": "S2-d1-audit",
+                "allowed_modes": ["d1-audit"],
+                "diagnostic_only": False,
+            }
+            app_reg.write_bytes((json.dumps(branch_payload, indent=2) + "\n").encode("utf-8"))
+            subprocess.run(["git", "-C", str(trusted_repo), "add", "coordination/A_Q2Q3_APPROVALS.json"], check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(trusted_repo), "commit", "-m", "Self-approved on feature branch"], check=True, capture_output=True)
+            ok_branch, info_branch = PF2.verify_approval_authorization(
+                repo=trusted_repo,
+                mode="d1-audit",
+                approval_ref="BRANCH-ONLY-SELF",
+            )
+            self.assertFalse(ok_branch)
+            self.assertIn("尚未合入 origin/main", info_branch["reason"])
+
+            # Return cleanly to main for junction test
+            subprocess.run(["git", "-C", str(trusted_repo), "checkout", "main"], check=True, capture_output=True)
+
+            # 3) Untrusted approved_by even when merged into origin/main -> rejected
+            ok_untrusted, info_untrusted = PF2.verify_approval_authorization(
+                repo=trusted_repo,
+                mode="d1-audit",
+                approval_ref="UNTRUSTED-ISSUER",
+            )
+            self.assertFalse(ok_untrusted)
+            self.assertIn("受信任统筹签发名单", info_untrusted["reason"])
+
+            # 4) Reparse point / junction replacing coordination/ pointing outside repo -> rejected
+            outside_coord = tmp / "outside_coord"
+            outside_coord.mkdir(parents=True, exist_ok=True)
+            (outside_coord / "A_Q2Q3_APPROVALS.json").write_bytes(orig_bytes)
+            coord_dir = trusted_repo / "coordination"
+            coord_backup = tmp / "coord_backup"
+            shutil.move(str(coord_dir), str(coord_backup))
+            created_junc = False
+            if sys.platform == "win32":
+                p_mk = subprocess.run(["cmd", "/c", "mklink", "/J", str(coord_dir), str(outside_coord)], capture_output=True, text=True)
+                created_junc = p_mk.returncode == 0
+            else:
+                os.symlink(outside_coord, coord_dir)
+                created_junc = True
+            if created_junc:
+                ok_junc, info_junc = PF2.verify_approval_authorization(
+                    repo=trusted_repo,
+                    mode="d1-audit",
+                    approval_ref="CODEX-S1-D1-TEST",
+                )
+                self.assertFalse(ok_junc, info_junc)
+                self.assertIn("反重解析", info_junc["reason"])
+                if sys.platform == "win32":
+                    subprocess.run(["cmd", "/c", "rmdir", str(coord_dir)], capture_output=True)
+                else:
+                    coord_dir.unlink()
+                shutil.move(str(coord_backup), str(coord_dir))
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
@@ -694,19 +996,18 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             manifest_path, overall_sha, counts = _build_valid_d0_synthetic_corpus(
                 data_root, n_wall=3, n_metal=8, inject_group8_neg32768=True, plant_echoes=False
             )
-            app_reg = _write_approval_registry(tmp / "approvals.json")
+            payload = _build_approval_registry_payload(include_bad_variants=False)
+            trusted_repo, _ = _init_trusted_test_repo(tmp / "trusted_repo", payload)
             out_dir = tmp / "d1_audit_out"
             base_argv = [
                 "--repo",
-                str(REPO),
+                str(trusted_repo),
                 "--data-root",
                 str(data_root),
                 "--manifest",
                 str(manifest_path),
                 "--approval-ref",
                 "CODEX-S1-D1-TEST",
-                "--approval-record",
-                str(app_reg),
             ]
             manifest = RUN.run_two_independent_runs(
                 worker_mode="d1-audit-worker",
@@ -794,11 +1095,12 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             )
             q1_dir = tmp / "q1_frozen"
             _make_synthetic_q1_dir(q1_dir, frozen=True, eligible=True)
-            app_reg = _write_approval_registry(tmp / "approvals.json")
+            payload = _build_approval_registry_payload(q1_frozen_dir=q1_dir, include_bad_variants=False)
+            trusted_repo, _ = _init_trusted_test_repo(tmp / "trusted_repo", payload)
             out_dir = tmp / "exec_out"
             base_argv = [
                 "--repo",
-                str(REPO),
+                str(trusted_repo),
                 "--data-root",
                 str(data_root),
                 "--manifest",
@@ -807,8 +1109,6 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
                 str(q1_dir),
                 "--approval-ref",
                 "CODEX-S1-EXEC-TEST",
-                "--approval-record",
-                str(app_reg),
             ]
             # Use coarse solver grid inside synthetic test so dual subprocess run finishes in a few seconds
             coarse_override = (
@@ -874,6 +1174,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
                 tmp / "experiments/A/A-Q2Q3-EMP/results/run.log",
                 tmp / "experiments/A/A-Q2Q3-EMP/d1_audit/q2q3_d1_audit.json",
                 tmp / "experiments/A/A-Q2Q3-EMP/results/repeat_runs/run-2/q2_results.json",
+                tmp / "coordination/A_Q2Q3_APPROVALS.json",
             ]
             for p in targets:
                 p.parent.mkdir(parents=True, exist_ok=True)

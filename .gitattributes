@@ -14,6 +14,7 @@ experiments/A/A-Q2Q3-SYN/results/SHA256SUMS.txt text eol=lf
 experiments/A/A-Q2Q3-SYN/results/*.npz binary
 
 # Q2/Q3 实测与 D1 审计目录（#44）：JSON、台账与日志按 LF 检出，NPZ 按二进制保护。
+coordination/A_Q2Q3_APPROVALS.json text eol=lf
 experiments/A/A-Q2Q3-EMP/**/*.json text eol=lf
 experiments/A/A-Q2Q3-EMP/**/SHA256SUMS.txt text eol=lf
 experiments/A/A-Q2Q3-EMP/**/*.log text eol=lf
