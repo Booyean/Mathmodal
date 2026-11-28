@@ -38,7 +38,7 @@ $$X_i^{(g)}(f_D) = H_i(f_D)\, S(f_D)\, e^{+j 2\pi f_R t_0^{(g)}} \left[ E_i^{\te
 ### 5.2 问题 1.1：基于空场正则比值的通道校准模型（`M0-Cal-Base`）
 
 #### 5.2.1 数学模型与无量纲正则化
-依据 `A-Q1-M0` 经典基线与 `A-Q1-E0` 先导规范，仅利用经 `D1-2` 验收的 10 组空场数据 $\mathcal{G}_{\text{air}}$（禁止触碰检验集标签），分三步完成相对校准参数估计：
+依据 `A-Q1-M0` 经典基线与 `A-Q1-E0` 先导规范，借鉴共址与穿墙雷达多通道幅相失配校准建模[1, 2]，仅利用经 `D1-2` 验收的 10 组空场数据 $\mathcal{G}_{\text{air}}$（禁止触碰检验集标签），分三步完成相对校准参数估计：
 1. **空场跨组射频对齐聚合**：指定 `空场数据/data1` 为时间原点，对各空场组 $g \in \mathcal{G}_{\text{air}}$ 在工作带 $\mathcal{B}$ 内搜索相对异步偏移 $\Delta\hat{t}_0^{\text{air},(g)}$，使其经 $e^{+j2\pi f_R \Delta t_0}$ 移位后与基准组加权二范数残差最小（粗搜取参考通道解析互相关包络峰 $\hat{k}_0$，细搜在 $[\hat{k}_0 - 1, \hat{k}_0 + 1]\,T_s$ 内以 $10^{-3}\,T_s$ 步长搜索），对齐平均得低噪空场频谱 $\bar{X}_i^{\text{air}}(f_D)$。
 2. **传播路径几何补偿与无量纲 Tikhonov 校准**：在假设 A5（$E_i^{\text{dir}} \approx 1/R_i^{\text{dir}}$）下，定义相对参考通道带内平均功率 $\bar{P}_{\text{ref}} = \operatorname{mean}_{f_D\in\mathcal{B}}|\bar{X}_{i_{\text{ref}}}^{\text{air}}(f_D)|^2$，对全部 63 路计算正则化相对频响：
    $$\hat{H}_i^{\text{rel}}(f_D) = \frac{\bar{X}_i^{\text{air}}(f_D)\,\big(\bar{X}_{i_{\text{ref}}}^{\text{air}}(f_D)\big)^*}{|\bar{X}_{i_{\text{ref}}}^{\text{air}}(f_D)|^2 + \lambda_{\text{cal}}\,\bar{P}_{\text{ref}}} \cdot \frac{R_i^{\text{dir}}}{R_{i_{\text{ref}}}^{\text{dir}}}\,\exp\!\Big(-j 2\pi f_R \big(\tau_i^{\text{dir}} - \tau_{i_{\text{ref}}}^{\text{dir}}\big)\Big), \qquad f_D \in \mathcal{B}, \tag{5-6}$$
@@ -53,7 +53,7 @@ $$J_{\text{air}}(\lambda_{\text{cal}}, \lambda_{\text{inv}}) = \operatorname{med
 - **校准效果评价指标（空场 LOO 上计算）**：
   - 幅度残差 $\text{Res}_{\text{amp}} = \operatorname{rms}_{i\neq i_{\text{ref}}, f_D\in\mathcal{B}}\!\big(\big|\frac{X_i^{\text{cal}}(f_D)}{X_{i_{\text{ref}}}^{\text{cal}}(f_D)}\frac{R_i^{\text{dir}}}{R_{i_{\text{ref}}}^{\text{dir}}}\big| - 1\big)$，降幅 $\Delta\text{Res}_{\text{amp}} = 20\log_{10}(\text{Res}_{\text{amp}}^{\text{before}} / \text{Res}_{\text{amp}}^{\text{after}})$；
   - 带内核心子带能量加权相位残差 $\text{Res}_{\text{ph}} = \sqrt{\frac{\sum_{i\neq i_{\text{ref}}, f_D\in\mathcal{B}_{\text{core}}} |S(f_D)|^2 \cdot \operatorname{wrap}(\angle[\frac{X_i^{\text{cal}}(f_D)}{X_{i_{\text{ref}}}^{\text{cal}}(f_D)}e^{-j2\pi f_R(\tau_i^{\text{dir}}-\tau_{i_{\text{ref}}}^{\text{dir}})}])^2}{\sum_{i\neq i_{\text{ref}}, f_D\in\mathcal{B}_{\text{core}}} |S(f_D)|^2}}$（单位 $\text{rad}$）。
-- **对照改进分支预留（`M0-Cal-Joint`，未入基线 E0）**：若校准实测发现端射互耦引起幅相差偏置，可在后续候选研究中引入校准池近法向已知目标回波联合校准作为消融对照，当前不计入经典基线结果。
+- **对照改进分支预留（`M0-Cal-Joint`，未入基线 E0）**：若校准实测发现端射互耦引起幅相差偏置[1]，可在后续候选研究中引入校准池近法向已知目标回波联合校准作为消融对照，当前不计入经典基线结果。
 
 > **图/表槽位**：代表性通道校准前后波形与频谱对比见 **`Fig 1-1 [待补：依赖 E0-C 验收]`**；63 路校准参数 $(\Delta\hat{\tau}_i, \hat{G}_i, \hat{\psi}_i)$ 与 LOO 残差统计见 **`Table 1-1 [待补：依赖 E0-C 验收]`**。
 
@@ -66,7 +66,7 @@ $$J_{\text{air}}(\lambda_{\text{cal}}, \lambda_{\text{inv}}) = \operatorname{med
 $$\Delta\hat{t}_0^{(g)} = \arg\min_{\Delta t_0 \in [0, T_p)} \sum_{i \in \mathcal{I}_{\text{rx}}} w_i^{\text{dw}} \sum_{f_D \in \mathcal{B}} \Big| X_i^{(g,\text{cal})}(f_D) - \bar{X}_i^{\text{air,cal}}(f_D)\, e^{+j 2\pi f_R \Delta t_0} \Big|^2, \tag{5-9}$$
 并在经典基线中严格锁定比例系数 $\alpha_g \equiv 1.0$ 执行带内相干减除：
 $$\tilde{X}_i^{(g)}(f_D) = X_i^{(g,\text{cal})}(f_D) - \bar{X}_i^{\text{air,cal}}(f_D)\, e^{+j 2\pi f_R \Delta\hat{t}_0^{(g)}}, \qquad f_D \in \mathcal{B}. \tag{5-10}$$
-**不采用原始时域拟合 $\hat{\alpha}_g$ 的物理依据**：因 1 $\mu\text{s}$ 周期 LFM 在原始时域上全周期交叠，实测合成反例核验表明，即使 `42 cm` 墙体目标在原始时域直达窗内的目标/直达能量交叠亦达 `1.16e-3`，即便经过脉冲压缩在 $\pm 1.0\text{ ns}$ 直射窗内仍保留约 `-44.4 dB` 的有限带宽尾瓣泄露。基线固定 $\alpha_g \equiv 1.0$ 可严格保证抑制过程零目标信号泄露；可能存在的小幅环境温漂缩放留归受控改进候选（`M0-DW-Subspace`）单独消融检验。
+**不采用原始时域拟合 $\hat{\alpha}_g$ 的物理依据**：因 1 $\mu\text{s}$ 周期 LFM 在原始时域上全周期交叠，实测合成反例核验表明，即使 `42 cm` 墙体目标在原始时域直达窗内的目标/直达能量交叠亦达 `1.16e-3`，即便经过脉冲压缩在 $\pm 1.0\text{ ns}$ 直射窗内仍保留约 `-44.4 dB` 的有限带宽尾瓣泄露。基线固定 $\alpha_g \equiv 1.0$ 可严格保证抑制过程零目标信号泄露；可能存在的小幅环境温漂缩放及强静态杂波分离问题留归受控改进候选（`M0-DW-Subspace`，参见基于子空间投影的墙体与直达杂波抑制方法[3]）单独消融检验。
 
 #### 5.3.2 显式压缩延迟域 $z_{\text{MF},i}(\tau)$ 与跨零/背景代理窗口
 因为周期性 LFM 原始波形在 $[50, 950]\text{ ns}$ 仍承载全周期约 $110.8\%$ 的平均功率（完全非静音），直射窗抑制比与峰背比必须统一定义在基于显式模板 $\hat{S}_{\text{eff}}^{(g)}(f_D)$（式 (5-13)）的**循环距离压缩延迟域**：
@@ -97,7 +97,7 @@ $$P_{\text{norm,eff}}^{(g)}(d) = \frac{\big|a^{\text{eff},(g)}(d)^H W \tilde{X}^
 #### 5.4.2 峰值提取规则、PSLR 度量与 10/10 拆分隔离
 在 $[0.15, 2.00]\text{ m}$ 内先以 $1\text{ mm}$ 步长粗搜、再于峰邻域以 $0.1\text{ mm}$ 细搜：
 - **金属板**：全局极大值 $\hat{d}_g = \arg\max_{d\in[0.15, 2.00]\text{ m}} P_{\text{norm,eff}}^{(g)}(d)$。
-- **墙体（前表面首峰判别）**：鉴于墙体后表面或内部可能存在强多次反射伪峰，选取满足局部极大、$P(d) \ge \eta_{\text{wall}} P_{\max}$ 且超过背景代理 $+6\text{ dB}$（$P(d) \ge 10^{0.6}\,\text{BG}_{\text{proxy}}^{(g)}$）的**首个（最小 $d$）前向峰**；$\eta_{\text{wall}}$ 默认 $0.25$，仅在 `E0-C` 校准样 `data1-42cm` 上核查候选 $\{0.15, 0.25, 0.35\}$ 后与正则对 $(\lambda_{\text{cal}}, \lambda_{\text{inv}})$ 同步写入冻结配置 `config.frozen.json`。
+- **墙体（前表面首峰判别）**：鉴于墙体后表面或内部可能存在强多次反射伪峰[9]，选取满足局部极大、$P(d) \ge \eta_{\text{wall}} P_{\max}$ 且超过背景代理 $+6\text{ dB}$（$P(d) \ge 10^{0.6}\,\text{BG}_{\text{proxy}}^{(g)}$）的**首个（最小 $d$）前向峰**；$\eta_{\text{wall}}$ 默认 $0.25$，仅在 `E0-C` 校准样 `data1-42cm` 上核查候选 $\{0.15, 0.25, 0.35\}$ 后与正则对 $(\lambda_{\text{cal}}, \lambda_{\text{inv}})$ 同步写入冻结配置 `config.frozen.json`。
 - **峰旁瓣比（PSLR）**：对估计峰 $\hat{d}_g$ 取主瓣保护半宽 $\Delta d_{\text{ml}} = 1.5\cdot c_0/(2B) = 0.1606031\text{ m}$，令旁瓣区 $\mathcal{D}_{\text{sl}}(\hat{d}_g) = [0.15, 2.00]\text{ m} \setminus [\hat{d}_g - \Delta d_{\text{ml}}, \hat{d}_g + \Delta d_{\text{ml}}]$，计算 $\text{PSLR}_g = 10\log_{10}(P(\hat{d}_g) / \max_{d\in\mathcal{D}_{\text{sl}}} P(d))$。
 - **分层 10/10 拆分铁律（`A-Q1-SPLIT0`）**：墙体 20 组（校准 `42–106 cm` / 检验 `44–121 cm`）与金属板 20 组（校准 `48–91 cm` / 检验 `48–99 cm`）严格隔离，所有检验组标签严禁参与校准、选参或 $\eta_{\text{wall}}$ 确定；超过校准范围的墙体 $>106\text{ cm}$（含 `121 cm`）与金属 $>91\text{ cm}$（含 `99 cm`）作为外推测试集单独汇总指标，不与内插区间混算掩盖边界性能。
 
@@ -138,7 +138,7 @@ $$R_{j,i}(\mathbf{r}) = \|\mathbf{p}_{j,\text{tx}} - \mathbf{r}\|_2 + \|\mathbf{
 ### 6.2 问题 2.1：有界双分量远距离回波增益模型（`M2-Gain-BSEC`）
 
 #### 6.2.1 数学表达、两步封顶与精确量纲换算
-为同时补偿球面/平面几何扩散损耗与穿透前墙 A（厚 $10.5\text{ cm}$）后的介质衰减并防止晚时背景噪声过度抬升，定义**两步截断有界增益补偿函数**：
+为同时补偿球面/平面几何扩散损耗与穿透前墙 A（厚 $10.5\text{ cm}$）后的介质衰减（对应经典球面与指数衰减补偿 SEC 物理框架[4]）并防止晚时背景噪声过度抬升，定义**两步截断有界增益补偿函数**：
 $$\tau_{\text{clip}}(\tau) = \min\!\big(\max(\tau, \tau_0),\ \tau_{\text{sat}}\big), \qquad [u]_+ = \max(u, 0),$$
 $$W_{\text{raw}}(\tau; \beta, \alpha_{\text{gain}}) = \left(\frac{\tau_{\text{clip}}(\tau)}{\tau_0}\right)^{\beta} \cdot \exp\!\Big(10^9\alpha_{\text{gain}}\,\big[\tau_{\text{clip}}(\tau) - \tau_0\big]_+\Big), \tag{6-2}$$
 $$W_{\text{comp}}(\tau; \beta, \alpha_{\text{gain}}, G_{\text{cap}}) = \min\!\big(G_{\text{cap}},\ W_{\text{raw}}(\tau; \beta, \alpha_{\text{gain}})\big), \tag{6-3}$$
@@ -157,7 +157,7 @@ $$W_{\text{comp}}(\tau; \beta, \alpha_{\text{gain}}, G_{\text{cap}}) = \min\!\bi
 
 在网格 $\Omega_{\text{2D}} = [-0.20, 1.40]\times[0, 2.50]\text{ m}$（推荐步长 $0.01\text{ m}$，局部细化 $0.005\text{ m}$）上，首先定义随方位角 $\theta_j(x,y) = \arctan2(|x - x_j|, \max(y, 0.05))$ 平滑截断的上升余弦孔径窗（$|\theta_j|\le 35^\circ$ 取 $1$，$35^\circ < |\theta_j|\le 45^\circ$ 取余弦过渡，$\theta_j > 45^\circ$ 置 $0$）及有效权重和 $N_{\text{ap}}(x,y) = \sum_{j=1}^{33}\sum_{i\in\mathcal{I}_r} w_{\text{ap}}(j;x,y)$。值得注意的是，中心射频 $f_c = 3.0\text{ GHz}$ 对应自由空间半波长 $\lambda_c / 2 = 5.0\text{ cm}$，恰好与测量平移步距 $\Delta x_{\text{scan}} = 5.0\text{ cm}$ 一致，结合 $1.4\text{ GHz}$ 宽带压噪与 $45^\circ$ 孔径截断可有效抑制横向栅瓣。
 
-据此建立**增益补偿相干聚焦主模型（`M2-Img-CohBPA`）**与**非相干包络对照（`M2-Img-EnvBPA`）**：
+据此结合穿墙宽带合成孔径波束形成/反向投影理论[5, 10]，建立**增益补偿相干聚焦主模型（`M2-Img-CohBPA`）**与**非相干包络对照（`M2-Img-EnvBPA`）**：
 $$U_{\text{coh}}(x,y) = \frac{1}{N_{\text{ap}}(x,y)}\sum_{j=1}^{33}\sum_{i\in\mathcal{I}_r} w_{\text{ap}}(j;x,y)\, W_{\text{comp}}\big(\tau_{j,i}(x,y)\big)\, z_{\text{MF},j,i}\big(\tau_{j,i}(x,y)\big), \qquad I_{\text{2D}}^{\text{coh}}(x,y) = \big|U_{\text{coh}}(x,y)\big|^2, \tag{6-5}$$
 $$I_{\text{2D}}^{\text{env}}(x,y) = \left(\frac{1}{N_{\text{ap}}(x,y)}\sum_{j=1}^{33}\sum_{i\in\mathcal{I}_r} w_{\text{ap}}(j;x,y)\, W_{\text{comp}}\big(\tau_{j,i}(x,y)\big)\, \big|z_{\text{MF},j,i}\big(\tau_{j,i}(x,y)\big)\big|\right)^2. \tag{6-6}$$
 令 $W_{\text{comp}} \equiv 1$ 得未增益对照剖面 $I_{\text{2D}}^{(0)}(x,y)$。
@@ -171,7 +171,7 @@ $$I_{\text{2D}}^{\text{env}}(x,y) = \left(\frac{1}{N_{\text{ap}}(x,y)}\sum_{j=1}
 ---
 
 ### 6.4 物理边界说明与结果/检验槽位
-1. **介质折射视在深度边界**：穿过介电常数 $\varepsilon_r > 1$、厚度 $d_A = 10.5\text{ cm}$ 前墙 A 的射线，其在自由空间波速 $c_0$ 下成出的后墙位置 $y_B^{\text{app}}(x)$ 将向 $+y$ 后移 $\Delta y_{\text{app}} \approx d_A(\sqrt{\varepsilon_r} - 1)$。基线不预先臆测 $\varepsilon_r$，而是通过无墙/有墙区间观测错位反推等效诊断量 $\hat{\varepsilon}_r \approx (1 + \Delta y_{\text{app}}/d_A)^2$，避免将视在延迟误判为后墙物理弯曲。
+1. **介质折射视在深度边界**：穿过介电常数 $\varepsilon_r > 1$、厚度 $d_A = 10.5\text{ cm}$ 前墙 A 的射线，其在自由空间波速 $c_0$ 下成出的后墙位置 $y_B^{\text{app}}(x)$ 将向 $+y$ 后移 $\Delta y_{\text{app}} \approx d_A(\sqrt{\varepsilon_r} - 1)$[5, 6]。基线不预先臆测 $\varepsilon_r$，而是通过无墙/有墙区间观测错位反推等效诊断量 $\hat{\varepsilon}_r \approx (1 + \Delta y_{\text{app}}/d_A)^2$，避免将视在延迟误判为后墙物理弯曲。
 2. **跨高波束与表观壁厚展宽**：受单行天线垂向波束张角影响，非共面散射体以 $y_{\text{app}} = \sqrt{y^2 + (\Delta z)^2}$ 拖尾至更深视在距离，导致二维成像墙体表观条带展宽；因此前/后墙定位以主前界面脊线拟合为准，不将条带半高宽直接宣称为砖墙几何物理厚度。
 3. **规格合成小算例边界与待补实测检验**：规格阶段纯合成双墙闭环（`solutions/A/verify_q2_spec.py`，零 `.dat` 读取）已验证单位换算、硬封顶行为与增益前后聚焦逻辑自洽性（仅限设计验证，非实测效果）。真实 `附件3-成像数据/墙体` 的增益前后剖面对比（**`Fig 2-1 [待补]`**）、第 4 行与第 3/5 行多行一致性及参数灵敏度分析（**`Fig 2-2 [待补]`**）、以及两面墙精确位置走向与定量提升表（**`Table 2-1 [待补]`**），均待后续独立实测验收后回填。
 
@@ -197,7 +197,7 @@ $$I_{\text{2D}}^{\text{env}}(x,y) = \left(\frac{1}{N_{\text{ap}}(x,y)}\sum_{j=1}
 - 联合权与有效参与度：$w_{\text{ap},3\text{D}}(j,i;\mathbf{r}) = w_x(j;\mathbf{r})\,w_z(i;\mathbf{r})$，$N_{\text{ap},3\text{D}}(\mathbf{r}) = \sum_{j=1}^J \sum_{i\in\mathcal{I}_{\text{rx}}} w_{\text{ap},3\text{D}}(j,i;\mathbf{r})$。
 
 #### 7.2.2 三维相干与包络聚焦方程及分场景增益模式
-直接沿用式 (6-2)~(6-3) 两步封顶增益 $W_{\text{comp}}(\tau; \beta, \alpha_{\text{gain}}, G_{\text{cap}})$ 及第二奈奎斯特区 $4\times$ 基带过采样插值规则，构建全 63 路**三维相干反向投影（`M3-Img-CohBPA3D`）**与**非相干包络对照（`M3-Img-EnvBPA3D`）**：
+直接沿用式 (6-2)~(6-3) 两步封顶增益 $W_{\text{comp}}(\tau; \beta, \alpha_{\text{gain}}, G_{\text{cap}})$ 及第二奈奎斯特区 $4\times$ 基带过采样插值规则，依据三维穿墙孔径聚焦框架[7, 10]，构建全 63 路**三维相干反向投影（`M3-Img-CohBPA3D`）**与**非相干包络对照（`M3-Img-EnvBPA3D`）**：
 $$U_{\text{3D}}(\mathbf{r}) = \frac{1}{N_{\text{ap},3\text{D}}(\mathbf{r})}\sum_{j=1}^{J}\sum_{i\in\mathcal{I}_{\text{rx}}} w_{\text{ap},3\text{D}}(j,i;\mathbf{r})\, W_{\text{comp}}\big(\tau_{j,i}(\mathbf{r})\big)\, z_{\text{MF},j,i}\big(\tau_{j,i}(\mathbf{r})\big), \tag{7-1}$$
 $$I_{\text{3D}}^{\text{coh}}(\mathbf{r}) = \big|U_{\text{3D}}(\mathbf{r})\big|^2, \qquad I_{\text{3D}}^{\text{env}}(\mathbf{r}) = \left(\frac{1}{N_{\text{ap},3\text{D}}(\mathbf{r})}\sum_{j=1}^{J}\sum_{i\in\mathcal{I}_{\text{rx}}} w_{\text{ap},3\text{D}}(j,i;\mathbf{r})\, W_{\text{comp}}\big(\tau_{j,i}(\mathbf{r})\big)\, \big|z_{\text{MF},j,i}(\tau_{j,i}(\mathbf{r}))\big|\right)^2. \tag{7-2}$$
 增益设置按场景物理分化：
@@ -215,13 +215,13 @@ $$I_{\text{3D}}^{\text{coh}}(\mathbf{r}) = \big|U_{\text{3D}}(\mathbf{r})\big|^2
    - **$-10\text{ dB}$ 等值三维包围盒**（体素能量 $\ge 0.10\,P_{\text{peak}}$）及其垂向跨度 $\Delta\hat{z}_{10\text{dB}} = \hat{z}_{\max} - \hat{z}_{\min}$；
    - **$-10\text{ dB}$ 能量加权三维质心** $(\hat{x}_c, \hat{y}_c, \hat{z}_c)$。
    依据主峰高度位置与 $-10\text{ dB}$ 垂向跨度即可在不依赖位置先验下区分贯高金属柱（镜面主峰邻近发射高度 $z_4$ 且含上下端绕射展宽）与低矮局部金属铲，并严格分别报告“主峰 vs 质心”与“XY（立柱）vs 3D（金属铲）”位置精度口径。
-3. **金属后方墙面电磁遮挡指标（`ShadowRatio`）**：针对金属强散射导致其后方墙面信号难以辨认的现象（题面第 8 页注），对每个检出金属目标的横向/垂向投影区（后方区间 $y > \hat{y}_p + 0.25\text{ m}$ 至后墙带）计算阴影平均能量 $\bar{I}_{\text{shadow}}^{(m)}$ 与同 $y$ 区间无横向遮挡区墙面能量中位数 $\bar{I}_{\text{unocc}}$ 的功率比：
+3. **金属后方墙面电磁遮挡指标（`ShadowRatio`）**：针对穿墙雷达中前向强散射目标遮挡引起后方区域能量衰减与电磁阴影的物理机制[8]（题面第 8 页注），本文提出并定义定量遮挡功率比指标 `ShadowRatio`：对每个检出金属目标的横向/垂向投影区（后方区间 $y > \hat{y}_p + 0.25\text{ m}$ 至后墙带）计算阴影平均能量 $\bar{I}_{\text{shadow}}^{(m)}$ 与同 $y$ 区间无横向遮挡区墙面能量中位数 $\bar{I}_{\text{unocc}}$ 的功率比：
    $$\text{ShadowRatio}_m = 10\log_{10}\!\left(\frac{\bar{I}_{\text{shadow}}^{(m)}}{\bar{I}_{\text{unocc}}}\right)\quad (\text{dB}). \tag{7-3}$$
    若 $\text{ShadowRatio}_m \le -6.0\text{ dB}$，即定量确证金属前向屏蔽造成了局部能量阴影，从而区别于墙面本身的结构缺失。
 
 ---
 
 ### 7.4 三维物理分辨率边界与结果/检验槽位
-1. **三轴物理分辨率的非对称极限**：距离向分辨率由信号带宽决定（$\Delta y_{\text{res}} = c_0/(2B) \approx 10.71\text{ cm}$），水平向由机械平移合成孔径实现高分辨（$\Delta x_{\text{res}} \approx 3.54\text{ cm}$），而垂直 $z$ 向仅依靠单程固定物理高度孔径 $L_z = 0.490\text{ m}$，导致理论垂向分辨率 $\Delta z_{\text{res}}(y) \approx \lambda_c y / L_z$ 随深度线性展宽（$y=0.8\text{ m}$ 约 $16\text{ cm}$，$y=2.0\text{ m}$ 约 $41\text{ cm}$）。故三维模型具备清晰的紧凑金属高程质心区分能力，但不可宣称在远距 $2\text{ m}$ 墙体处具备厘米级垂向锐度。
+1. **三轴物理分辨率的非对称极限**：距离向分辨率由信号带宽决定（$\Delta y_{\text{res}} = c_0/(2B) \approx 10.71\text{ cm}$），水平向由机械平移合成孔径实现高分辨（$\Delta x_{\text{res}} \approx 3.54\text{ cm}$），而垂直 $z$ 向仅依靠单程固定物理高度孔径 $L_z = 0.490\text{ m}$，导致理论垂向分辨率 $\Delta z_{\text{res}}(y) \approx \lambda_c y / L_z$ 随深度线性展宽[10]（$y=0.8\text{ m}$ 约 $16\text{ cm}$，$y=2.0\text{ m}$ 约 $41\text{ cm}$）。故三维模型具备清晰的紧凑金属高程质心区分能力，但不可宣称在远距 $2\text{ m}$ 墙体处具备厘米级垂向锐度。
 2. **高 RCS 目标多次散射虚像排查**：若金属目标之间或金属与地面间存在二次往返耦合，目标后方可能出现延迟虚像，应结合单/双程物理时延几何与阴影区位置剔除虚假目标。
 3. **规格合成小算例与待补实测结果/检验**：规格验证阶段纯合成 27 站 $\times$ 63 路三维闭环（`solutions/A/verify_q3_spec.py`，零 `.dat` 读取）已核验立柱与金属铲异峰分离、XY/3D 主峰与 $-10\text{ dB}$ 质心一致定位及后墙遮挡检测逻辑自洽（仅限方法学自洽验证，不代表真实成像效果）。真实 `附件3-成像数据` 的三维墙体重构与截面（**`Fig 3-1 [待补]`**、**`Table 3-1 [待补]`**）、金属柱/金属铲三维位置及阴影衰减定量分析（**`Fig 3-2 [待补]`**、**`Table 3-2 [待补]`**），以及行列抽样消融与相干/包络跨组稳定性检验均标注 **`[待补]`**，待独立验收通过后统一填入。
