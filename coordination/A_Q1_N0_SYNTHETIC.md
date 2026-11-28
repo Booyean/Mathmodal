@@ -5,7 +5,7 @@
 | 契约 | `N0-SYN-1`（**合成原型**，不是 N0 实测） |
 | 判定口径 | `A-Q1-N0-DEC-2`（`coordination/A_Q1_N0_PROPOSAL.md` @ `4904bc8`） |
 | 入口 | `solutions/A/a_e0_n0.py`（`--mode check` / `--mode synthetic`，**无 execute**） |
-| 自检 | `solutions/A/test_a_e0_n0.py`（41 项，187 s） |
+| 自检 | `solutions/A/test_a_e0_n0.py`（41 项，188.6 s，全 PASS） |
 | 产物 | `experiments/A/A-Q1-E0/n0/synthetic/{n0_synthetic_results.json,N0_SYNTHETIC.md,SHA256SUMS.txt}` |
 | 首轮结果 | 合成夹具 **L1 PASS / L2 FAIL（`S8`）**；`real_dat_reads=0`、`opened_files=0` |
 | 状态 | **待统筹复审**；N0 实测（B-02）、E0-C 重跑、E0-T 均**未放行** |
