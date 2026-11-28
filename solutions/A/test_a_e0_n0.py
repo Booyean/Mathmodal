@@ -21,7 +21,10 @@
    L1 三值互斥、L2 的 C9b/灰区/frozen 条件、`L1 PASS / L2 FAIL → S8`；
 8. **夹具全流程**：`P1` 秩 2 比秩 1 至少高 5 dB、P4 保留、`citable=false`、
    `real_dat_reads=0`、`L1=PASS` 而 `L2=FAIL（S8）`；
-9. **CLI**：`check` 只读；`synthetic` 写出三件产物且拒绝覆盖非空目录（退出码 3）。
+9. **CLI**：`check` 只读；`synthetic` 写出三件产物且拒绝覆盖非空目录（退出码 3）；
+10. **证据链**：产物带 `implementation_sha/generated_at/command/environment` 溯源，
+    `SHA256SUMS` 与 LF 归一化摘要一致，`--generated-at` 固定时逐字节可复现；
+    `.gitattributes` 把纳入摘要的 JSON 钉成 `eol=lf`；C8' 覆盖 P2 十折；P3 锚点与归档一致。
 
 用法::
 
@@ -33,6 +36,7 @@ from __future__ import annotations
 import json
 import math
 import shutil
+import subprocess
 import sys
 import unittest
 import uuid
@@ -304,6 +308,10 @@ class ComplexChannelRegressionTests(unittest.TestCase):
             reloaded = json.loads((out / "n0_channel_regression.json").read_text(encoding="utf-8"))
             self.assertEqual(reloaded["contract"], "N0-CHREG-1")
             self.assertTrue(reloaded["verdict"]["pass"])
+            prov = reloaded["provenance"]
+            self.assertRegex(prov["implementation_sha"], r"^(?:[0-9a-f]{40}|unknown)$")
+            self.assertTrue(prov["generated_at"].endswith("Z"))
+            self.assertIn("a_e0_n0_channel_regression.py", prov["command"])
             # 输出目录非空且未给 overwrite → 拒绝（与 `n0/synthetic` 同约定）。
             with self.assertRaises(SystemExit):
                 R.write_outputs(doc, out)
@@ -513,6 +521,66 @@ class FixtureTests(unittest.TestCase):
         self.assertLessEqual(self.doc["c8_prime"]["max_delta_db"], 1e-6)
         self.assertEqual(self.doc["c8_prime"]["lambda_fixed"], [1e-3, 1e-3])
 
+    def test_c8_prime_covers_p2_ten_folds(self):
+        cov = self.doc["c8_prime"]["coverage"]
+        self.assertEqual(cov["p1_values"], 5 * 2 * 3)
+        self.assertEqual(cov["p2_values"], 10 * 3)
+        self.assertEqual(cov["target_values"], 2 * 3)
+        self.assertEqual(cov["total_values"], 66)
+        self.assertEqual(cov["p2_folds_per_arm"], 10)
+        for arm in self.doc["p2"]:
+            self.assertEqual(len(self.doc["p2"][arm]["values"]), 10)
+            for value in self.doc["p2"][arm]["values"]:
+                # P2 每个折也必须带双路径复算差值（F3 声明=实现）。
+                self.assertLessEqual(value["c8_delta_supp_db"], 1e-6)
+                self.assertIn("c8_delta_coeff", value)
+
+    def test_wall_pnr_anchor_matches_archive(self):
+        archive = json.loads(ARCHIVED.read_text(encoding="utf-8"))
+        rows = {g["group_key"]: g for g in archive["groups"]}
+        for key, anchor in N.BASELINE_P3_ANCHOR.items():
+            row = rows[key]
+            # 锚点是从归档四舍五入来的，必须逐项在 4 位小数内一致（F4）。
+            self.assertAlmostEqual(anchor["pnr_db"], float(row["pnr_db"]), places=4)
+            self.assertAlmostEqual(anchor["pslr_db"], float(row["pslr_db"]), places=4)
+            self.assertAlmostEqual(anchor["abs_err_cm"], float(row["abs_err_cm"]), places=2)
+            self.assertAlmostEqual(anchor["d_hat_m"], float(row["d_hat_m"]), places=6)
+
+    def test_check_mode_anchor_matches_declared(self):
+        doc = N.run_check()
+        for key, anchor in N.BASELINE_P3_ANCHOR.items():
+            got = doc["archived_anchor"][key]
+            self.assertAlmostEqual(got["pnr_db"], anchor["pnr_db"], places=4)
+
+    def test_write_outputs_provenance_and_byte_reproducibility(self):
+        tmp = _work_tmp()
+        try:
+            command = "python solutions/A/a_e0_n0.py --mode synthetic"
+            N.write_outputs(self.doc, tmp / "a", command=command,
+                            generated_at="2026-11-28T00:00:00Z")
+            N.write_outputs(self.doc, tmp / "b", command=command,
+                            generated_at="2026-11-28T00:00:00Z")
+            for name in ("n0_synthetic_results.json", "N0_SYNTHETIC.md"):
+                self.assertEqual(
+                    (tmp / "a" / name).read_bytes(), (tmp / "b" / name).read_bytes(), name
+                )
+            artifact = json.loads(
+                (tmp / "a" / "n0_synthetic_results.json").read_text(encoding="utf-8")
+            )
+            prov = artifact["provenance"]
+            self.assertRegex(prov["implementation_sha"], r"^(?:[0-9a-f]{40}|unknown)$")
+            self.assertEqual(prov["generated_at"], "2026-11-28T00:00:00Z")
+            self.assertEqual(prov["generated_at_source"], "explicit")
+            self.assertEqual(prov["command"], command)
+            self.assertIn("numpy", prov["environment"])
+            lines = (tmp / "a" / "SHA256SUMS.txt").read_text(encoding="utf-8").splitlines()
+            self.assertEqual(len(lines), 2)
+            for line in lines:
+                want, name = line.split("  ", 1)
+                self.assertEqual(want, N._sha256(tmp / "a" / name))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
     def test_l1_pass_l2_fail_s8(self):
         self.assertEqual(self.doc["l1"]["l1"], "pass")
         self.assertEqual(self.doc["l2"]["l2"], "fail")
@@ -544,6 +612,7 @@ class CliTests(unittest.TestCase):
                 "--mode", "synthetic",
                 "--out", str(tmp / "out"),
                 "--profile-step-m", "0.004", "--p4-step-m", "5e-4",
+                "--generated-at", "2026-11-28T00:00:00Z",
             ])
             self.assertEqual(code, 0)
             out = tmp / "out"
@@ -552,11 +621,33 @@ class CliTests(unittest.TestCase):
             doc = json.loads((out / "n0_synthetic_results.json").read_text(encoding="utf-8"))
             self.assertFalse(doc["citable"])
             self.assertEqual(doc["contract"], "N0-SYN-1")
-            sums = (out / "SHA256SUMS.txt").read_text(encoding="utf-8")
-            self.assertIn("n0_synthetic_results.json", sums)
-            self.assertIn("N0_SYNTHETIC.md", sums)
+            prov = doc["provenance"]
+            self.assertEqual(prov["generated_at"], "2026-11-28T00:00:00Z")
+            self.assertIn("--generated-at 2026-11-28T00:00:00Z", prov["command"])
+            sums = (out / "SHA256SUMS.txt").read_text(encoding="utf-8").splitlines()
+            self.assertEqual(len(sums), 2)
+            for line in sums:
+                want, name = line.split("  ", 1)
+                self.assertEqual(want, N._sha256(out / name))
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_json_artifacts_are_lf_locked(self):
+        # F1：纳入 SHA256SUMS 的 JSON 必须在 CRLF 检出下仍以 LF 落地。
+        paths = [
+            "experiments/A/A-Q1-E0/n0/synthetic/n0_synthetic_results.json",
+            "experiments/A/A-Q1-E0/n0/channel_regression/n0_channel_regression.json",
+            "experiments/A/A-Q1-E0/e0c/poststop/poststop_targets.json",
+        ]
+        try:
+            for rel in paths:
+                proc = subprocess.run(
+                    ["git", "-C", str(REPO), "check-attr", "eol", "--", rel],
+                    capture_output=True, text=True, check=True,
+                )
+                self.assertIn("eol: lf", proc.stdout, rel)
+        except (OSError, subprocess.CalledProcessError) as exc:  # pragma: no cover
+            self.skipTest("git 不可用，跳过 .gitattributes 检查：%s" % exc)
 
     def test_refuses_non_empty_output(self):
         tmp = _work_tmp()

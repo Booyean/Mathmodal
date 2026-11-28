@@ -78,7 +78,7 @@ import json
 import math
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -470,10 +470,11 @@ def run(*, n_f: int = 4) -> Dict[str, Any]:
                         "n0_synthetic_results.json": "e2835b91ecc688b7f7bdf0ea427176e93911054b70820c658e53ccdb5631b6b0",
                         "N0_SYNTHETIC.md": "0c342a4f896c31a07fc7e4760c86d7af3274a62ab9958aab712b8bd2d27fbc5a",
                     },
-                    "post_fix": {
-                        "n0_synthetic_results.json": "731d593581bf5182fbee2311968dc76764228bd1170fd2565c163684176ffad8",
-                        "N0_SYNTHETIC.md": "90259f7ed388b1d44febf520932b445c979c13338a8d707bdf9e92019237025d",
-                    },
+                    "post_fix": _read_sums(N.DEFAULT_OUT / "SHA256SUMS.txt"),
+                    "post_fix_source": (
+                        "experiments/A/A-Q1-E0/n0/synthetic/SHA256SUMS.txt"
+                        "（运行时读取当前提交产物，避免硬编码过期）"
+                    ),
                     "pre_fix_reproduced_at_207510c": True,
                 },
                 "note": (
@@ -607,27 +608,62 @@ def render_markdown(doc: Dict[str, Any]) -> str:
             post = impact.get("n0_synthetic_artifact_sha256", {}).get("post_fix", {})
             if pre and post:
                 lines.append("")
-                lines.append("| 产物 | 修复前 SHA256（`207510c` 可复现） | 修复后 SHA256 |")
+                lines.append("| 产物 | 修复前 SHA256（`207510c` 可复现） | 修复后 SHA256（当前提交产物） |")
                 lines.append("|---|---|---|")
                 for name in sorted(pre):
                     lines.append("| `%s` | `%s` | `%s` |" % (name, pre[name], post.get(name, "")))
                 lines.append("")
         lines.append("")
+    prov = doc.get("provenance") or {}
+    lines.append("## 生成溯源")
+    lines.append("")
+    lines.append("| 项 | 值 |")
+    lines.append("|---|---|")
+    lines.append("| 生成代码 | `%s%s` |" % (
+        prov.get("implementation_sha", "unknown"),
+        " (dirty)" if prov.get("implementation_dirty") else "",
+    ))
+    lines.append("| 生成时间（UTC） | `%s`（%s） |" % (
+        prov.get("generated_at", "unknown"), prov.get("generated_at_source", "unknown")))
+    lines.append("| 生成命令 | `%s` |" % prov.get("command", "unknown"))
+    lines.append("")
     lines.append("## 复跑")
     lines.append("")
     lines.append("```")
     lines.append(
-        "python solutions/A/a_e0_n0_channel_regression.py --out experiments/A/A-Q1-E0/n0/channel_regression"
+        prov.get("command")
+        or "python solutions/A/a_e0_n0_channel_regression.py --out experiments/A/A-Q1-E0/n0/channel_regression"
     )
     lines.append("python solutions/A/test_a_e0_n0.py ComplexChannelRegressionTests")
     lines.append("```")
     lines.append("")
+    if prov.get("generated_at"):
+        lines.append(
+            "逐字节复现：在同上命令后追加 `--generated-at %s`（或设 `SOURCE_DATE_EPOCH=...`），"
+            "并要求 `implementation_dirty=false` 且运行环境一致。" % prov["generated_at"]
+        )
+        lines.append("")
     lines.append(
         "> SHA256 按 **LF 归一化**计算（`lf_sha256`，与 `b63e217` 产物同口径）；"
         "本仓 `core.autocrlf=true`，CRLF 检出不会让复核值漂移。"
     )
     lines.append("")
     return "\n".join(lines) + "\n"
+
+
+def _read_sums(path: Path) -> Dict[str, str]:
+    """读 `SHA256SUMS.txt`（`<digest>  <name>`）；文件不存在时返回空字典。"""
+    out: Dict[str, str] = {}
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return out
+    for line in text.splitlines():
+        if "  " not in line:
+            continue
+        digest, name = line.split("  ", 1)
+        out[name.strip()] = digest.strip()
+    return out
 
 
 def _display_path(path: Path) -> str:
@@ -638,11 +674,25 @@ def _display_path(path: Path) -> str:
         return str(path)
 
 
-def write_outputs(doc: Dict[str, Any], out_dir: Path, *, overwrite: bool = False) -> Dict[str, Any]:
+def write_outputs(
+    doc: Dict[str, Any],
+    out_dir: Path,
+    *,
+    overwrite: bool = False,
+    command: Optional[str] = None,
+    generated_at: Optional[str] = None,
+) -> Dict[str, Any]:
     out_dir = Path(out_dir)
     if out_dir.exists() and any(out_dir.iterdir()) and not overwrite:
         raise SystemExit("输出目录非空，拒绝覆盖：%s" % out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    if command is None:
+        command = (
+            "python solutions/A/a_e0_n0_channel_regression.py --out %s"
+            % _display_path(out_dir)
+        )
+    doc = dict(doc)
+    doc["provenance"] = N.build_provenance(command=command, generated_at=generated_at)
     payload = json.dumps(json_safe(doc), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     json_path = out_dir / "n0_channel_regression.json"
     md_path = out_dir / "N0_CHANNEL_REGRESSION.md"
@@ -669,11 +719,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, default=None, help="输出目录（非空则拒绝覆盖）")
     parser.add_argument("--overwrite", action="store_true", default=False, help="允许覆盖已有产物")
     parser.add_argument("--n-f", type=int, default=4, help="频点数（默认 4）")
+    parser.add_argument("--generated-at", type=N._iso_utc, default=None,
+                        help="固定生成时间（UTC，YYYY-MM-DDTHH:MM:SSZ）用于逐字节复现")
     args = parser.parse_args(argv)
 
     doc = run(n_f=int(args.n_f))
     if args.out is not None:
-        info = write_outputs(doc, args.out, overwrite=bool(args.overwrite))
+        command = "python solutions/A/a_e0_n0_channel_regression.py --n-f %d --out %s" % (
+            int(args.n_f), _display_path(args.out)
+        )
+        if args.generated_at:
+            command += " --generated-at %s" % args.generated_at
+        info = write_outputs(
+            doc, args.out, overwrite=bool(args.overwrite),
+            command=command, generated_at=args.generated_at,
+        )
         doc = dict(doc, outputs=info)
     print(json.dumps(json_safe(doc), ensure_ascii=False, indent=2, sort_keys=True))
     return 0 if doc["verdict"]["pass"] else 1

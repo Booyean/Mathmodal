@@ -58,7 +58,10 @@ import argparse
 import hashlib
 import json
 import math
+import platform
+import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -154,7 +157,7 @@ GRAM_COND_MAX = 1e12
 BASELINE_P3_ANCHOR: Dict[str, Dict[str, float]] = {
     "墙体数据/data1-42cm": {
         "pslr_db": 2.6643,
-        "pnr_db": 34.2870,
+        "pnr_db": 34.293809,
         "abs_err_cm": 6.18,
         "d_hat_m": 0.4818,
     },
@@ -1113,7 +1116,13 @@ def run_synthetic(
                 rank_effective=basis["rank_effective"], z_x=z_x,
             )
             p2_per_arm[arm].append(
-                {"group": AIR_GROUPS[i], "supp_db": res["supp_db"]}
+                {
+                    "group": AIR_GROUPS[i],
+                    "supp_db": res["supp_db"],
+                    # C8' 的双路径复算覆盖 P2 十折（不只 P1/目标侧）。
+                    "c8_delta_supp_db": res["c8"]["delta_supp_db"],
+                    "c8_delta_coeff": res["c8"]["delta_coeff"],
+                }
             )
 
     p1_summary = {}
@@ -1217,15 +1226,35 @@ def run_synthetic(
             "arms": arms_out,
         }
 
-    # ---- C8'：固定 λ 的 Supp 逐值复算一致性
+    # ---- C8'：固定 λ 的 Supp 逐值复算一致性（P1 五折 + P2 十折 + 目标侧，逐值覆盖）
     c8_deltas = [v["c8_delta_supp_db"] for arm in N0_ARMS for v in p1_per_arm[arm]]
-    c8_deltas += [
+    c8_p2_deltas = [v["c8_delta_supp_db"] for arm in N0_ARMS for v in p2_per_arm[arm]]
+    c8_target_deltas = [
         t["arms"][arm]["c8"]["delta_supp_db"]
+        for t in target_results.values()
+        for arm in N0_ARMS
+    ]
+    c8_deltas += c8_p2_deltas
+    c8_deltas += c8_target_deltas
+    c8_coeff_deltas = [
+        v["c8_delta_coeff"] for arm in N0_ARMS for v in p2_per_arm[arm]
+    ] + [
+        t["arms"][arm]["c8"]["delta_coeff"]
         for t in target_results.values()
         for arm in N0_ARMS
     ]
     c8_max_delta = float(max(c8_deltas)) if c8_deltas else 0.0
     c8_pass = c8_max_delta <= 1e-6
+    c8_coverage = {
+        "p1_values": len(p1_per_arm[N0_ARMS[0]]) * len(N0_ARMS),
+        "p2_values": len(c8_p2_deltas),
+        "target_values": len(c8_target_deltas),
+        "total_values": len(c8_deltas),
+        "p2_folds_per_arm": len(p2_per_arm[N0_ARMS[0]]),
+        "arms": list(N0_ARMS),
+        "max_delta_coeff": float(max(c8_coeff_deltas)) if c8_coeff_deltas else 0.0,
+        "coeff_note": "系数差仅作诊断（stats 路径含 λ 正则，数组路径不含），不参与 C8' 判定",
+    }
 
     # ---- P3 单侧非退化
     p3_items = _p3_items(target_results)
@@ -1392,7 +1421,8 @@ def run_synthetic(
         "p5a": {"pass": p5a_pass, "items": p5a_items},
         "c8_prime": {"pass": c8_pass, "max_delta_db": c8_max_delta,
                      "lambda_fixed": list(LAMBDA_FIXED),
-                     "note": "固定 λ 的逐值复算；不做 9 对 λ 选择/并列裁决"},
+                     "coverage": c8_coverage,
+                     "note": "固定 λ 的逐值复算；P1 五折 + P2 十折 + 目标侧全覆盖；不做 9 对 λ 选择/并列裁决"},
         "c9b": c9b,
         "contrasts": cp_blocks,
         "l1": l1,
@@ -1465,6 +1495,77 @@ def _sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+# --------------------------------------------------------------------------
+# 生成溯源（F2）：实现提交、生成时间、实际命令、运行环境
+# --------------------------------------------------------------------------
+def _git_state(repo_root: Path) -> Tuple[str, bool]:
+    """返回 (HEAD 完整 SHA, 工作区是否有未提交改动)；取不到时返回 ("unknown", True)。"""
+
+    def _git(*args: str) -> str:
+        return subprocess.run(
+            ["git", "-C", str(repo_root), *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+
+    try:
+        sha = _git("rev-parse", "HEAD")
+        dirty = bool(_git("status", "--porcelain", "--untracked-files=no"))
+        return sha, dirty
+    except Exception:
+        return "unknown", True
+
+
+def _display_path(path: Path) -> str:
+    """仓库内路径用相对路径记录（保证命令字段不依赖本机 worktree 位置）。"""
+    try:
+        return str(Path(path).resolve().relative_to(A.REPO_ROOT)).replace("\\", "/")
+    except Exception:
+        return str(path)
+
+
+def _resolve_generated_at(value: Optional[str]) -> Tuple[str, str]:
+    """生成时间：显式参数 > SOURCE_DATE_EPOCH > 系统时钟。"""
+    if value:
+        return value, "explicit"
+    epoch = os.environ.get("SOURCE_DATE_EPOCH")
+    if epoch:
+        try:
+            stamp = datetime.fromtimestamp(int(epoch), tz=timezone.utc)
+            return stamp.strftime("%Y-%m-%dT%H:%M:%SZ"), "SOURCE_DATE_EPOCH"
+        except (TypeError, ValueError, OSError):
+            pass
+    return (
+        datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "system_clock",
+    )
+
+
+def build_provenance(
+    *, command: str, generated_at: Optional[str] = None
+) -> Dict[str, Any]:
+    sha, dirty = _git_state(A.REPO_ROOT)
+    stamp, stamp_source = _resolve_generated_at(generated_at)
+    return {
+        "implementation_sha": sha,
+        "implementation_dirty": bool(dirty),
+        "generated_at": stamp,
+        "generated_at_source": stamp_source,
+        "command": command,
+        "environment": {
+            "python": platform.python_version(),
+            "numpy": np.__version__,
+            "platform": platform.platform(),
+        },
+        "reproduction": (
+            "数值字段由 seed/参数决定，可按容差复算；逐字节复现需用 --generated-at "
+            "或 SOURCE_DATE_EPOCH 指定同一 generated_at、保持 implementation_dirty=false，"
+            "并使用相同运行环境（本块已记录）。"
+        ),
+    }
+
+
 def _json_bytes(obj: Any) -> bytes:
     return (
         json.dumps(A.json_safe(obj), ensure_ascii=False, indent=1, sort_keys=True) + "\n"
@@ -1491,6 +1592,19 @@ def render_markdown(doc: Dict[str, Any]) -> str:
     lines.append("| 跨频相位锚 | `%s`（ref_pos=%d） |" % (doc["n0"]["phase_anchor"], doc["n0"]["ref_pos"]))
     lines.append("| 真实 `.dat` 读取 | `%d` |" % doc["scope"]["real_dat_reads"])
     lines.append("| 打开文件数 | `%d` |" % doc["scope"]["opened_files"])
+    prov = doc.get("provenance") or {}
+    if prov:
+        sha = prov.get("implementation_sha", "unknown")
+        dirty = " (dirty)" if prov.get("implementation_dirty") else ""
+        lines.append("| 生成代码 | `%s%s` |" % (sha, dirty))
+        lines.append("| 生成时间（UTC） | `%s`（%s） |"
+                     % (prov.get("generated_at", "unknown"),
+                        prov.get("generated_at_source", "unknown")))
+        lines.append("| 生成命令 | `%s` |" % prov.get("command", "unknown"))
+        env = prov.get("environment") or {}
+        lines.append("| 运行环境 | `python %s` / `numpy %s` / `%s` |"
+                     % (env.get("python", "?"), env.get("numpy", "?"),
+                        env.get("platform", "?")))
     lines.append("")
     lines.append("## 1. 分簇与训练范围（锁定）")
     lines.append("")
@@ -1549,8 +1663,9 @@ def render_markdown(doc: Dict[str, Any]) -> str:
     lines.append("|---|---|")
     lines.append("| P3 单侧非退化 | `%s` |" % doc["p3"]["pass"])
     lines.append("| P4 回波保留（≥ −0.1 dB，≤ 2 mm） | `%s` |" % doc["p4"]["pass"])
-    lines.append("| C8′ 固定 λ 逐值复算（≤ 1e-6 dB） | `%s`（max `%.3g dB`） |"
-                 % (doc["c8_prime"]["pass"], doc["c8_prime"]["max_delta_db"]))
+    lines.append("| C8′ 固定 λ 逐值复算（≤ 1e-6 dB） | `%s`（max `%.3g dB`，覆盖 P1/P2/目标侧 `%d` 值） |"
+                 % (doc["c8_prime"]["pass"], doc["c8_prime"]["max_delta_db"],
+                    doc["c8_prime"].get("coverage", {}).get("total_values", 0)))
     lines.append("| P5a 接口与证据链 | `%s` |" % doc["p5a"]["pass"])
     lines.append("| 近零内积事件 | `%s` |"
                  % ("none" if not doc["n0"]["near_zero"]["events"]
@@ -1580,18 +1695,38 @@ def render_markdown(doc: Dict[str, Any]) -> str:
     lines.append("- 合成 `L1` 只用来验证判定逻辑分支；`L2` 因无冻结证据必然 FAIL（即提案 `S8`），不是方法失败。")
     lines.append("- 数值内核（`solve_bundle` 等）未改动；分簇、窗宽、λ、η 全部固定。")
     lines.append("")
-    lines.append("复跑：`python solutions/A/a_e0_n0.py --mode synthetic --out experiments/A/A-Q1-E0/n0/synthetic --overwrite`")
+    lines.append("复跑：`%s`" % (
+        prov.get("command")
+        or "python solutions/A/a_e0_n0.py --mode synthetic --out experiments/A/A-Q1-E0/n0/synthetic --overwrite"
+    ))
     lines.append("")
+    if prov.get("generated_at"):
+        lines.append(
+            "逐字节复现：在同上命令后追加 `--generated-at %s`（或设 `SOURCE_DATE_EPOCH=...`），"
+            "并要求 `implementation_dirty=false` 且运行环境一致。" % prov["generated_at"]
+        )
+        lines.append("")
     return "\n".join(lines) + "\n"
 
 
-def write_outputs(doc: Dict[str, Any], out_dir: Path, *, overwrite: bool = False) -> Dict[str, Any]:
+def write_outputs(
+    doc: Dict[str, Any],
+    out_dir: Path,
+    *,
+    overwrite: bool = False,
+    command: Optional[str] = None,
+    generated_at: Optional[str] = None,
+) -> Dict[str, Any]:
     out_dir = Path(out_dir)
     if out_dir.exists() and any(out_dir.iterdir()) and not overwrite:
         raise N0Stop("S6", "输出目录非空，未给 --overwrite：%s" % out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path = out_dir / "n0_synthetic_results.json"
     md_path = out_dir / "N0_SYNTHETIC.md"
+    if command is None:
+        command = "python solutions/A/a_e0_n0.py --mode synthetic --out %s" % _display_path(out_dir)
+    doc = dict(doc)
+    doc["provenance"] = build_provenance(command=command, generated_at=generated_at)
     json_path.write_bytes(_json_bytes(doc))
     md_path.write_text(render_markdown(doc), encoding="utf-8", newline="\n")
     sums = []
@@ -1599,6 +1734,14 @@ def write_outputs(doc: Dict[str, Any], out_dir: Path, *, overwrite: bool = False
         sums.append("%s  %s" % (_sha256(p), p.name))
     (out_dir / "SHA256SUMS.txt").write_text("\n".join(sums) + "\n", encoding="utf-8", newline="\n")
     return {"json": json_path, "markdown": md_path, "sha256": {p.name: _sha256(p) for p in (json_path, md_path)}}
+
+
+def _iso_utc(value: str) -> str:
+    try:
+        datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError:
+        raise argparse.ArgumentTypeError("要求 UTC 时间格式 YYYY-MM-DDTHH:MM:SSZ")
+    return value
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -1610,6 +1753,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--profile-step-m", type=float, default=0.001)
     ap.add_argument("--p4-step-m", type=float, default=1e-4)
     ap.add_argument("--p4-half-m", type=float, default=0.03)
+    ap.add_argument("--generated-at", type=_iso_utc, default=None,
+                    help="固定生成时间（UTC），用于逐字节复现；默认取系统时钟")
     ap.add_argument("--overwrite", action="store_true")
     args = ap.parse_args(argv)
     try:
@@ -1626,7 +1771,26 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             p4_half_m=float(args.p4_half_m),
             setup=setup,
         )
-        paths = write_outputs(doc, Path(args.out), overwrite=bool(args.overwrite))
+        command_parts = [
+            "python", "solutions/A/a_e0_n0.py",
+            "--mode", "synthetic",
+            "--seed", str(args.seed),
+            "--out", _display_path(Path(args.out)),
+            "--profile-step-m", "%g" % args.profile_step_m,
+            "--p4-step-m", "%g" % args.p4_step_m,
+            "--p4-half-m", "%g" % args.p4_half_m,
+        ]
+        if args.generated_at:
+            command_parts += ["--generated-at", args.generated_at]
+        if args.overwrite:
+            command_parts.append("--overwrite")
+        paths = write_outputs(
+            doc,
+            Path(args.out),
+            overwrite=bool(args.overwrite),
+            command=" ".join(command_parts),
+            generated_at=args.generated_at,
+        )
     except N0Stop as exc:
         print("N0 STOP %s: %s" % (exc.code, exc.reason), file=sys.stderr)
         if exc.detail:
