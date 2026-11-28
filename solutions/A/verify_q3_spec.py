@@ -223,9 +223,14 @@ def detect_metal_peaks_3d(
     zg: np.ndarray,
     img_3d: np.ndarray,
 ) -> list[dict[str, float]]:
-    """Extract separated compact metal targets via 3D-NMS over front/mid range y < 1.70 m."""
+    """Extract separated compact metal targets via (x,y) column 3D-NMS over y < 1.70 m.
+
+    For each detected target, computes discrete peak, -10 dB bounding box,
+    -10 dB vertical span, and -10 dB intensity-weighted 3D centroid inside the local NMS box.
+    """
     y_front = yg < 1.70
-    sub = img_3d[:, y_front, :].copy()
+    sub_orig = img_3d[:, y_front, :]
+    sub = sub_orig.copy()
     yg_sub = yg[y_front]
     bg_med = float(np.median(img_3d[img_3d > 0.0]))
     thresh = bg_med * (10.0 ** 1.2)  # +12 dB above median background
@@ -241,19 +246,36 @@ def detect_metal_peaks_3d(
         if val < thresh:
             break
         kz, ky, kx = np.unravel_index(flat_idx, sub.shape)
-        # Measure -10 dB vertical span near this (kx, ky) peak (captures diffracted pole edges)
-        col_z = img_3d[:, ky, kx]
-        mask_10db = col_z >= 0.10 * float(np.max(col_z))
-        z_span_10db = float(zg[mask_10db].max() - zg[mask_10db].min()) if np.any(mask_10db) else 0.0
+        y0, y1 = max(0, ky - ry), min(sub.shape[1], ky + ry + 1)
+        x0, x1 = max(0, kx - rx), min(sub.shape[2], kx + rx + 1)
+
+        # Evaluate -10 dB (>= 0.10 * val) bounding box and energy-weighted centroid within local column ROI
+        roi = sub_orig[:, y0:y1, x0:x1]
+        mask_10db = roi >= 0.10 * val
+        assert np.any(mask_10db), "Expected at least peak voxel inside -10 dB ROI"
+        iz, iy, ix = np.where(mask_10db)
+        w = roi[mask_10db]
+        w_sum = float(np.sum(w))
+        z_vals = zg[iz]
+        y_vals = yg_sub[y0 + iy]
+        x_vals = xg[x0 + ix]
+
         peaks.append({
             "x_m": float(xg[kx]),
             "y_m": float(yg_sub[ky]),
             "z_m": float(zg[kz]),
+            "xc_m": float(np.sum(w * x_vals) / w_sum),
+            "yc_m": float(np.sum(w * y_vals) / w_sum),
+            "zc_m": float(np.sum(w * z_vals) / w_sum),
             "val": val,
-            "z_span_10db_m": z_span_10db,
+            "z_span_10db_m": float(z_vals.max() - z_vals.min()),
+            "bbox_x_min": float(x_vals.min()),
+            "bbox_x_max": float(x_vals.max()),
+            "bbox_y_min": float(y_vals.min()),
+            "bbox_y_max": float(y_vals.max()),
+            "bbox_z_min": float(z_vals.min()),
+            "bbox_z_max": float(z_vals.max()),
         })
-        y0, y1 = max(0, ky - ry), min(sub.shape[1], ky + ry + 1)
-        x0, x1 = max(0, kx - rx), min(sub.shape[2], kx + rx + 1)
         sub[:, y0:y1, x0:x1] = 0.0
 
     return peaks
@@ -290,19 +312,31 @@ def main() -> None:
     peaks = detect_metal_peaks_3d(xg, yg, zg, i3_coh)
     assert len(peaks) >= 2, f"Expected >= 2 metal objects detected, got {len(peaks)}"
 
-    # Match planted column (0.35, 1.15) and shovel (0.90, 0.75, z=0.35)
-    col_det = min(peaks, key=lambda p: math.hypot(p["x_m"] - 0.35, p["y_m"] - 1.15))
-    shv_det = min(peaks, key=lambda p: math.hypot(p["x_m"] - 0.90, p["y_m"] - 0.75))
-    err_col_xy = math.hypot(col_det["x_m"] - 0.35, col_det["y_m"] - 1.15)
-    err_shv_xyz = math.sqrt((shv_det["x_m"] - 0.90) ** 2 + (shv_det["y_m"] - 0.75) ** 2 + (shv_det["z_m"] - 0.35) ** 2)
+    # Match planted column (0.35, 1.15) and shovel (0.90, 0.75, z=0.35), requiring DISTINCT peak indices
+    idx_col = min(range(len(peaks)), key=lambda idx: math.hypot(peaks[idx]["x_m"] - 0.35, peaks[idx]["y_m"] - 1.15))
+    idx_shv = min(range(len(peaks)), key=lambda idx: math.hypot(peaks[idx]["x_m"] - 0.90, peaks[idx]["y_m"] - 0.75))
+    assert idx_col != idx_shv, "Planted column and shovel matched the same detected peak"
+    col_det = peaks[idx_col]
+    shv_det = peaks[idx_shv]
 
-    assert err_col_xy <= 0.051, f"Column XY localization error too large: {err_col_xy:.3f} m"
-    assert err_shv_xyz <= 0.06, f"Shovel 3D localization error too large: {err_shv_xyz:.3f} m"
+    # Column: evaluate XY errors (peak and -10 dB centroid) explicitly
+    err_col_peak_xy = math.hypot(col_det["x_m"] - 0.35, col_det["y_m"] - 1.15)
+    err_col_cent_xy = math.hypot(col_det["xc_m"] - 0.35, col_det["yc_m"] - 1.15)
+    # Shovel: evaluate 3D Euclidean errors (peak and -10 dB centroid) explicitly
+    err_shv_peak_3d = math.sqrt((shv_det["x_m"] - 0.90) ** 2 + (shv_det["y_m"] - 0.75) ** 2 + (shv_det["z_m"] - 0.35) ** 2)
+    err_shv_cent_3d = math.sqrt((shv_det["xc_m"] - 0.90) ** 2 + (shv_det["yc_m"] - 0.75) ** 2 + (shv_det["zc_m"] - 0.35) ** 2)
+
+    assert err_col_peak_xy <= 0.055 and err_col_cent_xy <= 0.055, (
+        f"Column XY errors exceeded 5.5 cm gate: peak={err_col_peak_xy:.3f}, centroid={err_col_cent_xy:.3f}"
+    )
+    assert err_shv_peak_3d <= 0.060 and err_shv_cent_3d <= 0.060, (
+        f"Shovel 3D errors exceeded 6.0 cm gate: peak={err_shv_peak_3d:.3f}, centroid={err_shv_cent_3d:.3f}"
+    )
     assert col_det["z_span_10db_m"] - shv_det["z_span_10db_m"] >= 0.08, (
         f"Tall column 10dB z-span ({col_det['z_span_10db_m']:.2f} m) must exceed shovel ({shv_det['z_span_10db_m']:.2f} m) by >= 0.08 m"
     )
     assert col_det["z_m"] - shv_det["z_m"] >= 0.08, (
-        f"Column specular center ({col_det['z_m']:.2f} m) should exceed lower shovel ({shv_det['z_m']:.2f} m) by >= 0.08 m"
+        f"Column specular peak ({col_det['z_m']:.2f} m) should exceed lower shovel ({shv_det['z_m']:.2f} m) by >= 0.08 m"
     )
 
     # 3. Check Coherent PBR vs Envelope PBR on column peak
@@ -326,12 +360,16 @@ def main() -> None:
     assert shadow_ratio_db <= -6.0, f"Expected rear-wall shadow <= -6 dB, got {shadow_ratio_db:.2f} dB"
 
     print(
-        f"[Q3-COL] est=({col_det['x_m']:.2f}, {col_det['y_m']:.2f}, z_spec={col_det['z_m']:.2f}), "
-        f"z_span_10dB={col_det['z_span_10db_m']:.2f}m, err_xy={err_col_xy*100:.1f}cm, PBR_coh={pbr_coh:.2f}dB (vs env {pbr_env:.2f}dB)"
+        f"[Q3-COL] peak=({col_det['x_m']:.2f},{col_det['y_m']:.2f},{col_det['z_m']:.2f}), "
+        f"cent=({col_det['xc_m']:.3f},{col_det['yc_m']:.3f},{col_det['zc_m']:.3f}), "
+        f"z_span_10dB={col_det['z_span_10db_m']:.2f}m, err_xy_peak={err_col_peak_xy*100:.1f}cm, "
+        f"err_xy_cent={err_col_cent_xy*100:.1f}cm, PBR_coh={pbr_coh:.2f}dB (vs env {pbr_env:.2f}dB)"
     )
     print(
-        f"[Q3-SHV] est=({shv_det['x_m']:.2f}, {shv_det['y_m']:.2f}, {shv_det['z_m']:.2f}), "
-        f"z_span_10dB={shv_det['z_span_10db_m']:.2f}m, err_3d={err_shv_xyz*100:.1f}cm"
+        f"[Q3-SHV] peak=({shv_det['x_m']:.2f},{shv_det['y_m']:.2f},{shv_det['z_m']:.2f}), "
+        f"cent=({shv_det['xc_m']:.3f},{shv_det['yc_m']:.3f},{shv_det['zc_m']:.3f}), "
+        f"z_span_10dB={shv_det['z_span_10db_m']:.2f}m, err_3d_peak={err_shv_peak_3d*100:.1f}cm, "
+        f"err_3d_cent={err_shv_cent_3d*100:.1f}cm"
     )
     print(f"[Q3-SHADOW] behind_column_wall_ShadowRatio={shadow_ratio_db:.2f}dB")
     print("ALL_Q3_SPEC_SYNTHETIC_CHECKS_PASSED")

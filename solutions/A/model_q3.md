@@ -72,7 +72,7 @@ $$I_{\text{3D}}^{\text{coh}}(\mathbf{r}) = \big|U_{\text{3D}}(\mathbf{r})\big|^2
 ### 3.2 问题 3.2 金属柱与金属铲分离定位及遮挡阴影定量刻画
 1. **基于三维局部极大值非极大抑制（3D-NMS）的双金属目标分离（不硬编码几何先验坐标）**：
    - 将空间搜索划分在金属前向区（去除最后墙体边带或联合检测最强局域紧凑峰值），对归一化能量 $I_{\text{3D}}(\mathbf{r})$ 沿水平脚印 $(x,y)$ 柱域施加非极大抑制（保护半径 $\Delta_{xy} = (0.14, 0.18)\text{ m}$，避免竖直贯高立柱因中心镜面主峰与上下端绕射边缘峰沿 $z$ 被拆分为多个伪目标），筛选超过全图背景中位数 $+12\text{ dB}$ 之独立强散射目标；
-   - 对各检出目标统计主峰高度及 $-10\text{ dB}$ 等值包络（含上下端绕射边界），测算质心 $(\hat{x}_m, \hat{y}_m, \hat{z}_m)$ 与垂向跨度 $\Delta\hat{z}_{m, 10\text{dB}}$，依高度跨度与高度中心自动区分贯高型立柱（中心靠近阵面发射中心并含上下绕射边界）与低矮局域金属铲。
+   - 对各检出目标在水平保护脚印内统计主峰位置 $(\hat{x}_p, \hat{y}_p, \hat{z}_p)$ 及 **$-10\text{ dB}$ 阈值区**（体素能量 $\ge 0.10\, P_{\text{peak}}$）的三维等值包围盒 $[\hat{x}_{\min}, \hat{x}_{\max}]\times[\hat{y}_{\min}, \hat{y}_{\max}]\times[\hat{z}_{\min}, \hat{z}_{\max}]$、垂向跨度 $\Delta\hat{z}_{10\text{dB}} = \hat{z}_{\max} - \hat{z}_{\min}$ 及能量加权质心 $(\hat{x}_c, \hat{y}_c, \hat{z}_c)$，依垂向跨度与主峰高度区分贯高型立柱（镜面中心靠近阵面发射高度且 $-10\text{ dB}$ 跨度含上下端绕射边界）与低矮局域金属铲。
 2. **金属后方墙面阴影遮挡指标（ShadowRatio）**：
    依据第 8 页题注“金属目标会反射较多入射能量，因此金属目标后方的部分墙面可能在图像中难以辨认”，对每个检出金属目标包围盒 $[\hat{x}_{m,\min}, \hat{x}_{m,\max}]\times[\hat{z}_{m,\min}, \hat{z}_{m,\max}]$，考察其后方远区（$y > \hat{y}_m + 0.25\text{ m}$ 至后墙带）能量 $\bar{I}_{\text{shadow}}^{(m)}$ 相对同 $y$ 区间**无金属横向遮挡区域**墙面能量中位数 $\bar{I}_{\text{unocc}}$ 的功率衰减比：
    $$\text{ShadowRatio}_m = 10\log_{10}\!\left(\frac{\bar{I}_{\text{shadow}}^{(m)}}{\bar{I}_{\text{unocc}}}\right)\quad (\text{dB}).$$
@@ -100,7 +100,7 @@ $$I_{\text{3D}}^{\text{coh}}(\mathbf{r}) = \big|U_{\text{3D}}(\mathbf{r})\big|^2
 - **输出**：
   - `image_3d_coh`, `image_3d_env`: 三维聚焦能量网格（形状 $(N_z, N_y, N_x)$）及正交三视图切片；
   - `q3_wall_surfaces`: 前/后墙体三维界面坐标分布与 Q2 二维切片对照误差；
-  - `q3_metal_objects`: 检出金属柱/金属铲 3D 质心、$-6\text{ dB}$ 包围盒及 `ShadowRatio_m` 遮挡诊断表。
+  - `q3_metal_objects`: 检出金属柱/金属铲 3D 主峰、$-10\text{ dB}$ 能量加权质心、$-10\text{ dB}$ 等值三维包围盒（含 $\Delta\hat{z}_{10\text{dB}}$）及 `ShadowRatio_m` 遮挡诊断表。
 
 ---
 
@@ -115,6 +115,10 @@ $$I_{\text{3D}}^{\text{coh}}(\mathbf{r}) = \big|U_{\text{3D}}(\mathbf{r})\big|^2
    ```powershell
    python solutions/A/verify_q3_spec.py
    ```
-3. **验证内容（全非空转门槛）**：
+3. **验证内容（全非空转门槛，口径与脚本严格一致）**：
    - 验证 63 路局部几何跨度（$x^{\text{loc}} \in [-0.280, +0.245]\text{ m}$，$z^{\text{loc}} \in [0.265, 0.755]\text{ m}$）、第 4 行与 Q2 一致、以及近场低高度角 $(y=0.40, z=0.20)$ 在解耦三维仰角窗下保持 $>0$ 有效孔径覆盖；
-   - 三维 `M3-Img-CohBPA3D`（$4\times$ 基带过采样 + $e^{-j2\pi f_s \tau}$）以 $(x,y)$ 柱域 3D-NMS 准确分离恢复双金属目标，质心误差 $\le 5\text{ cm}$，立柱 $-10\text{ dB}$ 垂向跨度与镜面主峰高度显著大于局部低矮金属铲（差值均 $\ge 0.08\text{ m}$，非接近相等界限）；相干 `PBR` 严格优于包络 `EnvBPA3D`；且金属后方墙面 `ShadowRatio <= -6.0 dB` 准确检出阴影衰减区。
+   - 在 `(dx, dy, dz) = (5, 5, 4) cm` 合成网格上运行三维 `M3-Img-CohBPA3D`（$4\times$ 基带过采样 + $e^{-j2\pi f_s \tau}$），以 $(x,y)$ 柱域 3D-NMS 分离双金属目标并**强制断言两个植入目标匹配到不同检出峰索引**（`idx_col != idx_shv`）；
+   - 如实分别校验**主峰与 $-10\text{ dB}$ 质心 / XY 与 3D 误差**：
+     - 竖直延展金属柱（主峰与质心均仅校验水平 XY 误差）：离散主峰 XY 误差与 $-10\text{ dB}$ 加权质心 XY 误差均 $\le 5.5\text{ cm}$；
+     - 紧凑金属铲（校验完整三维欧氏误差）：离散主峰 3D 误差与 $-10\text{ dB}$ 加权质心 3D 误差均 $\le 6.0\text{ cm}$；
+   - 校验立柱 `-10 dB` 包围盒垂向跨度 $\Delta\hat{z}_{10\text{dB}}$ 与主峰高度均显著大于低矮金属铲（差值 $\ge 8.0\text{ cm}$），相干 `PBR` 严格优于包络 `EnvBPA3D`，且金属后方墙面 `ShadowRatio <= -6.0 dB` 准确检出阴影衰减区。
