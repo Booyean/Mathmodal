@@ -1,8 +1,8 @@
 # A-Q1-E0-C 放行即跑 Runbook（预演版）
 
-> 契约：`E0C-DRYRUN-1` ｜ 预演脚本：`solutions/A/e0c_release_dryrun.py` ｜ 自检：`solutions/A/test_e0c_release_dryrun.py`（16/16）
-> 基线：`origin/main = 934b0893`；脚本提交 `54e3ef9`；证据运行于 `4de8490`、登记提交 `703b8da`（分支 `data/a-q1-e0c-release-dryrun`）
-> 预演实测：**11/11 PASS，7.0 s**，`packets_parsed = 0`，未执行 `--mode execute`
+> 契约：`E0C-DRYRUN-1` ｜ 预演脚本：`solutions/A/e0c_release_dryrun.py` ｜ 自检：`solutions/A/test_e0c_release_dryrun.py`（18/18）
+> 基线：`origin/main = 934b0893`；脚本提交 `3e5bf1c`；证据运行于 `3e5bf1c`、登记提交 `24c458c`（分支 `data/a-q1-n0-batch`，PR #41）
+> 预演实测：**11/11 PASS，6.7 s**，`packets_parsed = 0`，未执行 `--mode execute`
 
 本文只覆盖 **E0-C 命令链、目录契约与守卫**。它不构成放行，也不替代独立验收：
 真实 `execute` 仍须统筹签发 `--approval-ref`（当前 `B-02` 未放行）。
@@ -132,11 +132,11 @@ python checks/A/e0_c_accept/accept_e0c.py `
 回退点：最近一个通过验收的 `main` 提交（当前 `934b089`，含 E0-S 实现、登记与独立验收）。
 `b63e217`（`e0c/results/`）是失败证据，只读保留。
 
-## 7. 本轮预演实测（2026-11-28，提交 `54e3ef9`）
+## 7. 本轮预演实测（2026-11-28，提交 `3e5bf1c`）
 
 | 检查 | 结果 | 关键值 |
 |---|---|---|
-| D1 工作区干净 | PASS | `HEAD=54e3ef90`，`origin/main=934b0893` |
+| D1 工作区干净 | PASS | `HEAD=3e5bf1c9`，`origin/main=934b0893` |
 | D2 既有登记只读锁定 | PASS | 4/4 份 SHA256 与 `SHA256SUMS.txt` 一致；预演前后不变 |
 | D3 目标目录可登记 | PASS | `e0c/results-r2` 不存在、无旧 `run-2`、非冻结目录 |
 | D4 元数据自检 | PASS | 32/32 项、96 文件、`88,073,632 B`、路径守卫 0 拒绝 |
@@ -150,7 +150,10 @@ python checks/A/e0_c_accept/accept_e0c.py `
 
 锚点（未变）：`config=8fb6821f…`、`PLAN=073511c0…`、`SPLIT=d623da4e…`。
 
-证据：`experiments/A/A-Q1-E0/e0c/dryrun/<时间戳>/dryrun.json`。
+证据：`experiments/A/A-Q1-E0/e0c/dryrun/20261128T204219/dryrun.json`（`elapsed_s=6.682`）。
+
+本轮另修了预演脚本自身的一处状态解析缺陷：`git status --porcelain` 首行的前导状态位空格被 `strip()` 吃掉，
+使 ` D <evidence>` 被误判为代码改动（D1 假 FAIL）；已改为 `strip=False` 并加两条例行负例（自检 18/18）。
 
 ## 8. 未决项（不写成通过）
 
