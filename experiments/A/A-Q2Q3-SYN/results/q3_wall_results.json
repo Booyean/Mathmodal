@@ -1,0 +1,215 @@
+{
+  "phase": "Q3-Wall",
+  "input_mode": "synthetic_only",
+  "real_dat_files_read": 0,
+  "citable": false,
+  "implementation_sha": "8dd0b4126591d7daaf50fad4f425613378773cd1",
+  "main_commit": "934b089",
+  "q1_frozen_config_path": "synthetic://q1-frozen-baseline",
+  "q1_frozen_config_sha256": "4a70304a305b87d9fc3a17c023dab5e5e6f7abeb9403ab2bb024ec27f6559939",
+  "d0_contract_version": "D0-4",
+  "d1_contract_version": "D1-2",
+  "groups_used": [
+    "syn-wall-01",
+    "syn-wall-02",
+    "syn-wall-03",
+    "syn-wall-04",
+    "syn-wall-05",
+    "syn-wall-06",
+    "syn-wall-07",
+    "syn-wall-08",
+    "syn-wall-09",
+    "syn-wall-10",
+    "syn-wall-11",
+    "syn-wall-12",
+    "syn-wall-13",
+    "syn-wall-14",
+    "syn-wall-15",
+    "syn-wall-16",
+    "syn-wall-17",
+    "syn-wall-18",
+    "syn-wall-19",
+    "syn-wall-20",
+    "syn-wall-21",
+    "syn-wall-22",
+    "syn-wall-23",
+    "syn-wall-24",
+    "syn-wall-25",
+    "syn-wall-26",
+    "syn-wall-27",
+    "syn-wall-28",
+    "syn-wall-29",
+    "syn-wall-30",
+    "syn-wall-31",
+    "syn-wall-32",
+    "syn-wall-33"
+  ],
+  "anomaly_isolation": {
+    "real_dat_files_read": 0,
+    "packet_mismatch_groups": [
+      {
+        "group_index": 3,
+        "group_id": "syn-wall-03",
+        "p_common": 3
+      }
+    ],
+    "orphan_skipped": {
+      "status": "not_covered_by_synthetic_fixture",
+      "count": 0
+    },
+    "provenance": {
+      "real_dat_files_read": {
+        "source_path": "synthetic_scene#anomaly_inputs",
+        "field": "anomaly_inputs.real_dat_files_read",
+        "derivation": "passthrough of scene metadata; hard-constrained to 0 for the synthetic fixture"
+      },
+      "packet_mismatch_groups": {
+        "source_path": "synthetic_scene#j_p_common",
+        "field": "j_p_common[*] paired with j_group_ids[*]",
+        "derivation": "groups whose P_common is below max(j_p_common); group_index is 1-based"
+      },
+      "orphan_skipped": {
+        "source_path": "synthetic_scene#anomaly_inputs",
+        "field": "anomaly_inputs.orphan_files",
+        "derivation": "passthrough when supplied; otherwise explicit not_covered_by_synthetic_fixture status"
+      }
+    }
+  },
+  "arrays_sha256": "df7147a77e55a24d603f34e9573f6f751da58b8a17844c53d26d33c2ad8990e8",
+  "arrays_sha256_scope": {
+    "algorithm": "sha256",
+    "aggregate_definition": "sha256 over canonical JSON (UTF-8, separators=(',',':'), sort_keys=True) of {array_name: per_array_sha256}, one entry per covered array",
+    "per_array_definition": "sha256(dtype_string + repr(shape) + C-contiguous raw value bytes)",
+    "covers": "all arrays stored in this bundle's NPZ; no array is excluded or subsampled",
+    "covered_arrays": [
+      "image_3d_coh",
+      "image_3d_env",
+      "proj_xy_max",
+      "proj_xz_max",
+      "proj_yz_max",
+      "slice_xy_z4",
+      "x_grid_m",
+      "y_grid_m",
+      "z_grid_m"
+    ],
+    "array_count": 9,
+    "includes": [
+      "array name",
+      "dtype",
+      "shape",
+      "raw array values"
+    ],
+    "excludes": [
+      "scalar JSON fields in the companion results JSON",
+      "the companion results JSON itself",
+      "SHA256SUMS.txt",
+      "NPZ ZIP container headers and compression metadata"
+    ],
+    "dtype_byte_order": "native byte order of the generating machine (little-endian on x86_64)",
+    "cross_run_policy": "intra-run integrity digest; SVD/LAPACK last-bit differences can change it between runs. Cross-run or cross-implementation equivalence must be asserted numerically at rtol=1e-9, not by this digest.",
+    "file_level_ledger": "SHA256SUMS.txt is the byte-level ledger over the JSON+NPZ files of one run; it is run-specific and is not expected to match across environments."
+  },
+  "provenance": {
+    "implementation_sha": "8dd0b4126591d7daaf50fad4f425613378773cd1",
+    "implementation_sha_kind": "generation_code_commit",
+    "git_dirty": false,
+    "git_branch": "model/a-q2q3-synthetic-baseline",
+    "generated_at": "2026-11-28T13:04:05Z",
+    "command": "python solutions/A/run_q2_q3_synthetic.py --preset standard --out experiments/A/A-Q2Q3-SYN/results --generated-at 2026-11-28T13:04:05Z",
+    "generator_script": "solutions/A/run_q2_q3_synthetic.py",
+    "preset": "standard",
+    "contract_path": "solutions/A/q2_q3_output_contract.json",
+    "contract_sha256": "3a66d0a4020da2f0d31b3b99798769273def04256180afe380b51d2b82d26913",
+    "environment": {
+      "python": "3.13.5",
+      "numpy": "2.1.3",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "byte_order": "little"
+    },
+    "input_fixture": {
+      "input_mode": "synthetic_only",
+      "real_dat_files_read": 0,
+      "seed": 20261128,
+      "scene_builders": [
+        "a_q2q3_common.build_synthetic_wall_scene_63rx",
+        "a_q2q3_common.build_synthetic_metal_scene_63rx"
+      ]
+    },
+    "applies_to_phase": "Q3-Wall"
+  },
+  "finite": true,
+  "status": "synthetic_baseline_only",
+  "grid_spec": {
+    "x_range_m": [
+      -0.2,
+      1.4
+    ],
+    "y_range_m": [
+      0.0,
+      2.5
+    ],
+    "z_range_m": [
+      0.2,
+      0.8
+    ],
+    "dx_m": 0.02,
+    "dy_m": 0.02,
+    "dz_m": 0.02,
+    "nx": 81,
+    "ny": 126,
+    "nz": 31,
+    "coarse_step_m": 0.02,
+    "fine_step_m": 0.02
+  },
+  "aperture_weights": {
+    "theta_x_flat_deg": 35.0,
+    "theta_x_cut_deg": 45.0,
+    "theta_z_flat_deg": 45.0,
+    "theta_z_cut_deg": 55.0,
+    "valid_rx_count": 63
+  },
+  "inherited_gain_params": {
+    "beta": 1.0,
+    "alpha_gain_per_ns": 0.08,
+    "g_cap": 20.0
+  },
+  "slice_z4_spec": {
+    "target_z_m": 0.545,
+    "extraction_rule": "linear_z_interp_from_image_3d_coh",
+    "on_grid": false,
+    "z_low_idx": 17,
+    "z_high_idx": 18,
+    "z_low_m": 0.54,
+    "z_high_m": 0.56,
+    "weight_high": 0.25
+  },
+  "wall_a_3d": {
+    "x_span_m": [
+      0.2,
+      1.12
+    ],
+    "y_front_mean_m": 0.44883237330975395,
+    "y_front_range_m": [
+      0.26,
+      0.6503036518662103
+    ],
+    "z_envelope_m": [
+      0.2,
+      0.8
+    ],
+    "tilt_deg": 13.444190368676274
+  },
+  "wall_b_3d": {
+    "air_y_mean_m": 2.0028093981170305,
+    "behind_a_y_mean_m": 2.0642086490280476,
+    "z_consistency_cm": 3.6493350790649526,
+    "pbr_b_coh_db": 44.16245040835726,
+    "pbr_b_env_db": 16.689391393806062
+  },
+  "q2_q3_reconciliation": {
+    "z_slice_m": 0.545,
+    "air_segment_max_diff_cm": 0.7332300503923861,
+    "air_segment_mae_cm": 0.18144340257615446,
+    "passed_le_2cm": true
+  }
+}
