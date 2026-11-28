@@ -178,9 +178,10 @@
       "fixture_second_coeff_pre_fix": 0.0,
       "n0_synthetic_artifact_sha256": {
         "post_fix": {
-          "N0_SYNTHETIC.md": "90259f7ed388b1d44febf520932b445c979c13338a8d707bdf9e92019237025d",
-          "n0_synthetic_results.json": "731d593581bf5182fbee2311968dc76764228bd1170fd2565c163684176ffad8"
+          "N0_SYNTHETIC.md": "644e5b4f533f609ae940e0411bd0a2b40280d58d7f3a262e0090f691a18067ad",
+          "n0_synthetic_results.json": "69aca85a79a8f8180ec5960a3840de739185ed902b15c694e2754b118b3ce07d"
         },
+        "post_fix_source": "experiments/A/A-Q1-E0/n0/synthetic/SHA256SUMS.txt（运行时读取当前提交产物，避免硬编码过期）",
         "pre_fix": {
           "N0_SYNTHETIC.md": "0c342a4f896c31a07fc7e4760c86d7af3274a62ab9958aab712b8bd2d27fbc5a",
           "n0_synthetic_results.json": "e2835b91ecc688b7f7bdf0ea427176e93911054b70820c658e53ccdb5631b6b0"
@@ -210,6 +211,19 @@
     "pre_fix": "v = vh[0].conj()",
     "status": "found_and_fixed_in_this_commit",
     "why_old_tests_missed_it": "旧夹具有两个盲点：① 通道方向为实向量；② 所有组共用同一个 T_c，于是 rel_dev = dev/T 恰好等于实 pattern，conj 只差全局相位。真实/合成流水线里 T 是**组均值**，rel_dev = dev/T 带着 T 的逐通道相位，行方向本身是复向量——`(1, e^{2πi/3}, e^{4πi/3})/√3` 才能在这一维上分辨"
+  },
+  "provenance": {
+    "command": "python solutions/A/a_e0_n0_channel_regression.py --n-f 4 --out experiments/A/A-Q1-E0/n0/channel_regression",
+    "environment": {
+      "numpy": "2.1.3",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "python": "3.13.5"
+    },
+    "generated_at": "2026-11-28T12:49:15Z",
+    "generated_at_source": "system_clock",
+    "implementation_dirty": false,
+    "implementation_sha": "4b9d8f17a014006dbecbeaefbcad5dc3c4ea6a64",
+    "reproduction": "数值字段由 seed/参数决定，可按容差复算；逐字节复现需用 --generated-at 或 SOURCE_DATE_EPOCH 指定同一 generated_at、保持 implementation_dirty=false，并使用相同运行环境（本块已记录）。"
   },
   "real_dat_files_read": 0,
   "real_fixture_blindness": {
