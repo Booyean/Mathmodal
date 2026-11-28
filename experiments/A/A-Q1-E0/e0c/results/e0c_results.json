@@ -1,0 +1,2570 @@
+{
+  "contract_version": "E0-C-1",
+  "experiment_id": "A-Q1-E0",
+  "phase": "E0-C",
+  "scope": "真实校准组（10 空场 + 2 已披露校准目标），非盲测，不含 E0-T；标称距离仅用于事后评价与 PLAN §3.3 的 eta_wall 校准组筛选",
+  "generated_at": "2026-11-28T15:41:30+08:00",
+  "approval_ref": "workspace-approval:fb4c1003-3f83-4a71-b2e3-c80bd3d964d3",
+  "implementation_sha": "4cb44a0d59bfc8999187f40efe57318d70a033b7",
+  "parent_commit": "5ad8417b677ec727dc77ec0b5f12d00e4efe41f1",
+  "main_commit": "3b8b67e58156b9618c788ec8e114e50d960bbb0d",
+  "branch": "data/a-q1-e0-c-interface",
+  "output_dir": "D:\\数模\\Mathmodal\\experiments\\A\\A-Q1-E0\\e0c\\results",
+  "config_sha256": "8fb6821fa3335ef748e16ad2f5b5b8fc818c13cbe9d3315377faf48d5e40e06a",
+  "config_sha256_match": true,
+  "plan_sha256": "073511c0b6ae44dbc90d228b7d79c2de9d0687d4e65949494803b19f24595a88",
+  "plan_sha256_match": true,
+  "split_sha256": "d623da4ea186f372f2be094121c202c55dae0e236f4683005ab88d220a248b3a",
+  "split_sha256_match": true,
+  "e0_s_results_sha256": "171f55f75e464d289815af7352fb6fcb6635b8d73db97b3af2dcbb687eab3fdf",
+  "e0_s_results_sha256_match": true,
+  "fold_gate_contract_version": "D1-2",
+  "environment": {
+    "python": "3.13.5",
+    "numpy": "2.1.3",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    }
+  },
+  "command": "python solutions/A/a_e0_c.py --mode execute --approval-ref workspace-approval:fb4c1003-3f83-4a71-b2e3-c80bd3d964d3 --out experiments/A/A-Q1-E0/e0c/results",
+  "resource": {
+    "wall_time_s": 153.236,
+    "peak_rss_mib": 296.85546875,
+    "single_process": true,
+    "budget": {
+      "max_wall_time_sec": 600,
+      "max_peak_rss_mib": 4096
+    }
+  },
+  "methods": {
+    "alpha_mode": "fixed_1.0",
+    "n0_improvements_enabled": false,
+    "adaptive_alpha": false,
+    "subspace_suppression": false,
+    "wls_ranging": false,
+    "nonuniform_channel_weights": false
+  },
+  "inputs": [
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_0.dat",
+      "size_bytes": 1024112,
+      "sha256": "984281dd7c721ca686cd631bb878e611d872d8fb68b0f6517d922e0023aa7e42"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_1.dat",
+      "size_bytes": 1024112,
+      "sha256": "ce3590b69e23c1badeeb8a363c35f9f6b9f3ab8480d472c481859251746a0940"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_2.dat",
+      "size_bytes": 1024112,
+      "sha256": "b34240a1d2616fb87d82b6941727021bbbb81a3e36b2796becac0aa89fa2fe1e"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_3.dat",
+      "size_bytes": 1024112,
+      "sha256": "9478b059614ce95d316777d4b32701690716060b62b1463d503874999ae76d11"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_4.dat",
+      "size_bytes": 1024112,
+      "sha256": "81db6f99258653187e60619880cd04b96e73c2f0cb898ba26bc7b1183d189e8b"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_5.dat",
+      "size_bytes": 1024112,
+      "sha256": "364a32910dc325b77639977e2b71cc9697346a6e781152f9a236c3f5715a0fa5"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_6.dat",
+      "size_bytes": 1024112,
+      "sha256": "875e53ce994200e10193443bf2787e992041529f5bd599189ae76cd7428a884f"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_7.dat",
+      "size_bytes": 1024112,
+      "sha256": "65b0b86585c7f306e7802a730804c454d704b1439f25bab747e27c2dea2791a7"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_0.dat",
+      "size_bytes": 1280140,
+      "sha256": "7e1131b696403849d3a878f3e1f770b8533d16bca9a3b7c3a5c19cc122a31f1b"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_1.dat",
+      "size_bytes": 1280140,
+      "sha256": "dc0be35585ded00ccec0bf54a427c74c8724ee282711eee703d6a9be7fd95cdb"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_2.dat",
+      "size_bytes": 1280140,
+      "sha256": "2771fbdb08ed42a534c792729d172a43570e7d765df4aaa65ed7943243f13a37"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_3.dat",
+      "size_bytes": 1280140,
+      "sha256": "ea992dbfbdc13e2c59ce9cb57337a6f67dfc46113a3474371070a4ce4d9053dc"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_4.dat",
+      "size_bytes": 1280140,
+      "sha256": "da687a31fdb0c7ce0c756acbbbf17f69f022c3fc50ce8d4af4535e172cb6817a"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_5.dat",
+      "size_bytes": 1280140,
+      "sha256": "99f0e32feeaeb6e2734de33c2c5e3351ca7ddac74b407e2168c901d9c9cd6f08"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_6.dat",
+      "size_bytes": 1280140,
+      "sha256": "c102b7916dec447c2153f7778a722fdf67ab102ce09812dcf60013c534173e28"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_7.dat",
+      "size_bytes": 1280140,
+      "sha256": "6f7355213b9282c546be1a6895f318dd98b9fd7ae2e8c5395c0d1fa37544f6e7"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_0.dat",
+      "size_bytes": 512056,
+      "sha256": "94cea670c2288e227a0aae902f17479dd126d810086bd7b429de21be7536fab1"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_1.dat",
+      "size_bytes": 512056,
+      "sha256": "7c7bc4a2ed86a3c99a1f937710725eefa0bcc683010a21e41247d81385270cc3"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_2.dat",
+      "size_bytes": 512056,
+      "sha256": "45bb58979ee3f6cbe9e8dab72febdfaa2a5dd173eba5bd0e750d8bc69081cd95"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_3.dat",
+      "size_bytes": 512056,
+      "sha256": "633f2575b23f6814508e26630a0467f2526c80c3b63f91a08d0ccb6aae3ec816"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_4.dat",
+      "size_bytes": 512056,
+      "sha256": "2a242c4192e60eee5b6a7ad747533c43610958d16763376b022baaf7bcaf06e1"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_5.dat",
+      "size_bytes": 512056,
+      "sha256": "588e9bfd128942f4b4933b7a50c5b28c18e5e7b088efe1de25c65b172f3adbcb"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_6.dat",
+      "size_bytes": 512056,
+      "sha256": "5d347beb3de3b9962deb44f422d8966b692742f59b896d65e69d9ad47e5da28e"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_7.dat",
+      "size_bytes": 512056,
+      "sha256": "15fde5c7b245f153a34e930455612481aafd214d0cb96950bd5c857f5bd0a0a0"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_0.dat",
+      "size_bytes": 1024112,
+      "sha256": "d3c9085025d52308d3dbf6f739e535c88f8f86ee93bea864c1dfd824346a73cd"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_1.dat",
+      "size_bytes": 1024112,
+      "sha256": "ee4d05bd66113c4ab2dbb0622f44dac4811be3533482fe7ea74cfc84633c13c1"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_2.dat",
+      "size_bytes": 1024112,
+      "sha256": "778fbb912c681267c7723f8d3d21babb99610530bbe6c399ff99fbde90dad6b1"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_3.dat",
+      "size_bytes": 1024112,
+      "sha256": "71ae17cd9b1efa1bb595ff8b39425011e71bd2f9e34880d4f579a0d8c0b47ed3"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_4.dat",
+      "size_bytes": 1024112,
+      "sha256": "0f790bf3f1b177d4522868e02f113ad185def7b1600c47fdd05493e5a2ded5d8"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_5.dat",
+      "size_bytes": 1024112,
+      "sha256": "208adc107379c86b1b6798a112460f187c1223abaabd31506e89ed68671a1b7b"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_6.dat",
+      "size_bytes": 1024112,
+      "sha256": "80e6fec5e32efe0e46518d4480c375e56da7b60b6e2d93bfc181f66e00399c7c"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_7.dat",
+      "size_bytes": 1024112,
+      "sha256": "166e1ffdce0ba0e269994cff32412cf26d3c5ad3227261718ca47e8938fa8b3c"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_0.dat",
+      "size_bytes": 768084,
+      "sha256": "57e063c5737fde7812cb6d69a87a40d7102e067fc5cbb3e56fb3582873b4224e"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_1.dat",
+      "size_bytes": 768084,
+      "sha256": "004ed847ffa1407821cd0b6402bbd988bf82a9ab75d29401f07adfa2ceddfc9e"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_2.dat",
+      "size_bytes": 768084,
+      "sha256": "5dc0029cd27b5bcc290859630bee3d2c94d4f5708890b70c8d39753ba132c567"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_3.dat",
+      "size_bytes": 768084,
+      "sha256": "7a84d705b4d0da0ecf2f64fe343cc0b98d4290e991e452c0b1bfd917ee3d6994"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_4.dat",
+      "size_bytes": 768084,
+      "sha256": "4076d9c853ac1f6e696c3f6e97772f7dc29c916c29d37f4b55fafba5e8b1c0f4"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_5.dat",
+      "size_bytes": 768084,
+      "sha256": "eb6656548b4efb6db3a88a27e7639557f603cfbc473de46ab3857928eef9a7c1"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_6.dat",
+      "size_bytes": 768084,
+      "sha256": "3cba4fa3b8a4fa42aeccb0ac6495bbfb929a3a87289495374f9b8c4244cc38ac"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_7.dat",
+      "size_bytes": 768084,
+      "sha256": "d37b60922a8c07142239e59131cfcca09e50b9316fcf06ea30fac7a4560fb657"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_0.dat",
+      "size_bytes": 1024112,
+      "sha256": "e2d8d8122e1c35697f0bd9676a9fa3f3be917c51513277ea780c134e40854d37"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_1.dat",
+      "size_bytes": 1024112,
+      "sha256": "41c64414b6a946aeb4c6c86f49037d1da520c67fec9f1bc0e13b8e83124ee1fb"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_2.dat",
+      "size_bytes": 1024112,
+      "sha256": "c1cbdb998740845b2be67899f39499015a401a7f8315c4692cc985ec5b2b4248"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_3.dat",
+      "size_bytes": 1024112,
+      "sha256": "2f8d4ec96c7753d30298fe1cfbda9383c27785dbc1ce469682c2959958bcbb0f"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_4.dat",
+      "size_bytes": 1024112,
+      "sha256": "5e280cc5194c2e3bc519f88a878020909895132d0be7ae968e7265aa8413948c"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_5.dat",
+      "size_bytes": 1024112,
+      "sha256": "42724543c6eab8a0a466278880cd5321d69e10eedcf9defbf84d5adf5f03d89d"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_6.dat",
+      "size_bytes": 1024112,
+      "sha256": "ab531dcc25f6e54dc6be552f75e8160ade41d689aeed1d1256b2993f86bad765"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_7.dat",
+      "size_bytes": 1024112,
+      "sha256": "d6d538b59f965e310a9c29f4e591bc3e549f931314d877d7661fc64daa40d19f"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_0.dat",
+      "size_bytes": 512056,
+      "sha256": "e3fd4f429c39ace38a247a0b73e40cd0d108b7be8706d7d874003466bc6b60de"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_1.dat",
+      "size_bytes": 512056,
+      "sha256": "c453f3d73bb07a957cd99eb5e78755ebb78e6b1ee9ea3fb4f1c861c388d1a377"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_2.dat",
+      "size_bytes": 512056,
+      "sha256": "c7f36593a3967080f088cf9e32a6bef4e40e1482028ab75bc4d92ca57bed3fa3"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_3.dat",
+      "size_bytes": 512056,
+      "sha256": "fee7de84165b80f5cea892b09fda981112f2e39b3d4e521877e6af82b9bbdb72"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_4.dat",
+      "size_bytes": 512056,
+      "sha256": "46e284be163f74aea687b6c452d368c011f4bae150fa6610cc1a4d599c30953e"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_5.dat",
+      "size_bytes": 512056,
+      "sha256": "58efb9d0345e38a589da50e3d244ab83f5a2db0688ac912b65ca96345b29d46c"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_6.dat",
+      "size_bytes": 512056,
+      "sha256": "ec0ec05b53fe80b8a56a9d81c8361e430f9f85bc7946f4e15261fa1b8b65cea0"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_7.dat",
+      "size_bytes": 512056,
+      "sha256": "464bbdc5ef8fe42886c52b319fa70077c6a8ab53830836bef8723ea226fc795d"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_0.dat",
+      "size_bytes": 768084,
+      "sha256": "1fe61e13540431f87af3dae0b980d4ee48ca8e4b3d8bddd74beeea286ffe6c85"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_1.dat",
+      "size_bytes": 768084,
+      "sha256": "9f69aae1fe379180d630931fb4a70e27b8ddf5f4d0362db9facce49995493373"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_2.dat",
+      "size_bytes": 768084,
+      "sha256": "baceeaa18d975d0cec5ef7aacc7e88ccfbc38348fd0bb63dff9d2481003808e9"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_3.dat",
+      "size_bytes": 768084,
+      "sha256": "a8088c53efd0aca37fc5416f67aacae985d978562f669daf4b9fd19daed174de"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_4.dat",
+      "size_bytes": 768084,
+      "sha256": "c8c833339acb4423edde7ff30a3ccb59991c45e015dbb0c696ee888926b43efd"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_5.dat",
+      "size_bytes": 768084,
+      "sha256": "4d9583158eb679b22502b9fe4ed97cd8e597439a3612d052bf61923bc4c04cee"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_6.dat",
+      "size_bytes": 768084,
+      "sha256": "c4d8ee6f3fe1583b0abb69911bbe56f6708b4502f119f8895bb8ac74b938b0b5"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_7.dat",
+      "size_bytes": 768084,
+      "sha256": "e470a2ca4dbae5703ca068a3dd19aca7e9edddd7523ed95651a3ba9f08f39d68"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_0.dat",
+      "size_bytes": 1024112,
+      "sha256": "29bcb42e9ddfa7e82fce97541c1abe9d323065c1bd2e94ed48752ee80fb7ab4f"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_1.dat",
+      "size_bytes": 1024112,
+      "sha256": "885fb168479de639728e49213705469143e67391dddd4b0e9b47a5ba8cbaf807"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_2.dat",
+      "size_bytes": 1024112,
+      "sha256": "1418185a5409f7166d624dfadd37858dc55236d9ab55841b32a9470e8d7aa39e"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_3.dat",
+      "size_bytes": 1024112,
+      "sha256": "a88f522edd4892a9d9c02787d70ab741471483af64c02af19fe56fa24e998e28"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_4.dat",
+      "size_bytes": 1024112,
+      "sha256": "75b8805430bdd9351e3dcee2b34fab18886301e46af0192a6530a57d52f104b7"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_5.dat",
+      "size_bytes": 1024112,
+      "sha256": "3e2931ac7fa398590edf909e38b1f727434b7a8b582135716b72de7d3438cc48"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_6.dat",
+      "size_bytes": 1024112,
+      "sha256": "abecfdf55855e35f152c16e57e2cfb3f8801856869f5b8fd89b917b89ac8255d"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_7.dat",
+      "size_bytes": 1024112,
+      "sha256": "597e8496d77fdbc8c8c2ba3c730c76d456e99a1ae6993f87dffbd819af421cd3"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_0.dat",
+      "size_bytes": 1536168,
+      "sha256": "b6fb88a756a7f5a71209c97d1a8bcb435e6eaf7e75e1d6da00ac2dcf7a9ec383"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_1.dat",
+      "size_bytes": 1536168,
+      "sha256": "baf89bbd86b827d9c62bab86a22bc5747e8307419b8abda8246bc797f7fa8697"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_2.dat",
+      "size_bytes": 1536168,
+      "sha256": "5fb08a209e768cf0cb38963ba6998a980d44d62485cc6f81143766a56e4f19ab"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_3.dat",
+      "size_bytes": 1536168,
+      "sha256": "b22f9a68f7dd6a3d33dc6a29b4b79c96df3522bf7f4b42d81a2ef3e70b468457"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_4.dat",
+      "size_bytes": 1536168,
+      "sha256": "b87afd2f794a86362c0d4aebe2bfd332005aeea2e4cfe45b3540210a05bd34d4"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_5.dat",
+      "size_bytes": 1536168,
+      "sha256": "8e2e7678061dc98ca07fda7eac52e54196691bd3d241241dcede23a39c331828"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_6.dat",
+      "size_bytes": 1536168,
+      "sha256": "1f6301b4c11ada38913fc4f8657fa88f6621cae25320360208fbe15d9a10c740"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_7.dat",
+      "size_bytes": 1536168,
+      "sha256": "a808b806818577d9c3abef01ad64c10ffc545e324762231f3eb591d1ff975d1f"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_0.dat",
+      "size_bytes": 768084,
+      "sha256": "cbf7d342801faa31b9511fc3ce692eca381e08b00bfc2a6700e2d285ff19443e"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_1.dat",
+      "size_bytes": 768084,
+      "sha256": "d5d7cc54e4b1de58cdfda4f38ca4941027c791659540a6836357c80caf31988a"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_2.dat",
+      "size_bytes": 768084,
+      "sha256": "be269323969a060c3d4098c843697c261d1cb21d8d60e153ab1f3f20ca19002d"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_3.dat",
+      "size_bytes": 768084,
+      "sha256": "46868664f723cb874468ac06acb37010176ad17ea443ec93bb06270c76c0f46f"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_4.dat",
+      "size_bytes": 768084,
+      "sha256": "32fa2c1818516907865813a854ebd96fd7c8a0dd1928790700928400392638a2"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_5.dat",
+      "size_bytes": 768084,
+      "sha256": "79f5a00e3593be6e66d45f63d97a3881beba9d2ef68462f2d488e721a8805027"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_6.dat",
+      "size_bytes": 768084,
+      "sha256": "ea96e81ec346a3b22b1d653c6a6b9f0025fc4ccd1c60317d02b6fef8cc548603"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_7.dat",
+      "size_bytes": 768084,
+      "sha256": "563032455fba1a87a7bece52ce68df8bb708515f62579167f724b2b2cb8a76ed"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_0.dat",
+      "size_bytes": 768084,
+      "sha256": "551c0a0bf41f066aee0b3919caacd12231ef0bf0ca80b55afc96bcae5b71a46d"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_1.dat",
+      "size_bytes": 768084,
+      "sha256": "dae06953e0ea91646387a9a61c3fc3ab50ab6e1aea81407f723d84eab337eaa2"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_2.dat",
+      "size_bytes": 768084,
+      "sha256": "c839ae842e333b8e10ed88b2e584ffe06acbf81c30f65d29d4fc23a87e905f20"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_3.dat",
+      "size_bytes": 768084,
+      "sha256": "7838658f40d38dacf191bd5e6f9f0a044e961df2f1bd6045e4ac4f114376ca41"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_4.dat",
+      "size_bytes": 768084,
+      "sha256": "bafda30268b2b7490db61e88726df1d1c615e5e42820c07fb2d3051e1d0667c2"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_5.dat",
+      "size_bytes": 768084,
+      "sha256": "26e38d655a26d15c47499c857c52b10e356d33a06bd5a93f09142465d5f75eb0"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_6.dat",
+      "size_bytes": 768084,
+      "sha256": "00e624caa1eacee210d4c17758a3eb4a14845da6713215f28a99b67df3d07b18"
+    },
+    {
+      "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_7.dat",
+      "size_bytes": 768084,
+      "sha256": "440057d72790c7ca1c5e75c45ff9110324a8e94583467969cb9c95b7a6c3d4e2"
+    }
+  ],
+  "air_loo_folds": [
+    "空场数据/data1",
+    "空场数据/data2",
+    "空场数据/data3",
+    "空场数据/data4",
+    "空场数据/data5",
+    "空场数据/data6",
+    "空场数据/data7",
+    "空场数据/data8",
+    "空场数据/data9",
+    "空场数据/data10"
+  ],
+  "array_map": {
+    "air_loo_prefix": "air_loo",
+    "group_prefix": {
+      "墙体数据/data1-42cm": "wall",
+      "金属板数据/data1-69cm": "metal"
+    }
+  },
+  "lambda_selected": [
+    0.001,
+    0.001
+  ],
+  "eta_wall": 0.25,
+  "freeze": {
+    "status": "hard_stop",
+    "eligible": false,
+    "written": false,
+    "lambda_cal": 0.001,
+    "lambda_inv": 0.001,
+    "eta_wall": 0.25,
+    "eta_selection_rule": "仅在校准组 data1-42cm 上按“满足条件且最接近默认 0.25”选取",
+    "reasons": [
+      "air_loo_hard_stop: min=2.9844 dB < 6.0 dB",
+      "E0-C/Wall-42cm: pslr_db(failed)"
+    ]
+  },
+  "groups": [
+    {
+      "group_key": "空场数据/data1",
+      "target_type": "air",
+      "split": "air",
+      "d_true_cm": null,
+      "d_hat_m": null,
+      "abs_err_cm": null,
+      "supp_dw_win_db": null,
+      "pslr_db": null,
+      "pnr_db": null,
+      "echo_ret_db": null,
+      "valid_rx": 63,
+      "finite": true,
+      "status": "eligible",
+      "gate_results": {},
+      "stop_reason": null
+    },
+    {
+      "group_key": "空场数据/data2",
+      "target_type": "air",
+      "split": "air",
+      "d_true_cm": null,
+      "d_hat_m": null,
+      "abs_err_cm": null,
+      "supp_dw_win_db": null,
+      "pslr_db": null,
+      "pnr_db": null,
+      "echo_ret_db": null,
+      "valid_rx": 63,
+      "finite": true,
+      "status": "eligible",
+      "gate_results": {},
+      "stop_reason": null
+    },
+    {
+      "group_key": "空场数据/data3",
+      "target_type": "air",
+      "split": "air",
+      "d_true_cm": null,
+      "d_hat_m": null,
+      "abs_err_cm": null,
+      "supp_dw_win_db": null,
+      "pslr_db": null,
+      "pnr_db": null,
+      "echo_ret_db": null,
+      "valid_rx": 63,
+      "finite": true,
+      "status": "eligible",
+      "gate_results": {},
+      "stop_reason": null
+    },
+    {
+      "group_key": "空场数据/data4",
+      "target_type": "air",
+      "split": "air",
+      "d_true_cm": null,
+      "d_hat_m": null,
+      "abs_err_cm": null,
+      "supp_dw_win_db": null,
+      "pslr_db": null,
+      "pnr_db": null,
+      "echo_ret_db": null,
+      "valid_rx": 63,
+      "finite": true,
+      "status": "eligible",
+      "gate_results": {},
+      "stop_reason": null
+    },
+    {
+      "group_key": "空场数据/data5",
+      "target_type": "air",
+      "split": "air",
+      "d_true_cm": null,
+      "d_hat_m": null,
+      "abs_err_cm": null,
+      "supp_dw_win_db": null,
+      "pslr_db": null,
+      "pnr_db": null,
+      "echo_ret_db": null,
+      "valid_rx": 63,
+      "finite": true,
+      "status": "eligible",
+      "gate_results": {},
+      "stop_reason": null
+    },
+    {
+      "group_key": "空场数据/data6",
+      "target_type": "air",
+      "split": "air",
+      "d_true_cm": null,
+      "d_hat_m": null,
+      "abs_err_cm": null,
+      "supp_dw_win_db": null,
+      "pslr_db": null,
+      "pnr_db": null,
+      "echo_ret_db": null,
+      "valid_rx": 63,
+      "finite": true,
+      "status": "eligible",
+      "gate_results": {},
+      "stop_reason": null
+    },
+    {
+      "group_key": "空场数据/data7",
+      "target_type": "air",
+      "split": "air",
+      "d_true_cm": null,
+      "d_hat_m": null,
+      "abs_err_cm": null,
+      "supp_dw_win_db": null,
+      "pslr_db": null,
+      "pnr_db": null,
+      "echo_ret_db": null,
+      "valid_rx": 63,
+      "finite": true,
+      "status": "eligible",
+      "gate_results": {},
+      "stop_reason": null
+    },
+    {
+      "group_key": "空场数据/data8",
+      "target_type": "air",
+      "split": "air",
+      "d_true_cm": null,
+      "d_hat_m": null,
+      "abs_err_cm": null,
+      "supp_dw_win_db": null,
+      "pslr_db": null,
+      "pnr_db": null,
+      "echo_ret_db": null,
+      "valid_rx": 63,
+      "finite": true,
+      "status": "eligible",
+      "gate_results": {},
+      "stop_reason": null
+    },
+    {
+      "group_key": "空场数据/data9",
+      "target_type": "air",
+      "split": "air",
+      "d_true_cm": null,
+      "d_hat_m": null,
+      "abs_err_cm": null,
+      "supp_dw_win_db": null,
+      "pslr_db": null,
+      "pnr_db": null,
+      "echo_ret_db": null,
+      "valid_rx": 63,
+      "finite": true,
+      "status": "eligible",
+      "gate_results": {},
+      "stop_reason": null
+    },
+    {
+      "group_key": "空场数据/data10",
+      "target_type": "air",
+      "split": "air",
+      "d_true_cm": null,
+      "d_hat_m": null,
+      "abs_err_cm": null,
+      "supp_dw_win_db": null,
+      "pslr_db": null,
+      "pnr_db": null,
+      "echo_ret_db": null,
+      "valid_rx": 63,
+      "finite": true,
+      "status": "eligible",
+      "gate_results": {},
+      "stop_reason": null
+    },
+    {
+      "group_key": "墙体数据/data1-42cm",
+      "target_type": "wall",
+      "split": "wall_cal",
+      "d_true_cm": 42.0,
+      "d_hat_m": 0.4817999999999635,
+      "abs_err_cm": 6.179999999996349,
+      "supp_dw_win_db": 3.268659668481082,
+      "pslr_db": 2.664330228102982,
+      "pnr_db": 34.29380923376331,
+      "echo_ret_db": 0.3644216400260546,
+      "valid_rx": 63,
+      "finite": true,
+      "status": "hard_stop",
+      "gate_results": {
+        "pslr_ge_3db": false,
+        "pnr_ge_6db": true,
+        "abs_err_eligible": false,
+        "abs_err_not_hard": true,
+        "detail": {
+          "abs_err_cm": {
+            "value": 6.179999999996349,
+            "eligible_max": 5.0,
+            "hard_stop_gt": 10.71,
+            "status": "gray",
+            "passed": false
+          },
+          "pslr_db": {
+            "value": 2.664330228102982,
+            "threshold": 3.0,
+            "status": "failed",
+            "passed": false
+          },
+          "pnr_db": {
+            "value": 34.29380923376331,
+            "threshold": 6.0,
+            "status": "passed",
+            "passed": true
+          },
+          "valid_rx": {
+            "value": 63,
+            "threshold": 63,
+            "status": "passed",
+            "passed": true
+          },
+          "finite": {
+            "value": true,
+            "status": "passed",
+            "passed": true
+          }
+        }
+      },
+      "stop_reason": "pslr_db"
+    },
+    {
+      "group_key": "金属板数据/data1-69cm",
+      "target_type": "metal",
+      "split": "metal_cal",
+      "d_true_cm": 69.0,
+      "d_hat_m": 0.7336999999999357,
+      "abs_err_cm": 4.3699999999935795,
+      "supp_dw_win_db": 4.185473074871163,
+      "pslr_db": 4.17257974985938,
+      "pnr_db": 35.42927899434393,
+      "echo_ret_db": -0.01280724598967567,
+      "valid_rx": 63,
+      "finite": true,
+      "status": "eligible",
+      "gate_results": {
+        "pslr_ge_3db": true,
+        "pnr_ge_6db": true,
+        "abs_err_eligible": true,
+        "abs_err_not_hard": true,
+        "detail": {
+          "abs_err_cm": {
+            "value": 4.3699999999935795,
+            "eligible_max": 5.0,
+            "hard_stop_gt": 10.71,
+            "status": "passed",
+            "passed": true
+          },
+          "pslr_db": {
+            "value": 4.17257974985938,
+            "threshold": 3.0,
+            "status": "passed",
+            "passed": true
+          },
+          "pnr_db": {
+            "value": 35.42927899434393,
+            "threshold": 6.0,
+            "status": "passed",
+            "passed": true
+          },
+          "valid_rx": {
+            "value": 63,
+            "threshold": 63,
+            "status": "passed",
+            "passed": true
+          },
+          "finite": {
+            "value": true,
+            "status": "passed",
+            "passed": true
+          }
+        }
+      },
+      "stop_reason": null
+    }
+  ],
+  "metrics_sha256": "1cce102f1513aff209c6ef095e3f7fea46dc3e5367db5926a040a8fd3ea90dd7",
+  "d_true_usage": "evaluation_only",
+  "d_true_usage_note": "标称距离只进入 abs_err 与 PLAN §3.3 的 eta_wall 校准组筛选；不参与 lambda 选参、DW 减除或统计量计算",
+  "stop_reason": "air_loo_hard_stop: min=2.9844 dB < 6.0 dB; E0-C/Wall-42cm: pslr_db(failed)",
+  "hard_stops": [
+    "air_loo_hard_stop: min=2.9844 dB < 6.0 dB",
+    "E0-C/Wall-42cm: pslr_db(failed)"
+  ],
+  "gray_reasons": [],
+  "stop_reasons": [
+    "air_loo_hard_stop: min=2.9844 dB < 6.0 dB",
+    "E0-C/Wall-42cm: pslr_db(failed)"
+  ],
+  "air_loo_eligibility": "hard_stop",
+  "lambda_loo": {
+    "prereg": "E0-PREREG-3",
+    "folds": [
+      {
+        "index": 0,
+        "held_out": "空场数据/data1"
+      },
+      {
+        "index": 1,
+        "held_out": "空场数据/data2"
+      },
+      {
+        "index": 2,
+        "held_out": "空场数据/data3"
+      },
+      {
+        "index": 3,
+        "held_out": "空场数据/data4"
+      },
+      {
+        "index": 4,
+        "held_out": "空场数据/data5"
+      },
+      {
+        "index": 5,
+        "held_out": "空场数据/data6"
+      },
+      {
+        "index": 6,
+        "held_out": "空场数据/data7"
+      },
+      {
+        "index": 7,
+        "held_out": "空场数据/data8"
+      },
+      {
+        "index": 8,
+        "held_out": "空场数据/data9"
+      },
+      {
+        "index": 9,
+        "held_out": "空场数据/data10"
+      }
+    ],
+    "grid": [
+      {
+        "lambdas": [
+          0.0001,
+          0.0001
+        ],
+        "folds": [
+          {
+            "held_out": "空场数据/data1",
+            "supp_db": 4.149450043419543
+          },
+          {
+            "held_out": "空场数据/data2",
+            "supp_db": 2.9639984641925925
+          },
+          {
+            "held_out": "空场数据/data3",
+            "supp_db": 9.704612728029048
+          },
+          {
+            "held_out": "空场数据/data4",
+            "supp_db": 10.010723397630144
+          },
+          {
+            "held_out": "空场数据/data5",
+            "supp_db": 12.661884320616114
+          },
+          {
+            "held_out": "空场数据/data6",
+            "supp_db": 12.866780893732269
+          },
+          {
+            "held_out": "空场数据/data7",
+            "supp_db": 12.425436839381748
+          },
+          {
+            "held_out": "空场数据/data8",
+            "supp_db": 12.299867143310246
+          },
+          {
+            "held_out": "空场数据/data9",
+            "supp_db": 10.298521240815926
+          },
+          {
+            "held_out": "空场数据/data10",
+            "supp_db": 9.694249402214917
+          }
+        ],
+        "j_air_db": 11.636621551319331,
+        "min_db": 2.9639984641925925,
+        "median_db": 10.154622319223035
+      },
+      {
+        "lambdas": [
+          0.0001,
+          0.001
+        ],
+        "folds": [
+          {
+            "held_out": "空场数据/data1",
+            "supp_db": 4.192601675491561
+          },
+          {
+            "held_out": "空场数据/data2",
+            "supp_db": 2.987058303536683
+          },
+          {
+            "held_out": "空场数据/data3",
+            "supp_db": 9.89487936071466
+          },
+          {
+            "held_out": "空场数据/data4",
+            "supp_db": 10.212938053038796
+          },
+          {
+            "held_out": "空场数据/data5",
+            "supp_db": 12.89329058303862
+          },
+          {
+            "held_out": "空场数据/data6",
+            "supp_db": 13.10690798621232
+          },
+          {
+            "held_out": "空场数据/data7",
+            "supp_db": 12.653750878561114
+          },
+          {
+            "held_out": "空场数据/data8",
+            "supp_db": 12.492566468178449
+          },
+          {
+            "held_out": "空场数据/data9",
+            "supp_db": 10.401681131198162
+          },
+          {
+            "held_out": "空场数据/data10",
+            "supp_db": 9.776528813525228
+          }
+        ],
+        "j_air_db": 11.800838743886821,
+        "min_db": 2.987058303536683,
+        "median_db": 10.307309592118479
+      },
+      {
+        "lambdas": [
+          0.0001,
+          0.01
+        ],
+        "folds": [
+          {
+            "held_out": "空场数据/data1",
+            "supp_db": 4.4331848020402544
+          },
+          {
+            "held_out": "空场数据/data2",
+            "supp_db": 3.1297986482591966
+          },
+          {
+            "held_out": "空场数据/data3",
+            "supp_db": 10.308138334446237
+          },
+          {
+            "held_out": "空场数据/data4",
+            "supp_db": 10.658973853952496
+          },
+          {
+            "held_out": "空场数据/data5",
+            "supp_db": 13.562722230523768
+          },
+          {
+            "held_out": "空场数据/data6",
+            "supp_db": 13.80439323432238
+          },
+          {
+            "held_out": "空场数据/data7",
+            "supp_db": 13.24392009524159
+          },
+          {
+            "held_out": "空场数据/data8",
+            "supp_db": 13.031534922819713
+          },
+          {
+            "held_out": "空场数据/data9",
+            "supp_db": 10.66537426793866
+          },
+          {
+            "held_out": "空场数据/data10",
+            "supp_db": 9.974379141485779
+          }
+        ],
+        "j_air_db": 12.227073385075176,
+        "min_db": 3.1297986482591966,
+        "median_db": 10.662174060945578
+      },
+      {
+        "lambdas": [
+          0.001,
+          0.0001
+        ],
+        "folds": [
+          {
+            "held_out": "空场数据/data1",
+            "supp_db": 4.146787586168123
+          },
+          {
+            "held_out": "空场数据/data2",
+            "supp_db": 2.9609311753947836
+          },
+          {
+            "held_out": "空场数据/data3",
+            "supp_db": 9.693359666682948
+          },
+          {
+            "held_out": "空场数据/data4",
+            "supp_db": 9.998514845809002
+          },
+          {
+            "held_out": "空场数据/data5",
+            "supp_db": 12.646106190906423
+          },
+          {
+            "held_out": "空场数据/data6",
+            "supp_db": 12.853078268402262
+          },
+          {
+            "held_out": "空场数据/data7",
+            "supp_db": 12.418153995896803
+          },
+          {
+            "held_out": "空场数据/data8",
+            "supp_db": 12.293098113263367
+          },
+          {
+            "held_out": "空场数据/data9",
+            "supp_db": 10.29382793276852
+          },
+          {
+            "held_out": "空场数据/data10",
+            "supp_db": 9.68990471290892
+          }
+        ],
+        "j_air_db": 11.626636976986152,
+        "min_db": 2.9609311753947836,
+        "median_db": 10.14617138928876
+      },
+      {
+        "lambdas": [
+          0.001,
+          0.001
+        ],
+        "folds": [
+          {
+            "held_out": "空场数据/data1",
+            "supp_db": 4.190326909421409
+          },
+          {
+            "held_out": "空场数据/data2",
+            "supp_db": 2.9844339994900797
+          },
+          {
+            "held_out": "空场数据/data3",
+            "supp_db": 9.886207484726471
+          },
+          {
+            "held_out": "空场数据/data4",
+            "supp_db": 10.203566491599005
+          },
+          {
+            "held_out": "空场数据/data5",
+            "supp_db": 12.881729940654502
+          },
+          {
+            "held_out": "空场数据/data6",
+            "supp_db": 13.096603459453032
+          },
+          {
+            "held_out": "空场数据/data7",
+            "supp_db": 12.6489575801014
+          },
+          {
+            "held_out": "空场数据/data8",
+            "supp_db": 12.488048065461083
+          },
+          {
+            "held_out": "空场数据/data9",
+            "supp_db": 10.39839711338937
+          },
+          {
+            "held_out": "空场数据/data10",
+            "supp_db": 9.773415492490399
+          }
+        ],
+        "j_air_db": 11.793198802239228,
+        "min_db": 2.9844339994900797,
+        "median_db": 10.300981802494189
+      },
+      {
+        "lambdas": [
+          0.001,
+          0.01
+        ],
+        "folds": [
+          {
+            "held_out": "空场数据/data1",
+            "supp_db": 4.431839605792014
+          },
+          {
+            "held_out": "空场数据/data2",
+            "supp_db": 3.1282325822531516
+          },
+          {
+            "held_out": "空场数据/data3",
+            "supp_db": 10.301670907726004
+          },
+          {
+            "held_out": "空场数据/data4",
+            "supp_db": 10.651945902639333
+          },
+          {
+            "held_out": "空场数据/data5",
+            "supp_db": 13.557227381593284
+          },
+          {
+            "held_out": "空场数据/data6",
+            "supp_db": 13.79909803531568
+          },
+          {
+            "held_out": "空场数据/data7",
+            "supp_db": 13.241534268778066
+          },
+          {
+            "held_out": "空场数据/data8",
+            "supp_db": 13.02928158146509
+          },
+          {
+            "held_out": "空场数据/data9",
+            "supp_db": 10.663359015396871
+          },
+          {
+            "held_out": "空场数据/data10",
+            "supp_db": 9.972355520393183
+          }
+        ],
+        "j_air_db": 12.221768750144678,
+        "min_db": 3.1282325822531516,
+        "median_db": 10.657652459018102
+      },
+      {
+        "lambdas": [
+          0.01,
+          0.0001
+        ],
+        "folds": [
+          {
+            "held_out": "空场数据/data1",
+            "supp_db": 4.097373541905499
+          },
+          {
+            "held_out": "空场数据/data2",
+            "supp_db": 2.9093637698452812
+          },
+          {
+            "held_out": "空场数据/data3",
+            "supp_db": 9.507887122671324
+          },
+          {
+            "held_out": "空场数据/data4",
+            "supp_db": 9.796590707030827
+          },
+          {
+            "held_out": "空场数据/data5",
+            "supp_db": 12.383158561404048
+          },
+          {
+            "held_out": "空场数据/data6",
+            "supp_db": 12.600049935802266
+          },
+          {
+            "held_out": "空场数据/data7",
+            "supp_db": 12.304830355672259
+          },
+          {
+            "held_out": "空场数据/data8",
+            "supp_db": 12.18602056664427
+          },
+          {
+            "held_out": "空场数据/data9",
+            "supp_db": 10.221725519769445
+          },
+          {
+            "held_out": "空场数据/data10",
+            "supp_db": 9.621995976813743
+          }
+        ],
+        "j_air_db": 11.463839998322777,
+        "min_db": 2.9093637698452812,
+        "median_db": 10.009158113400137
+      },
+      {
+        "lambdas": [
+          0.01,
+          0.001
+        ],
+        "folds": [
+          {
+            "held_out": "空场数据/data1",
+            "supp_db": 4.1675428866619075
+          },
+          {
+            "held_out": "空场数据/data2",
+            "supp_db": 2.963523003104264
+          },
+          {
+            "held_out": "空场数据/data3",
+            "supp_db": 9.74516781194917
+          },
+          {
+            "held_out": "空场数据/data4",
+            "supp_db": 10.050428348460851
+          },
+          {
+            "held_out": "空场数据/data5",
+            "supp_db": 12.795122624682644
+          },
+          {
+            "held_out": "空场数据/data6",
+            "supp_db": 13.004850837424337
+          },
+          {
+            "held_out": "空场数据/data7",
+            "supp_db": 12.584773209274738
+          },
+          {
+            "held_out": "空场数据/data8",
+            "supp_db": 12.427029181132399
+          },
+          {
+            "held_out": "空场数据/data9",
+            "supp_db": 10.351398441997315
+          },
+          {
+            "held_out": "空场数据/data10",
+            "supp_db": 9.728280770325835
+          }
+        ],
+        "j_air_db": 11.682674896781215,
+        "min_db": 2.963523003104264,
+        "median_db": 10.200913395229083
+      },
+      {
+        "lambdas": [
+          0.01,
+          0.01
+        ],
+        "folds": [
+          {
+            "held_out": "空场数据/data1",
+            "supp_db": 4.422438057782277
+          },
+          {
+            "held_out": "空场数据/data2",
+            "supp_db": 3.1171385448302735
+          },
+          {
+            "held_out": "空场数据/data3",
+            "supp_db": 10.227892733103939
+          },
+          {
+            "held_out": "空场数据/data4",
+            "supp_db": 10.571666147345422
+          },
+          {
+            "held_out": "空场数据/data5",
+            "supp_db": 13.528571334520095
+          },
+          {
+            "held_out": "空场数据/data6",
+            "supp_db": 13.770514241437999
+          },
+          {
+            "held_out": "空场数据/data7",
+            "supp_db": 13.217812445046315
+          },
+          {
+            "held_out": "空场数据/data8",
+            "supp_db": 13.007340821896598
+          },
+          {
+            "held_out": "空场数据/data9",
+            "supp_db": 10.643814613877796
+          },
+          {
+            "held_out": "空场数据/data10",
+            "supp_db": 9.952481270175422
+          }
+        ],
+        "j_air_db": 12.166309653026746,
+        "min_db": 3.1171385448302735,
+        "median_db": 10.60774038061161
+      }
+    ],
+    "selected": [
+      0.001,
+      0.001
+    ],
+    "switched": false,
+    "min_supp_db": 2.9844339994900797,
+    "median_supp_db": 10.300981802494189,
+    "j_air_default_db": 11.793198802239228,
+    "j_air_best_db": 12.227073385075176,
+    "eligibility": "hard_stop",
+    "switch_reason": "keep_default",
+    "tie_tolerance_db": 1e-06,
+    "near_tie": false,
+    "tied_candidates": [
+      {
+        "lambda_cal": 0.0001,
+        "lambda_inv": 0.01,
+        "J_air_db": 12.227073385075176
+      }
+    ],
+    "budget_pairs": 9
+  },
+  "air_loo_raw": {
+    "budget_pairs": 9,
+    "folds": 10,
+    "best": {
+      "lambda_cal": 0.0001,
+      "lambda_inv": 0.01,
+      "J_air_db": 12.227073385075176,
+      "min_supp_db": 3.1297986482591966,
+      "median_supp_db": 10.662174060945578,
+      "supp_db": [
+        4.4331848020402544,
+        3.1297986482591966,
+        10.308138334446237,
+        10.658973853952496,
+        13.562722230523768,
+        13.80439323432238,
+        13.24392009524159,
+        13.031534922819713,
+        10.66537426793866,
+        9.974379141485779
+      ]
+    },
+    "default": {
+      "lambda_cal": 0.001,
+      "lambda_inv": 0.001,
+      "J_air_db": 11.793198802239228,
+      "min_supp_db": 2.9844339994900797,
+      "median_supp_db": 10.300981802494189,
+      "supp_db": [
+        4.190326909421409,
+        2.9844339994900797,
+        9.886207484726471,
+        10.203566491599005,
+        12.881729940654502,
+        13.096603459453032,
+        12.6489575801014,
+        12.488048065461083,
+        10.39839711338937,
+        9.773415492490399
+      ]
+    },
+    "trigger_reason": "keep_default",
+    "tie_tolerance_db": 1e-06,
+    "near_tie": false,
+    "tied_candidates": [
+      {
+        "lambda_cal": 0.0001,
+        "lambda_inv": 0.01,
+        "J_air_db": 12.227073385075176
+      }
+    ]
+  },
+  "cal": {
+    "shifts_s": [
+      0.0,
+      1.4749999999999988e-11,
+      2.1197300000000001e-07,
+      2.1197275e-07,
+      7.2326425e-07,
+      7.232635000000001e-07,
+      3.4013875e-07,
+      3.401375e-07,
+      6.2538425e-07,
+      6.2538375e-07
+    ],
+    "lambda_cal": 0.001,
+    "lambda_inv": 0.001,
+    "eta_wall_default": 0.25,
+    "eta_candidates": [
+      0.25,
+      0.15,
+      0.35
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "E0-C/Wall-42cm",
+      "group_key": "墙体数据/data1-42cm",
+      "target_type": "wall",
+      "in_split": "wall_cal",
+      "peak_rule": "wall",
+      "d_hat_rule": "wall_first_peak",
+      "eta_wall": 0.25,
+      "eta_wall_candidates": [
+        {
+          "eta_wall": 0.25,
+          "d_hat_m": 0.4817999999999635,
+          "abs_err_cm": 6.179999999996349,
+          "pslr_db": 2.664330228102982,
+          "pnr_db": 34.29380923376331,
+          "eligible": false
+        },
+        {
+          "eta_wall": 0.15,
+          "d_hat_m": 0.4817999999999635,
+          "abs_err_cm": 6.179999999996349,
+          "pslr_db": 2.664330228102982,
+          "pnr_db": 34.29380923376331,
+          "eligible": false
+        },
+        {
+          "eta_wall": 0.35,
+          "d_hat_m": 0.4817999999999635,
+          "abs_err_cm": 6.179999999996349,
+          "pslr_db": 2.664330228102982,
+          "pnr_db": 34.29380923376331,
+          "eligible": false
+        }
+      ],
+      "d_true_cm_nominal": 42.0,
+      "d_hat_m": 0.4817999999999635,
+      "d_hat_cm": 48.17999999999635,
+      "abs_err_cm": 6.179999999996349,
+      "supp_dw_win_db": 3.268659668481082,
+      "pslr_db": 2.664330228102982,
+      "pnr_db": 34.29380923376331,
+      "echo_ret_db": 0.3644216400260546,
+      "bg_proxy": 18393037242.888958,
+      "valid_rx": 63,
+      "finite": true,
+      "dt0_samples": 2562.9280000000003,
+      "dw_window_samples": 2583,
+      "metric_grid": {
+        "tau_step_ns": 0.05,
+        "d_step_m": 0.0001,
+        "supp_window": "|wrap(tau-tau_dir)|<=1.0 ns on delivered tau grid",
+        "pnr_sample": "nearest delivered tau sample to 2*d_hat/c0",
+        "bg_window_ns": [
+          50.0,
+          950.0
+        ]
+      },
+      "gate_results": {
+        "abs_err_cm": {
+          "value": 6.179999999996349,
+          "eligible_max": 5.0,
+          "hard_stop_gt": 10.71,
+          "status": "gray",
+          "passed": false
+        },
+        "pslr_db": {
+          "value": 2.664330228102982,
+          "threshold": 3.0,
+          "status": "failed",
+          "passed": false
+        },
+        "pnr_db": {
+          "value": 34.29380923376331,
+          "threshold": 6.0,
+          "status": "passed",
+          "passed": true
+        },
+        "valid_rx": {
+          "value": 63,
+          "threshold": 63,
+          "status": "passed",
+          "passed": true
+        },
+        "finite": {
+          "value": true,
+          "status": "passed",
+          "passed": true
+        }
+      },
+      "freeze_status": "hard_stop"
+    },
+    {
+      "case_id": "E0-C/Metal-69cm",
+      "group_key": "金属板数据/data1-69cm",
+      "target_type": "metal",
+      "in_split": "metal_cal",
+      "peak_rule": "metal",
+      "d_hat_rule": "global_argmax",
+      "eta_wall": null,
+      "eta_wall_candidates": [],
+      "d_true_cm_nominal": 69.0,
+      "d_hat_m": 0.7336999999999357,
+      "d_hat_cm": 73.36999999999357,
+      "abs_err_cm": 4.3699999999935795,
+      "supp_dw_win_db": 4.185473074871163,
+      "pslr_db": 4.17257974985938,
+      "pnr_db": 35.42927899434393,
+      "echo_ret_db": -0.01280724598967567,
+      "bg_proxy": 41982779656.59266,
+      "valid_rx": 63,
+      "finite": true,
+      "dt0_samples": 958.4199999999998,
+      "dw_window_samples": 2583,
+      "metric_grid": {
+        "tau_step_ns": 0.05,
+        "d_step_m": 0.0001,
+        "supp_window": "|wrap(tau-tau_dir)|<=1.0 ns on delivered tau grid",
+        "pnr_sample": "nearest delivered tau sample to 2*d_hat/c0",
+        "bg_window_ns": [
+          50.0,
+          950.0
+        ]
+      },
+      "gate_results": {
+        "abs_err_cm": {
+          "value": 4.3699999999935795,
+          "eligible_max": 5.0,
+          "hard_stop_gt": 10.71,
+          "status": "passed",
+          "passed": true
+        },
+        "pslr_db": {
+          "value": 4.17257974985938,
+          "threshold": 3.0,
+          "status": "passed",
+          "passed": true
+        },
+        "pnr_db": {
+          "value": 35.42927899434393,
+          "threshold": 6.0,
+          "status": "passed",
+          "passed": true
+        },
+        "valid_rx": {
+          "value": 63,
+          "threshold": 63,
+          "status": "passed",
+          "passed": true
+        },
+        "finite": {
+          "value": true,
+          "status": "passed",
+          "passed": true
+        }
+      },
+      "freeze_status": "eligible"
+    }
+  ],
+  "preflight": {
+    "contract_version": "E0C-PREFLIGHT-2",
+    "preconditions_pass": true,
+    "summary": {
+      "total": 32,
+      "passed": 32,
+      "failed": 0,
+      "failed_ids": [],
+      "blocking_ids": [],
+      "elapsed_s": 0.327
+    },
+    "failed_ids": []
+  },
+  "data": {
+    "groups": [
+      {
+        "group_key": "空场数据/data1",
+        "role": "air",
+        "n_packets": 4,
+        "n_accepted": 4,
+        "valid_rx": 63,
+        "ref_channel_valid": true,
+        "sync_common": [
+          114,
+          115,
+          116,
+          117
+        ],
+        "sync_accepted": [
+          114,
+          115,
+          116,
+          117
+        ],
+        "anchor_sync": 115,
+        "files": [
+          {
+            "row": 0,
+            "file": "2026-11-12-15-40-36_16000_0.dat",
+            "size_bytes": 1024112,
+            "sha256": "984281dd7c721ca686cd631bb878e611d872d8fb68b0f6517d922e0023aa7e42"
+          },
+          {
+            "row": 1,
+            "file": "2026-11-12-15-40-36_16000_1.dat",
+            "size_bytes": 1024112,
+            "sha256": "ce3590b69e23c1badeeb8a363c35f9f6b9f3ab8480d472c481859251746a0940"
+          },
+          {
+            "row": 2,
+            "file": "2026-11-12-15-40-36_16000_2.dat",
+            "size_bytes": 1024112,
+            "sha256": "b34240a1d2616fb87d82b6941727021bbbb81a3e36b2796becac0aa89fa2fe1e"
+          },
+          {
+            "row": 3,
+            "file": "2026-11-12-15-40-36_16000_3.dat",
+            "size_bytes": 1024112,
+            "sha256": "9478b059614ce95d316777d4b32701690716060b62b1463d503874999ae76d11"
+          },
+          {
+            "row": 4,
+            "file": "2026-11-12-15-40-36_16000_4.dat",
+            "size_bytes": 1024112,
+            "sha256": "81db6f99258653187e60619880cd04b96e73c2f0cb898ba26bc7b1183d189e8b"
+          },
+          {
+            "row": 5,
+            "file": "2026-11-12-15-40-36_16000_5.dat",
+            "size_bytes": 1024112,
+            "sha256": "364a32910dc325b77639977e2b71cc9697346a6e781152f9a236c3f5715a0fa5"
+          },
+          {
+            "row": 6,
+            "file": "2026-11-12-15-40-36_16000_6.dat",
+            "size_bytes": 1024112,
+            "sha256": "875e53ce994200e10193443bf2787e992041529f5bd599189ae76cd7428a884f"
+          },
+          {
+            "row": 7,
+            "file": "2026-11-12-15-40-36_16000_7.dat",
+            "size_bytes": 1024112,
+            "sha256": "65b0b86585c7f306e7802a730804c454d704b1439f25bab747e27c2dea2791a7"
+          }
+        ],
+        "extremes": {
+          "neg_32768": 0,
+          "pos_32767": 0
+        }
+      },
+      {
+        "group_key": "空场数据/data2",
+        "role": "air",
+        "n_packets": 5,
+        "n_accepted": 5,
+        "valid_rx": 63,
+        "ref_channel_valid": true,
+        "sync_common": [
+          127,
+          128,
+          129,
+          130,
+          131
+        ],
+        "sync_accepted": [
+          127,
+          128,
+          129,
+          130,
+          131
+        ],
+        "anchor_sync": 130,
+        "files": [
+          {
+            "row": 0,
+            "file": "2026-11-12-15-41-01_16000_0.dat",
+            "size_bytes": 1280140,
+            "sha256": "7e1131b696403849d3a878f3e1f770b8533d16bca9a3b7c3a5c19cc122a31f1b"
+          },
+          {
+            "row": 1,
+            "file": "2026-11-12-15-41-01_16000_1.dat",
+            "size_bytes": 1280140,
+            "sha256": "dc0be35585ded00ccec0bf54a427c74c8724ee282711eee703d6a9be7fd95cdb"
+          },
+          {
+            "row": 2,
+            "file": "2026-11-12-15-41-01_16000_2.dat",
+            "size_bytes": 1280140,
+            "sha256": "2771fbdb08ed42a534c792729d172a43570e7d765df4aaa65ed7943243f13a37"
+          },
+          {
+            "row": 3,
+            "file": "2026-11-12-15-41-01_16000_3.dat",
+            "size_bytes": 1280140,
+            "sha256": "ea992dbfbdc13e2c59ce9cb57337a6f67dfc46113a3474371070a4ce4d9053dc"
+          },
+          {
+            "row": 4,
+            "file": "2026-11-12-15-41-01_16000_4.dat",
+            "size_bytes": 1280140,
+            "sha256": "da687a31fdb0c7ce0c756acbbbf17f69f022c3fc50ce8d4af4535e172cb6817a"
+          },
+          {
+            "row": 5,
+            "file": "2026-11-12-15-41-01_16000_5.dat",
+            "size_bytes": 1280140,
+            "sha256": "99f0e32feeaeb6e2734de33c2c5e3351ca7ddac74b407e2168c901d9c9cd6f08"
+          },
+          {
+            "row": 6,
+            "file": "2026-11-12-15-41-01_16000_6.dat",
+            "size_bytes": 1280140,
+            "sha256": "c102b7916dec447c2153f7778a722fdf67ab102ce09812dcf60013c534173e28"
+          },
+          {
+            "row": 7,
+            "file": "2026-11-12-15-41-01_16000_7.dat",
+            "size_bytes": 1280140,
+            "sha256": "6f7355213b9282c546be1a6895f318dd98b9fd7ae2e8c5395c0d1fa37544f6e7"
+          }
+        ],
+        "extremes": {
+          "neg_32768": 0,
+          "pos_32767": 0
+        }
+      },
+      {
+        "group_key": "空场数据/data3",
+        "role": "air",
+        "n_packets": 2,
+        "n_accepted": 2,
+        "valid_rx": 63,
+        "ref_channel_valid": true,
+        "sync_common": [
+          45,
+          46
+        ],
+        "sync_accepted": [
+          45,
+          46
+        ],
+        "anchor_sync": 45,
+        "files": [
+          {
+            "row": 0,
+            "file": "2026-11-12-15-44-00_16000_0.dat",
+            "size_bytes": 512056,
+            "sha256": "94cea670c2288e227a0aae902f17479dd126d810086bd7b429de21be7536fab1"
+          },
+          {
+            "row": 1,
+            "file": "2026-11-12-15-44-00_16000_1.dat",
+            "size_bytes": 512056,
+            "sha256": "7c7bc4a2ed86a3c99a1f937710725eefa0bcc683010a21e41247d81385270cc3"
+          },
+          {
+            "row": 2,
+            "file": "2026-11-12-15-44-00_16000_2.dat",
+            "size_bytes": 512056,
+            "sha256": "45bb58979ee3f6cbe9e8dab72febdfaa2a5dd173eba5bd0e750d8bc69081cd95"
+          },
+          {
+            "row": 3,
+            "file": "2026-11-12-15-44-00_16000_3.dat",
+            "size_bytes": 512056,
+            "sha256": "633f2575b23f6814508e26630a0467f2526c80c3b63f91a08d0ccb6aae3ec816"
+          },
+          {
+            "row": 4,
+            "file": "2026-11-12-15-44-00_16000_4.dat",
+            "size_bytes": 512056,
+            "sha256": "2a242c4192e60eee5b6a7ad747533c43610958d16763376b022baaf7bcaf06e1"
+          },
+          {
+            "row": 5,
+            "file": "2026-11-12-15-44-00_16000_5.dat",
+            "size_bytes": 512056,
+            "sha256": "588e9bfd128942f4b4933b7a50c5b28c18e5e7b088efe1de25c65b172f3adbcb"
+          },
+          {
+            "row": 6,
+            "file": "2026-11-12-15-44-00_16000_6.dat",
+            "size_bytes": 512056,
+            "sha256": "5d347beb3de3b9962deb44f422d8966b692742f59b896d65e69d9ad47e5da28e"
+          },
+          {
+            "row": 7,
+            "file": "2026-11-12-15-44-00_16000_7.dat",
+            "size_bytes": 512056,
+            "sha256": "15fde5c7b245f153a34e930455612481aafd214d0cb96950bd5c857f5bd0a0a0"
+          }
+        ],
+        "extremes": {
+          "neg_32768": 0,
+          "pos_32767": 0
+        }
+      },
+      {
+        "group_key": "空场数据/data4",
+        "role": "air",
+        "n_packets": 4,
+        "n_accepted": 4,
+        "valid_rx": 63,
+        "ref_channel_valid": true,
+        "sync_common": [
+          48,
+          49,
+          50,
+          51
+        ],
+        "sync_accepted": [
+          48,
+          49,
+          50,
+          51
+        ],
+        "anchor_sync": 49,
+        "files": [
+          {
+            "row": 0,
+            "file": "2026-11-12-15-44-07_16000_0.dat",
+            "size_bytes": 1024112,
+            "sha256": "d3c9085025d52308d3dbf6f739e535c88f8f86ee93bea864c1dfd824346a73cd"
+          },
+          {
+            "row": 1,
+            "file": "2026-11-12-15-44-07_16000_1.dat",
+            "size_bytes": 1024112,
+            "sha256": "ee4d05bd66113c4ab2dbb0622f44dac4811be3533482fe7ea74cfc84633c13c1"
+          },
+          {
+            "row": 2,
+            "file": "2026-11-12-15-44-07_16000_2.dat",
+            "size_bytes": 1024112,
+            "sha256": "778fbb912c681267c7723f8d3d21babb99610530bbe6c399ff99fbde90dad6b1"
+          },
+          {
+            "row": 3,
+            "file": "2026-11-12-15-44-07_16000_3.dat",
+            "size_bytes": 1024112,
+            "sha256": "71ae17cd9b1efa1bb595ff8b39425011e71bd2f9e34880d4f579a0d8c0b47ed3"
+          },
+          {
+            "row": 4,
+            "file": "2026-11-12-15-44-07_16000_4.dat",
+            "size_bytes": 1024112,
+            "sha256": "0f790bf3f1b177d4522868e02f113ad185def7b1600c47fdd05493e5a2ded5d8"
+          },
+          {
+            "row": 5,
+            "file": "2026-11-12-15-44-07_16000_5.dat",
+            "size_bytes": 1024112,
+            "sha256": "208adc107379c86b1b6798a112460f187c1223abaabd31506e89ed68671a1b7b"
+          },
+          {
+            "row": 6,
+            "file": "2026-11-12-15-44-07_16000_6.dat",
+            "size_bytes": 1024112,
+            "sha256": "80e6fec5e32efe0e46518d4480c375e56da7b60b6e2d93bfc181f66e00399c7c"
+          },
+          {
+            "row": 7,
+            "file": "2026-11-12-15-44-07_16000_7.dat",
+            "size_bytes": 1024112,
+            "sha256": "166e1ffdce0ba0e269994cff32412cf26d3c5ad3227261718ca47e8938fa8b3c"
+          }
+        ],
+        "extremes": {
+          "neg_32768": 0,
+          "pos_32767": 0
+        }
+      },
+      {
+        "group_key": "空场数据/data5",
+        "role": "air",
+        "n_packets": 3,
+        "n_accepted": 3,
+        "valid_rx": 63,
+        "ref_channel_valid": true,
+        "sync_common": [
+          37,
+          38,
+          39
+        ],
+        "sync_accepted": [
+          37,
+          38,
+          39
+        ],
+        "anchor_sync": 39,
+        "files": [
+          {
+            "row": 0,
+            "file": "2026-11-12-15-46-55_16000_0.dat",
+            "size_bytes": 768084,
+            "sha256": "57e063c5737fde7812cb6d69a87a40d7102e067fc5cbb3e56fb3582873b4224e"
+          },
+          {
+            "row": 1,
+            "file": "2026-11-12-15-46-55_16000_1.dat",
+            "size_bytes": 768084,
+            "sha256": "004ed847ffa1407821cd0b6402bbd988bf82a9ab75d29401f07adfa2ceddfc9e"
+          },
+          {
+            "row": 2,
+            "file": "2026-11-12-15-46-55_16000_2.dat",
+            "size_bytes": 768084,
+            "sha256": "5dc0029cd27b5bcc290859630bee3d2c94d4f5708890b70c8d39753ba132c567"
+          },
+          {
+            "row": 3,
+            "file": "2026-11-12-15-46-55_16000_3.dat",
+            "size_bytes": 768084,
+            "sha256": "7a84d705b4d0da0ecf2f64fe343cc0b98d4290e991e452c0b1bfd917ee3d6994"
+          },
+          {
+            "row": 4,
+            "file": "2026-11-12-15-46-55_16000_4.dat",
+            "size_bytes": 768084,
+            "sha256": "4076d9c853ac1f6e696c3f6e97772f7dc29c916c29d37f4b55fafba5e8b1c0f4"
+          },
+          {
+            "row": 5,
+            "file": "2026-11-12-15-46-55_16000_5.dat",
+            "size_bytes": 768084,
+            "sha256": "eb6656548b4efb6db3a88a27e7639557f603cfbc473de46ab3857928eef9a7c1"
+          },
+          {
+            "row": 6,
+            "file": "2026-11-12-15-46-55_16000_6.dat",
+            "size_bytes": 768084,
+            "sha256": "3cba4fa3b8a4fa42aeccb0ac6495bbfb929a3a87289495374f9b8c4244cc38ac"
+          },
+          {
+            "row": 7,
+            "file": "2026-11-12-15-46-55_16000_7.dat",
+            "size_bytes": 768084,
+            "sha256": "d37b60922a8c07142239e59131cfcca09e50b9316fcf06ea30fac7a4560fb657"
+          }
+        ],
+        "extremes": {
+          "neg_32768": 0,
+          "pos_32767": 0
+        }
+      },
+      {
+        "group_key": "空场数据/data6",
+        "role": "air",
+        "n_packets": 4,
+        "n_accepted": 4,
+        "valid_rx": 63,
+        "ref_channel_valid": true,
+        "sync_common": [
+          41,
+          42,
+          43,
+          44
+        ],
+        "sync_accepted": [
+          41,
+          42,
+          43,
+          44
+        ],
+        "anchor_sync": 43,
+        "files": [
+          {
+            "row": 0,
+            "file": "2026-11-12-15-47-03_16000_0.dat",
+            "size_bytes": 1024112,
+            "sha256": "e2d8d8122e1c35697f0bd9676a9fa3f3be917c51513277ea780c134e40854d37"
+          },
+          {
+            "row": 1,
+            "file": "2026-11-12-15-47-03_16000_1.dat",
+            "size_bytes": 1024112,
+            "sha256": "41c64414b6a946aeb4c6c86f49037d1da520c67fec9f1bc0e13b8e83124ee1fb"
+          },
+          {
+            "row": 2,
+            "file": "2026-11-12-15-47-03_16000_2.dat",
+            "size_bytes": 1024112,
+            "sha256": "c1cbdb998740845b2be67899f39499015a401a7f8315c4692cc985ec5b2b4248"
+          },
+          {
+            "row": 3,
+            "file": "2026-11-12-15-47-03_16000_3.dat",
+            "size_bytes": 1024112,
+            "sha256": "2f8d4ec96c7753d30298fe1cfbda9383c27785dbc1ce469682c2959958bcbb0f"
+          },
+          {
+            "row": 4,
+            "file": "2026-11-12-15-47-03_16000_4.dat",
+            "size_bytes": 1024112,
+            "sha256": "5e280cc5194c2e3bc519f88a878020909895132d0be7ae968e7265aa8413948c"
+          },
+          {
+            "row": 5,
+            "file": "2026-11-12-15-47-03_16000_5.dat",
+            "size_bytes": 1024112,
+            "sha256": "42724543c6eab8a0a466278880cd5321d69e10eedcf9defbf84d5adf5f03d89d"
+          },
+          {
+            "row": 6,
+            "file": "2026-11-12-15-47-03_16000_6.dat",
+            "size_bytes": 1024112,
+            "sha256": "ab531dcc25f6e54dc6be552f75e8160ade41d689aeed1d1256b2993f86bad765"
+          },
+          {
+            "row": 7,
+            "file": "2026-11-12-15-47-03_16000_7.dat",
+            "size_bytes": 1024112,
+            "sha256": "d6d538b59f965e310a9c29f4e591bc3e549f931314d877d7661fc64daa40d19f"
+          }
+        ],
+        "extremes": {
+          "neg_32768": 0,
+          "pos_32767": 0
+        }
+      },
+      {
+        "group_key": "空场数据/data7",
+        "role": "air",
+        "n_packets": 2,
+        "n_accepted": 2,
+        "valid_rx": 63,
+        "ref_channel_valid": true,
+        "sync_common": [
+          32,
+          33
+        ],
+        "sync_accepted": [
+          32,
+          33
+        ],
+        "anchor_sync": 32,
+        "files": [
+          {
+            "row": 0,
+            "file": "2026-11-12-15-49-03_16000_0.dat",
+            "size_bytes": 512056,
+            "sha256": "e3fd4f429c39ace38a247a0b73e40cd0d108b7be8706d7d874003466bc6b60de"
+          },
+          {
+            "row": 1,
+            "file": "2026-11-12-15-49-03_16000_1.dat",
+            "size_bytes": 512056,
+            "sha256": "c453f3d73bb07a957cd99eb5e78755ebb78e6b1ee9ea3fb4f1c861c388d1a377"
+          },
+          {
+            "row": 2,
+            "file": "2026-11-12-15-49-03_16000_2.dat",
+            "size_bytes": 512056,
+            "sha256": "c7f36593a3967080f088cf9e32a6bef4e40e1482028ab75bc4d92ca57bed3fa3"
+          },
+          {
+            "row": 3,
+            "file": "2026-11-12-15-49-03_16000_3.dat",
+            "size_bytes": 512056,
+            "sha256": "fee7de84165b80f5cea892b09fda981112f2e39b3d4e521877e6af82b9bbdb72"
+          },
+          {
+            "row": 4,
+            "file": "2026-11-12-15-49-03_16000_4.dat",
+            "size_bytes": 512056,
+            "sha256": "46e284be163f74aea687b6c452d368c011f4bae150fa6610cc1a4d599c30953e"
+          },
+          {
+            "row": 5,
+            "file": "2026-11-12-15-49-03_16000_5.dat",
+            "size_bytes": 512056,
+            "sha256": "58efb9d0345e38a589da50e3d244ab83f5a2db0688ac912b65ca96345b29d46c"
+          },
+          {
+            "row": 6,
+            "file": "2026-11-12-15-49-03_16000_6.dat",
+            "size_bytes": 512056,
+            "sha256": "ec0ec05b53fe80b8a56a9d81c8361e430f9f85bc7946f4e15261fa1b8b65cea0"
+          },
+          {
+            "row": 7,
+            "file": "2026-11-12-15-49-03_16000_7.dat",
+            "size_bytes": 512056,
+            "sha256": "464bbdc5ef8fe42886c52b319fa70077c6a8ab53830836bef8723ea226fc795d"
+          }
+        ],
+        "extremes": {
+          "neg_32768": 0,
+          "pos_32767": 0
+        }
+      },
+      {
+        "group_key": "空场数据/data8",
+        "role": "air",
+        "n_packets": 3,
+        "n_accepted": 3,
+        "valid_rx": 63,
+        "ref_channel_valid": true,
+        "sync_common": [
+          36,
+          37,
+          38
+        ],
+        "sync_accepted": [
+          36,
+          37,
+          38
+        ],
+        "anchor_sync": 36,
+        "files": [
+          {
+            "row": 0,
+            "file": "2026-11-12-15-49-11_16000_0.dat",
+            "size_bytes": 768084,
+            "sha256": "1fe61e13540431f87af3dae0b980d4ee48ca8e4b3d8bddd74beeea286ffe6c85"
+          },
+          {
+            "row": 1,
+            "file": "2026-11-12-15-49-11_16000_1.dat",
+            "size_bytes": 768084,
+            "sha256": "9f69aae1fe379180d630931fb4a70e27b8ddf5f4d0362db9facce49995493373"
+          },
+          {
+            "row": 2,
+            "file": "2026-11-12-15-49-11_16000_2.dat",
+            "size_bytes": 768084,
+            "sha256": "baceeaa18d975d0cec5ef7aacc7e88ccfbc38348fd0bb63dff9d2481003808e9"
+          },
+          {
+            "row": 3,
+            "file": "2026-11-12-15-49-11_16000_3.dat",
+            "size_bytes": 768084,
+            "sha256": "a8088c53efd0aca37fc5416f67aacae985d978562f669daf4b9fd19daed174de"
+          },
+          {
+            "row": 4,
+            "file": "2026-11-12-15-49-11_16000_4.dat",
+            "size_bytes": 768084,
+            "sha256": "c8c833339acb4423edde7ff30a3ccb59991c45e015dbb0c696ee888926b43efd"
+          },
+          {
+            "row": 5,
+            "file": "2026-11-12-15-49-11_16000_5.dat",
+            "size_bytes": 768084,
+            "sha256": "4d9583158eb679b22502b9fe4ed97cd8e597439a3612d052bf61923bc4c04cee"
+          },
+          {
+            "row": 6,
+            "file": "2026-11-12-15-49-11_16000_6.dat",
+            "size_bytes": 768084,
+            "sha256": "c4d8ee6f3fe1583b0abb69911bbe56f6708b4502f119f8895bb8ac74b938b0b5"
+          },
+          {
+            "row": 7,
+            "file": "2026-11-12-15-49-11_16000_7.dat",
+            "size_bytes": 768084,
+            "sha256": "e470a2ca4dbae5703ca068a3dd19aca7e9edddd7523ed95651a3ba9f08f39d68"
+          }
+        ],
+        "extremes": {
+          "neg_32768": 0,
+          "pos_32767": 0
+        }
+      },
+      {
+        "group_key": "空场数据/data9",
+        "role": "air",
+        "n_packets": 4,
+        "n_accepted": 4,
+        "valid_rx": 63,
+        "ref_channel_valid": true,
+        "sync_common": [
+          32,
+          33,
+          34,
+          35
+        ],
+        "sync_accepted": [
+          32,
+          33,
+          34,
+          35
+        ],
+        "anchor_sync": 34,
+        "files": [
+          {
+            "row": 0,
+            "file": "2026-11-12-15-51-20_16000_0.dat",
+            "size_bytes": 1024112,
+            "sha256": "29bcb42e9ddfa7e82fce97541c1abe9d323065c1bd2e94ed48752ee80fb7ab4f"
+          },
+          {
+            "row": 1,
+            "file": "2026-11-12-15-51-20_16000_1.dat",
+            "size_bytes": 1024112,
+            "sha256": "885fb168479de639728e49213705469143e67391dddd4b0e9b47a5ba8cbaf807"
+          },
+          {
+            "row": 2,
+            "file": "2026-11-12-15-51-20_16000_2.dat",
+            "size_bytes": 1024112,
+            "sha256": "1418185a5409f7166d624dfadd37858dc55236d9ab55841b32a9470e8d7aa39e"
+          },
+          {
+            "row": 3,
+            "file": "2026-11-12-15-51-20_16000_3.dat",
+            "size_bytes": 1024112,
+            "sha256": "a88f522edd4892a9d9c02787d70ab741471483af64c02af19fe56fa24e998e28"
+          },
+          {
+            "row": 4,
+            "file": "2026-11-12-15-51-20_16000_4.dat",
+            "size_bytes": 1024112,
+            "sha256": "75b8805430bdd9351e3dcee2b34fab18886301e46af0192a6530a57d52f104b7"
+          },
+          {
+            "row": 5,
+            "file": "2026-11-12-15-51-20_16000_5.dat",
+            "size_bytes": 1024112,
+            "sha256": "3e2931ac7fa398590edf909e38b1f727434b7a8b582135716b72de7d3438cc48"
+          },
+          {
+            "row": 6,
+            "file": "2026-11-12-15-51-20_16000_6.dat",
+            "size_bytes": 1024112,
+            "sha256": "abecfdf55855e35f152c16e57e2cfb3f8801856869f5b8fd89b917b89ac8255d"
+          },
+          {
+            "row": 7,
+            "file": "2026-11-12-15-51-20_16000_7.dat",
+            "size_bytes": 1024112,
+            "sha256": "597e8496d77fdbc8c8c2ba3c730c76d456e99a1ae6993f87dffbd819af421cd3"
+          }
+        ],
+        "extremes": {
+          "neg_32768": 0,
+          "pos_32767": 0
+        }
+      },
+      {
+        "group_key": "空场数据/data10",
+        "role": "air",
+        "n_packets": 6,
+        "n_accepted": 6,
+        "valid_rx": 63,
+        "ref_channel_valid": true,
+        "sync_common": [
+          37,
+          38,
+          39,
+          40,
+          41,
+          42
+        ],
+        "sync_accepted": [
+          37,
+          38,
+          39,
+          40,
+          41,
+          42
+        ],
+        "anchor_sync": 41,
+        "files": [
+          {
+            "row": 0,
+            "file": "2026-11-12-15-51-30_16000_0.dat",
+            "size_bytes": 1536168,
+            "sha256": "b6fb88a756a7f5a71209c97d1a8bcb435e6eaf7e75e1d6da00ac2dcf7a9ec383"
+          },
+          {
+            "row": 1,
+            "file": "2026-11-12-15-51-30_16000_1.dat",
+            "size_bytes": 1536168,
+            "sha256": "baf89bbd86b827d9c62bab86a22bc5747e8307419b8abda8246bc797f7fa8697"
+          },
+          {
+            "row": 2,
+            "file": "2026-11-12-15-51-30_16000_2.dat",
+            "size_bytes": 1536168,
+            "sha256": "5fb08a209e768cf0cb38963ba6998a980d44d62485cc6f81143766a56e4f19ab"
+          },
+          {
+            "row": 3,
+            "file": "2026-11-12-15-51-30_16000_3.dat",
+            "size_bytes": 1536168,
+            "sha256": "b22f9a68f7dd6a3d33dc6a29b4b79c96df3522bf7f4b42d81a2ef3e70b468457"
+          },
+          {
+            "row": 4,
+            "file": "2026-11-12-15-51-30_16000_4.dat",
+            "size_bytes": 1536168,
+            "sha256": "b87afd2f794a86362c0d4aebe2bfd332005aeea2e4cfe45b3540210a05bd34d4"
+          },
+          {
+            "row": 5,
+            "file": "2026-11-12-15-51-30_16000_5.dat",
+            "size_bytes": 1536168,
+            "sha256": "8e2e7678061dc98ca07fda7eac52e54196691bd3d241241dcede23a39c331828"
+          },
+          {
+            "row": 6,
+            "file": "2026-11-12-15-51-30_16000_6.dat",
+            "size_bytes": 1536168,
+            "sha256": "1f6301b4c11ada38913fc4f8657fa88f6621cae25320360208fbe15d9a10c740"
+          },
+          {
+            "row": 7,
+            "file": "2026-11-12-15-51-30_16000_7.dat",
+            "size_bytes": 1536168,
+            "sha256": "a808b806818577d9c3abef01ad64c10ffc545e324762231f3eb591d1ff975d1f"
+          }
+        ],
+        "extremes": {
+          "neg_32768": 0,
+          "pos_32767": 0
+        }
+      },
+      {
+        "group_key": "墙体数据/data1-42cm",
+        "role": "wall",
+        "n_packets": 3,
+        "n_accepted": 3,
+        "valid_rx": 63,
+        "ref_channel_valid": true,
+        "sync_common": [
+          79,
+          80,
+          81
+        ],
+        "sync_accepted": [
+          79,
+          80,
+          81
+        ],
+        "anchor_sync": 81,
+        "files": [
+          {
+            "row": 0,
+            "file": "2026-11-12-20-50-32_16000_0.dat",
+            "size_bytes": 768084,
+            "sha256": "cbf7d342801faa31b9511fc3ce692eca381e08b00bfc2a6700e2d285ff19443e"
+          },
+          {
+            "row": 1,
+            "file": "2026-11-12-20-50-32_16000_1.dat",
+            "size_bytes": 768084,
+            "sha256": "d5d7cc54e4b1de58cdfda4f38ca4941027c791659540a6836357c80caf31988a"
+          },
+          {
+            "row": 2,
+            "file": "2026-11-12-20-50-32_16000_2.dat",
+            "size_bytes": 768084,
+            "sha256": "be269323969a060c3d4098c843697c261d1cb21d8d60e153ab1f3f20ca19002d"
+          },
+          {
+            "row": 3,
+            "file": "2026-11-12-20-50-32_16000_3.dat",
+            "size_bytes": 768084,
+            "sha256": "46868664f723cb874468ac06acb37010176ad17ea443ec93bb06270c76c0f46f"
+          },
+          {
+            "row": 4,
+            "file": "2026-11-12-20-50-32_16000_4.dat",
+            "size_bytes": 768084,
+            "sha256": "32fa2c1818516907865813a854ebd96fd7c8a0dd1928790700928400392638a2"
+          },
+          {
+            "row": 5,
+            "file": "2026-11-12-20-50-32_16000_5.dat",
+            "size_bytes": 768084,
+            "sha256": "79f5a00e3593be6e66d45f63d97a3881beba9d2ef68462f2d488e721a8805027"
+          },
+          {
+            "row": 6,
+            "file": "2026-11-12-20-50-32_16000_6.dat",
+            "size_bytes": 768084,
+            "sha256": "ea96e81ec346a3b22b1d653c6a6b9f0025fc4ccd1c60317d02b6fef8cc548603"
+          },
+          {
+            "row": 7,
+            "file": "2026-11-12-20-50-32_16000_7.dat",
+            "size_bytes": 768084,
+            "sha256": "563032455fba1a87a7bece52ce68df8bb708515f62579167f724b2b2cb8a76ed"
+          }
+        ],
+        "extremes": {
+          "neg_32768": 0,
+          "pos_32767": 0
+        }
+      },
+      {
+        "group_key": "金属板数据/data1-69cm",
+        "role": "metal",
+        "n_packets": 3,
+        "n_accepted": 3,
+        "valid_rx": 63,
+        "ref_channel_valid": true,
+        "sync_common": [
+          522,
+          523,
+          524
+        ],
+        "sync_accepted": [
+          522,
+          523,
+          524
+        ],
+        "anchor_sync": 522,
+        "files": [
+          {
+            "row": 0,
+            "file": "2026-11-12-16-53-26_16000_0.dat",
+            "size_bytes": 768084,
+            "sha256": "551c0a0bf41f066aee0b3919caacd12231ef0bf0ca80b55afc96bcae5b71a46d"
+          },
+          {
+            "row": 1,
+            "file": "2026-11-12-16-53-26_16000_1.dat",
+            "size_bytes": 768084,
+            "sha256": "dae06953e0ea91646387a9a61c3fc3ab50ab6e1aea81407f723d84eab337eaa2"
+          },
+          {
+            "row": 2,
+            "file": "2026-11-12-16-53-26_16000_2.dat",
+            "size_bytes": 768084,
+            "sha256": "c839ae842e333b8e10ed88b2e584ffe06acbf81c30f65d29d4fc23a87e905f20"
+          },
+          {
+            "row": 3,
+            "file": "2026-11-12-16-53-26_16000_3.dat",
+            "size_bytes": 768084,
+            "sha256": "7838658f40d38dacf191bd5e6f9f0a044e961df2f1bd6045e4ac4f114376ca41"
+          },
+          {
+            "row": 4,
+            "file": "2026-11-12-16-53-26_16000_4.dat",
+            "size_bytes": 768084,
+            "sha256": "bafda30268b2b7490db61e88726df1d1c615e5e42820c07fb2d3051e1d0667c2"
+          },
+          {
+            "row": 5,
+            "file": "2026-11-12-16-53-26_16000_5.dat",
+            "size_bytes": 768084,
+            "sha256": "26e38d655a26d15c47499c857c52b10e356d33a06bd5a93f09142465d5f75eb0"
+          },
+          {
+            "row": 6,
+            "file": "2026-11-12-16-53-26_16000_6.dat",
+            "size_bytes": 768084,
+            "sha256": "00e624caa1eacee210d4c17758a3eb4a14845da6713215f28a99b67df3d07b18"
+          },
+          {
+            "row": 7,
+            "file": "2026-11-12-16-53-26_16000_7.dat",
+            "size_bytes": 768084,
+            "sha256": "440057d72790c7ca1c5e75c45ff9110324a8e94583467969cb9c95b7a6c3d4e2"
+          }
+        ],
+        "extremes": {
+          "neg_32768": 0,
+          "pos_32767": 0
+        }
+      }
+    ],
+    "opened_files": 96,
+    "path_guard": {
+      "rule": "lexical_parent -> lstat_no_reparse -> realpath_within_group_and_root",
+      "applied_before": [
+        "stat",
+        "open"
+      ],
+      "guarded_files": 96,
+      "rejections": [],
+      "data_root_real": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题"
+    }
+  },
+  "partial": null,
+  "git": {
+    "head_sha": "4cb44a0d59bfc8999187f40efe57318d70a033b7",
+    "parent_sha": "5ad8417b677ec727dc77ec0b5f12d00e4efe41f1",
+    "branch": "data/a-q1-e0-c-interface",
+    "origin_main_sha": "3b8b67e58156b9618c788ec8e114e50d960bbb0d",
+    "working_tree_clean": true
+  },
+  "stop_detail": null,
+  "arrays_file": "e0c_arrays.npz",
+  "arrays_sha256": "03084cffe041900d6a9aa82b5492e6fb64474d971c37e0560adbd115ce4962ff",
+  "arrays_file_sha256": "03084cffe041900d6a9aa82b5492e6fb64474d971c37e0560adbd115ce4962ff",
+  "repeat_run": {
+    "arrays_sha256": "03084cffe041900d6a9aa82b5492e6fb64474d971c37e0560adbd115ce4962ff",
+    "arrays_sha256_second_serialization": "03084cffe041900d6a9aa82b5492e6fb64474d971c37e0560adbd115ce4962ff",
+    "metrics_sha256": "1cce102f1513aff209c6ef095e3f7fea46dc3e5367db5926a040a8fd3ea90dd7",
+    "metrics_recomputed_from_delivered_arrays": true,
+    "note": "两次独立序列化逐字节一致；指标已由交付数组按 E0-PREREG-3 §5 重算核对"
+  },
+  "air_loo_file": "e0c_air_loo.json",
+  "air_loo_file_sha256": "dc31ffdd9d043f134305c2617d89d282102114717f80a474b6f9790534969a27",
+  "files_sha256": {
+    "e0c_arrays.npz": "03084cffe041900d6a9aa82b5492e6fb64474d971c37e0560adbd115ce4962ff",
+    "e0c_air_loo.json": "dc31ffdd9d043f134305c2617d89d282102114717f80a474b6f9790534969a27",
+    "run.log": "7582d77080cb9877176e449b4d962eb0afc8d0b2f6c84ada127b90054aa65140"
+  },
+  "files_sha256_note": "本表不含 e0c_results.json 自身；其摘要见 SHA256SUMS.txt"
+}

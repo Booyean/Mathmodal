@@ -1,0 +1,16 @@
+contract_version=E0-C-1
+preflight preconditions_pass=True
+loaded 空场数据/data1: packets=4 accepted=4 valid_rx=63
+loaded 空场数据/data2: packets=5 accepted=5 valid_rx=63
+loaded 空场数据/data3: packets=2 accepted=2 valid_rx=63
+loaded 空场数据/data4: packets=4 accepted=4 valid_rx=63
+loaded 空场数据/data5: packets=3 accepted=3 valid_rx=63
+loaded 空场数据/data6: packets=4 accepted=4 valid_rx=63
+loaded 空场数据/data7: packets=2 accepted=2 valid_rx=63
+loaded 空场数据/data8: packets=3 accepted=3 valid_rx=63
+loaded 空场数据/data9: packets=4 accepted=4 valid_rx=63
+loaded 空场数据/data10: packets=6 accepted=6 valid_rx=63
+loaded 墙体数据/data1-42cm: packets=3 accepted=3 valid_rx=63
+loaded 金属板数据/data1-69cm: packets=3 accepted=3 valid_rx=63
+air LOO: selected (1e-03, 1e-03) triggered=False reason=keep_default min=2.9844 dB median=10.3010 dB
+wall eta candidates: 0.25(err=6.180cm), 0.15(err=6.180cm), 0.35(err=6.180cm) -> selected 0.25
