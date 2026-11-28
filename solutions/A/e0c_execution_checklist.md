@@ -297,6 +297,7 @@ python solutions/A/a_e0_c.py --mode execute `
 | B-09 | R0 清单“总体 SHA256”的算法说明 | `recon/README.md` 写“按相对路径排序”，但实测只有按 **CSV 行序** 才能复现 `86305548…`；本清单自检按可复现行序实现，建议统筹安排一次文档更正（不改数据、不重算锚点） |
 | B-10 | 冻结拆分的裸组名有跨数据集同名 | `data14-48cm` 同时出现在 `wall_test` 与 `metal_test`（分别是墙体与金属板的两个物理组）；按数据集限定后四折 40 组互斥。自检已按 `墙体数据/…`、`金属板数据/…` 限定，建议拆分说明补一句“组名以数据集限定” |
 | B-11 | “16 组未触碰”的口径 | 20 个检验组减去 E0-T 的 2 组后剩 **18** 组；其中 2 组外推（`墙体121cm`、`金属99cm`）、**16** 组内插。`config.json#untouched_remaining_holdout_groups_count=16` 取的是内插口径，字段名未区分。执行时按“18 组一律不读”执行 |
+| B-12 | 硬停后仍生成目标结果的代码路径 | **已单独交付（`E0-C-POSTSTOP-1`）**：`solutions/A/a_e0_poststop.py` 只读归档硬停包，重算两组目标 `Supp/PSLR/PNR/d_hat/abs_err` 并写 `citable=false` 的独立产物；只接受 `hard_stop`、无 frozen、12 组白名单，混入 E0-T/留出组即拒绝。`b63e217` 实测两目标 `Δ=0`（`d_hat 0.481800/0.733700 m`、`PSLR 2.664/4.173 dB`），产物在 `experiments/A/A-Q1-E0/e0c/poststop/`。**这些数值不得作为结果引用** |
 
 ---
 
