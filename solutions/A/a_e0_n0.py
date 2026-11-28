@@ -59,7 +59,6 @@ import hashlib
 import json
 import math
 import sys
-import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -634,7 +633,6 @@ def solve_coefficients(
         raise N0Stop("S4", "窗内 Gram 非正定（det=%.3g）" % det)
     a = (A22 * Stx - A12 * Sdx) / det
     b = (A11 * Sdx - np.conj(A12) * Stx) / det
-    e_t = float(abs(a) ** 2) * float(stats["A11"].real)
     e_d = float(abs(b) ** 2) * float(stats["A22"].real)
     # 相对“秩 1 拟合后残余”的能量占比：直接回答“第二模态是否真的多扣了东西”。
     e1_resid = float(stats["Exx"].real) - float(abs(Stx) ** 2) / max(A11, 1e-300)
@@ -845,8 +843,6 @@ def evaluate_target(
     )
     pnr = A.pnr_from_z(z_tgt, np.array([tau_tgt * 1e9]), d_hat_a, setup.c0, bg)
 
-    k_b = int(np.argmin(np.abs(d_grid - d_hat_b)))
-    k_a = int(np.argmin(np.abs(d_grid - d_hat_a)))
     d_true_m = float(d_true_cm) * 1e-2
     # P4 用**注入真值邻域的 0.1 mm 细网格**单独评：粗搜索网格（1 mm）不足以判
     # “测距偏移 ≤2 mm”，且未扣除前的主峰可能落在近场直射残余上。
