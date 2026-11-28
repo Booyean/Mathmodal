@@ -80,3 +80,12 @@ C1–C8 PASS，C9 FAIL（正是上面两个目标组门控），C10–C15 PASS
 | `e0c_arrays.npz` | 交付数组（`air_loo__p_cal/p_sup (9,10,63)`、`p_air_loo`、`h_rel`、`S_eff`、压缩剖面等） |
 | `e0c_air_loo.json` | 10 折 × 9 组 LOO 明细 |
 | `run.log` / `SHA256SUMS.txt` | 日志与产物摘要（`e0c_results.json` 自身摘要只在 `SHA256SUMS.txt`） |
+
+## 7. 补记：PR #33 复核口径（2026-11-28，codex 裁定后）
+
+- **C12 按新契约不再成立**：本包按旧口径（`metrics_sha256` 一致）登记，两次运行实际落在**同一进程**，第二次是二次序列化而非独立进程，故在 `E0-C-C12-REPEAT-1` 下判 **C12 FAIL**。
+- **C9 同时 FAIL**：墙体 `PSLR = 2.6643 dB < 3.0 dB`，空场 `min(Supp_air-LOO) = 2.9844 dB < 6.0 dB`。
+- **历史判定保持 FAIL（C9、C12）**，本补记不改变任何原始结果。
+- **原始产物全部保留**：`e0c_results.json`、`e0c_arrays.npz`、`e0c_air_loo.json`、`run.log`、`SHA256SUMS.txt` 原样保留，不覆盖、不改写。
+- C12 证据形态的修订在 `data/a-q1-e0-c-interface`（`9ee2adc`）另行提交，只改执行/编排/落盘层（`run_execute` 两个独立子进程 + 外置 `e0c_repeat.json`），`solve_bundle` 等数值内核逐字不变。
+- `E0-C` 仍为硬停止，`E0-T` 未放行。
