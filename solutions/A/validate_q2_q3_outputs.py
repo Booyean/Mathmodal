@@ -7,6 +7,8 @@ import argparse
 import hashlib
 import json
 import math
+import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -28,9 +30,101 @@ REQUIRED_UPSTREAM_KEYS = (
     "groups_used",
     "anomaly_isolation",
     "arrays_sha256",
+    "arrays_sha256_scope",
+    "provenance",
     "finite",
     "status",
 )
+
+_HEX40 = re.compile(r"^[0-9a-f]{40}$")
+
+
+def _validate_generation_provenance(results: dict[str, Any], contract_sha256: str) -> None:
+    phase = results["phase"]
+    sha = str(results["implementation_sha"])
+    if not _HEX40.fullmatch(sha):
+        raise AssertionError(f"{phase}: implementation_sha must be a full 40-char lowercase hex SHA, got {sha!r}")
+    prov = results["provenance"]
+    if not isinstance(prov, dict):
+        raise AssertionError(f"{phase}.provenance must be a dict")
+    if prov.get("implementation_sha") != sha:
+        raise AssertionError(f"{phase}.provenance.implementation_sha != implementation_sha")
+    if prov.get("implementation_sha_kind") != "generation_code_commit":
+        raise AssertionError(f"{phase}.provenance.implementation_sha_kind must be generation_code_commit")
+    if not isinstance(prov.get("git_dirty"), bool):
+        raise AssertionError(f"{phase}.provenance.git_dirty must be a bool")
+    if prov.get("applies_to_phase") != phase:
+        raise AssertionError(f"{phase}.provenance.applies_to_phase mismatch")
+    generated_at = str(prov.get("generated_at", ""))
+    try:
+        stamp = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise AssertionError(f"{phase}.provenance.generated_at is not ISO-8601: {generated_at!r}") from exc
+    if stamp.tzinfo is None:
+        raise AssertionError(f"{phase}.provenance.generated_at must carry a UTC/offset timezone")
+    if stamp.astimezone(timezone.utc).isoformat() == "":
+        raise AssertionError(f"{phase}.provenance.generated_at invalid")
+    if "run_q2_q3_synthetic.py" not in str(prov.get("command", "")):
+        raise AssertionError(f"{phase}.provenance.command must name run_q2_q3_synthetic.py")
+    if prov.get("generator_script") != "solutions/A/run_q2_q3_synthetic.py":
+        raise AssertionError(f"{phase}.provenance.generator_script mismatch")
+    if not str(prov.get("preset", "")):
+        raise AssertionError(f"{phase}.provenance.preset must be non-empty")
+    if prov.get("contract_sha256") != contract_sha256:
+        raise AssertionError(f"{phase}.provenance.contract_sha256 does not match the delivered contract")
+    env = prov.get("environment")
+    if not isinstance(env, dict):
+        raise AssertionError(f"{phase}.provenance.environment must be a dict")
+    for env_key in ("python", "numpy", "platform", "byte_order"):
+        if not str(env.get(env_key, "")):
+            raise AssertionError(f"{phase}.provenance.environment missing {env_key!r}")
+    fixture = prov.get("input_fixture")
+    if not isinstance(fixture, dict) or fixture.get("real_dat_files_read") != 0:
+        raise AssertionError(f"{phase}.provenance.input_fixture must declare real_dat_files_read=0")
+
+
+def _validate_arrays_scope(results: dict[str, Any], arrays: dict[str, np.ndarray]) -> None:
+    phase = results["phase"]
+    scope = results["arrays_sha256_scope"]
+    if not isinstance(scope, dict):
+        raise AssertionError(f"{phase}.arrays_sha256_scope must be a dict")
+    if scope.get("algorithm") != "sha256":
+        raise AssertionError(f"{phase}.arrays_sha256_scope.algorithm must be sha256")
+    covered = list(scope.get("covered_arrays", []))
+    if covered != sorted(arrays.keys()):
+        raise AssertionError(
+            f"{phase}.arrays_sha256_scope.covered_arrays {covered} != actual NPZ arrays {sorted(arrays.keys())}"
+        )
+    if int(scope.get("array_count", -1)) != len(covered):
+        raise AssertionError(f"{phase}.arrays_sha256_scope.array_count mismatch")
+    for key in ("aggregate_definition", "per_array_definition", "covers", "cross_run_policy", "file_level_ledger"):
+        if not str(scope.get(key, "")):
+            raise AssertionError(f"{phase}.arrays_sha256_scope missing {key!r}")
+    if not isinstance(scope.get("excludes"), list) or not scope["excludes"]:
+        raise AssertionError(f"{phase}.arrays_sha256_scope.excludes must be a non-empty list")
+
+
+def _validate_anomaly_provenance(results: dict[str, Any]) -> None:
+    phase = results["phase"]
+    anomaly = results["anomaly_isolation"]
+    if not isinstance(anomaly, dict):
+        raise AssertionError(f"{phase}.anomaly_isolation must be a dict")
+    provenance = anomaly.get("provenance")
+    if not isinstance(provenance, dict):
+        raise AssertionError(f"{phase}.anomaly_isolation.provenance must be a dict")
+    for stat in anomaly:
+        if stat == "provenance":
+            continue
+        entry = provenance.get(stat)
+        if not isinstance(entry, dict):
+            raise AssertionError(f"{phase}.anomaly_isolation.provenance missing entry for {stat!r}")
+        for field in ("source_path", "field", "derivation"):
+            if not str(entry.get(field, "")).strip():
+                raise AssertionError(
+                    f"{phase}.anomaly_isolation.provenance[{stat!r}] missing non-empty {field!r}"
+                )
+    if phase == "Q3-Metal" and isinstance(anomaly.get("group8_sync_common"), bool):
+        raise AssertionError(f"{phase}.anomaly_isolation.group8_sync_common must be a numeric count or status dict")
 
 
 def _lookup_dotted(obj: dict[str, Any], key: str) -> Any:
@@ -58,6 +152,7 @@ def _validate_single_contract(
     expected_phase: str,
     energy_prefixes: tuple[str, ...],
     allowed_statuses: set[str],
+    contract_sha256: str,
 ) -> None:
     for up_key in REQUIRED_UPSTREAM_KEYS:
         if up_key not in results:
@@ -70,6 +165,10 @@ def _validate_single_contract(
         raise AssertionError(f"{expected_phase}: real_dat_files_read must be 0")
     if not bool(results["finite"]):
         raise AssertionError(f"{expected_phase}: finite flag is False")
+
+    _validate_generation_provenance(results, contract_sha256)
+    _validate_arrays_scope(results, arrays)
+    _validate_anomaly_provenance(results)
 
     if not all_arrays_finite_and_valid(arrays, energy_prefixes):
         raise AssertionError(f"{expected_phase}: non-finite array or negative energy detected")
@@ -160,7 +259,14 @@ def validate_output_dir(out_dir: Path, contract_path: Path = CONTRACT_JSON_PATH)
 
     loaded_results: dict[str, dict[str, Any]] = {}
     loaded_arrays: dict[str, dict[str, np.ndarray]] = {}
-    allowed_statuses = set(schema["unit_conventions"]["runtime_status_enum"])
+    status_enum = schema.get("status_enum")
+    if not isinstance(status_enum, list) or not status_enum:
+        raise AssertionError("contract must declare a non-empty top-level status_enum")
+    runtime_enum = schema["unit_conventions"]["runtime_status_enum"]
+    if set(status_enum) != set(runtime_enum):
+        raise AssertionError("contract status_enum and unit_conventions.runtime_status_enum disagree")
+    allowed_statuses = set(status_enum)
+    contract_sha256 = hashlib.sha256(contract_path.read_bytes()).hexdigest()
 
     for contract_key, (phase, json_name, npz_name, prefixes) in bundles.items():
         json_path = out_dir / json_name
@@ -170,7 +276,9 @@ def validate_output_dir(out_dir: Path, contract_path: Path = CONTRACT_JSON_PATH)
         res = json.loads(json_path.read_text(encoding="utf-8"))
         with np.load(npz_path, allow_pickle=False) as npz:
             arrs = {k: npz[k] for k in npz.files}
-        _validate_single_contract(schema[contract_key], res, arrs, phase, prefixes, allowed_statuses)
+        _validate_single_contract(
+            schema[contract_key], res, arrs, phase, prefixes, allowed_statuses, contract_sha256
+        )
         loaded_results[contract_key] = res
         loaded_arrays[contract_key] = arrs
 

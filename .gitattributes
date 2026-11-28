@@ -1,2 +1,5 @@
 /竞赛题目/** -text
 *.md text eol=lf
+experiments/A/A-Q2Q3-SYN/results/*.json text eol=lf
+experiments/A/A-Q2Q3-SYN/results/SHA256SUMS.txt text eol=lf
+experiments/A/A-Q2Q3-SYN/results/*.npz binary

@@ -23,7 +23,7 @@
      - `C_B/A`（早先清单写法）$\equiv \Delta_{\text{B/A}}$（[model_q2.md](../../solutions/A/model_q2.md) §3.2 记号）$\leftrightarrow$ JSON 字段 `delta_ba_db`；
      - `C_B/bg`（早先清单写法）$\equiv \text{PBR}_B$（[model_q2.md](../../solutions/A/model_q2.md) §3.2 记号）$\leftrightarrow$ JSON 字段 `pbr_b_db`。
 2. **上游冻结契约继承字段（Q2 与 Q3 结果 JSON 顶层必含）**：
-   - `phase`（`"Q2"` / `"Q3-Wall"` / `"Q3-Metal"`）、`implementation_sha`、`main_commit`、`q1_frozen_config_path`、`q1_frozen_config_sha256`、`d0_contract_version`（`"D0-4"`）、`d1_contract_version`（`"D1-2"`）、`groups_used[]`、`anomaly_isolation{}`、`arrays_sha256`、`finite`（全有限布尔门控）、`status`（枚举：`["contract_only", "synthetic_baseline_only", "empirical_pending_acceptance", "empirical_accepted", "hard_stop"]`）。
+   - `phase`（`"Q2"` / `"Q3-Wall"` / `"Q3-Metal"`）、`implementation_sha`（40 位完整生成提交 SHA）、`main_commit`、`q1_frozen_config_path`、`q1_frozen_config_sha256`、`d0_contract_version`（`"D0-4"`）、`d1_contract_version`（`"D1-2"`）、`groups_used[]`、`anomaly_isolation{}`、`arrays_sha256`、`arrays_sha256_scope`（摘要范围，见 §4.1）、`provenance`（生成版本/时间/命令/环境，见 §4.1）、`finite`（全有限布尔门控）、`status`（枚举见契约顶层 `status_enum`；当前合成基线为 `synthetic_baseline_only`）。
 
 ---
 
@@ -106,6 +106,13 @@
 ---
 
 ## 四、机器可读契约与核查命令
+
+### 4.1 生成溯源、状态枚举与摘要范围（G6 / G7 / G11）
+
+- **状态枚举（G7）**：契约顶层 `status_enum` 固定为 `["contract_only", "synthetic_baseline_only", "empirical_pending_acceptance", "empirical_accepted", "hard_stop"]`，并与 `unit_conventions.runtime_status_enum` 保持同集合；三份结果 JSON 的 `status` 必须落在枚举内，当前合成基线为 `synthetic_baseline_only`。
+- **生成版本（G7）**：`implementation_sha` 为 40 位完整生成提交 SHA（非短 SHA、非旧提交）。`provenance` 同时记录 `implementation_sha_kind="generation_code_commit"`、`git_dirty`（在写产物前采样）、`generated_at`（UTC ISO-8601）、`command`（不含机器绝对路径的复跑命令）、`environment.{python,numpy,platform,byte_order}`、`contract_sha256` 与 `input_fixture`。核对时 `provenance.implementation_sha == implementation_sha`，且 `contract_sha256` 必须等于交付契约字节的 SHA256。
+- **异常统计来源（G6）**：`anomaly_isolation.provenance` 为每个统计项给出 `{source_path, field, derivation}`；第 8 组 `group8_sync_common` 的来源固定为 `synthetic_scene#j_p_common[7]` 的 `j_p_common[7]`，合成夹具未覆盖项显式保留 `not_covered_by_synthetic_fixture`，不得作为实测计数或实测结论。
+- **摘要范围（G11）**：`arrays_sha256_scope` 声明 `arrays_sha256` 只覆盖本 bundle NPZ 的**全部数组**（逐数组 `dtype + shape + C 连续原始值字节`，再对 `{数组名: 摘要}` 的 canonical JSON 取 SHA256），明确**不含** JSON 标量、`SHA256SUMS.txt`、NPZ ZIP 头与压缩元数据；跨运行或跨实现比较按数值 `rtol=1e-9`，字节级 `SHA256SUMS.txt` 只是单次运行的台账，不承诺跨环境逐字节一致。
 
 同目录及方案目录配套以下可验证交付件：
 - 机器可读 JSON Schema 对照清单：[solutions/A/q2_q3_output_contract.json](../../solutions/A/q2_q3_output_contract.json)

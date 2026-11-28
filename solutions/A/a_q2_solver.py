@@ -233,6 +233,7 @@ def solve_q2_synthetic(
     dy_m: float = 0.01,
     alpha_grid: tuple[float, ...] = (0.0, 0.04, 0.08, 0.12, 0.14, 0.20),
     beta: float = 1.0,
+    provenance: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, np.ndarray]]:
     """Run complete Q2 2D synthetic solver and return contract-compliant (results_json, arrays_dict)."""
     nx = int(round((1.40 - (-0.20)) / dx_m)) + 1
@@ -307,6 +308,7 @@ def solve_q2_synthetic(
         groups_used=scene["j_group_ids"].tolist(),
         anomaly=anomaly,
         energy_prefixes=("image_",),
+        provenance=provenance,
     )
 
     results = {

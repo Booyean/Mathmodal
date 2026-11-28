@@ -1,5 +1,12 @@
 {
   "schema_version": 1,
+  "status_enum": [
+    "contract_only",
+    "synthetic_baseline_only",
+    "empirical_pending_acceptance",
+    "empirical_accepted",
+    "hard_stop"
+  ],
   "contract_id": "A-Q2Q3-OUTPUT-FIGURE-CONTRACT",
   "base_commit": "40c637e066616d9e108f1cbf9d84e0ee33d61167",
   "status": "contract_only_empirical_slots_tbd",
@@ -56,7 +63,9 @@
       "metrics_after_gain_env": {"type": "dict[float]", "unit": "dB and %", "keys": ["delta_ba_db", "pbr_b_db", "pslr_b_db", "b_coverage_pct"]},
       "wall_a_apparent": {"type": "dict[float]", "unit": "m and deg", "keys": ["x_min_m", "x_max_m", "y_start_m", "y_end_m", "slope_dy_dx", "tilt_deg", "fit_r2"]},
       "wall_b_apparent": {"type": "dict", "unit": "m, deg, dimensionless", "keys": ["air_x_ranges_m", "air_y_mean_m", "air_tilt_deg", "behind_a_x_range_m", "behind_a_y_mean_m", "delta_y_app_m", "eps_r_diag"]},
-      "row_consistency": {"type": "dict[float]", "unit": "m and cm", "keys": ["row_3_wall_b_y_m", "row_4_wall_b_y_m", "row_5_wall_b_y_m", "max_row_diff_cm"]}
+      "row_consistency": {"type": "dict[float]", "unit": "m and cm", "keys": ["row_3_wall_b_y_m", "row_4_wall_b_y_m", "row_5_wall_b_y_m", "max_row_diff_cm"]},
+      "provenance": {"type": "dict", "unit": "metadata (no physics unit)", "keys": ["implementation_sha", "implementation_sha_kind", "git_dirty", "git_branch", "generated_at", "command", "generator_script", "preset", "contract_path", "contract_sha256", "environment", "input_fixture", "applies_to_phase"]},
+      "arrays_sha256_scope": {"type": "dict", "unit": "metadata (no physics unit)", "keys": ["algorithm", "aggregate_definition", "per_array_definition", "covers", "covered_arrays", "array_count", "includes", "excludes", "dtype_byte_order", "cross_run_policy", "file_level_ledger"]}
     },
     "npz_arrays": {
       "x_grid_m": {"shape": ["N_x"], "dtype": "float64", "unit": "m"},
@@ -81,7 +90,9 @@
       "slice_z4_spec": {"type": "dict", "unit": "m, index, weight", "keys": ["target_z_m", "extraction_rule", "on_grid", "z_low_idx", "z_high_idx", "z_low_m", "z_high_m", "weight_high"]},
       "wall_a_3d": {"type": "dict", "unit": "m and deg", "keys": ["x_span_m", "y_front_mean_m", "y_front_range_m", "z_envelope_m", "tilt_deg"]},
       "wall_b_3d": {"type": "dict", "unit": "m, cm, dB", "keys": ["air_y_mean_m", "behind_a_y_mean_m", "z_consistency_cm", "pbr_b_coh_db", "pbr_b_env_db"]},
-      "q2_q3_reconciliation": {"type": "dict", "unit": "m, cm, bool", "keys": ["z_slice_m", "air_segment_max_diff_cm", "air_segment_mae_cm", "passed_le_2cm"]}
+      "q2_q3_reconciliation": {"type": "dict", "unit": "m, cm, bool", "keys": ["z_slice_m", "air_segment_max_diff_cm", "air_segment_mae_cm", "passed_le_2cm"]},
+      "provenance": {"type": "dict", "unit": "metadata (no physics unit)", "keys": ["implementation_sha", "implementation_sha_kind", "git_dirty", "git_branch", "generated_at", "command", "generator_script", "preset", "contract_path", "contract_sha256", "environment", "input_fixture", "applies_to_phase"]},
+      "arrays_sha256_scope": {"type": "dict", "unit": "metadata (no physics unit)", "keys": ["algorithm", "aggregate_definition", "per_array_definition", "covers", "covered_arrays", "array_count", "includes", "excludes", "dtype_byte_order", "cross_run_policy", "file_level_ledger"]}
     },
     "npz_arrays": {
       "x_grid_m": {"shape": ["N_x"], "dtype": "float64", "unit": "m"},
@@ -100,7 +111,7 @@
     "arrays_npz": "q3_metal_arrays.npz",
     "json_fields": {
       "grid_spec": {"type": "dict", "unit": "m and count", "keys": ["x_range_m", "y_range_m", "z_range_m", "dx_m", "dy_m", "dz_m", "nx", "ny", "nz", "coarse_step_m", "fine_step_m"]},
-      "anomaly_isolation": {"type": "dict", "unit": "count and status", "keys": ["orphan_skipped", "group8_sync_common", "group8_int16_min_count", "group8_d1_gate_action"]},
+      "anomaly_isolation": {"type": "dict", "unit": "count and status", "keys": ["orphan_skipped", "group8_sync_common", "group8_int16_min_count", "group8_d1_gate_action", "provenance"]},
       "gain_modes": {"type": "dict", "unit": "ns^-1", "keys": ["primary_localization", "shadow_diagnostic"]},
       "nms_params": {"type": "dict[float]", "unit": "m and dB", "keys": ["radius_x_m", "radius_y_m", "min_peak_above_med_db", "contour_drop_db"]},
       "metal_objects": {"type": "list[dict]", "unit": "m and dB", "item_keys": ["object_id", "inferred_class", "peak_xyz_m", "centroid_10db_xyz_m", "bbox_10db_m", "delta_z_10db_m", "peak_above_med_db"], "bbox_axis_order": ["x_min_m", "x_max_m", "y_min_m", "y_max_m", "z_min_m", "z_max_m"]},
@@ -118,7 +129,9 @@
           "per_object_unocc_window_half_width_m": 0.45,
           "db_floor_ratio": 1e-12
         }
-      }
+      },
+      "provenance": {"type": "dict", "unit": "metadata (no physics unit)", "keys": ["implementation_sha", "implementation_sha_kind", "git_dirty", "git_branch", "generated_at", "command", "generator_script", "preset", "contract_path", "contract_sha256", "environment", "input_fixture", "applies_to_phase"]},
+      "arrays_sha256_scope": {"type": "dict", "unit": "metadata (no physics unit)", "keys": ["algorithm", "aggregate_definition", "per_array_definition", "covers", "covered_arrays", "array_count", "includes", "excludes", "dtype_byte_order", "cross_run_policy", "file_level_ledger"]}
     },
     "npz_arrays": {
       "x_grid_m": {"shape": ["N_x"], "dtype": "float64", "unit": "m"},

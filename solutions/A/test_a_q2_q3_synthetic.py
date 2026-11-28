@@ -131,6 +131,94 @@ class TestQ2Q3SyntheticSolvers(unittest.TestCase):
             save_npz_deterministic(p2, arr)
             self.assertEqual(hashlib.sha256(p1.read_bytes()).hexdigest(), hashlib.sha256(p2.read_bytes()).hexdigest())
 
+    def test_g6_g7_g11_provenance_status_and_digest_scope(self) -> None:
+        """Lock G6 anomaly provenance, G7 status/generation version, and G11 digest scope."""
+        contract = json.loads(
+            (REPO_ROOT / "solutions" / "A" / "q2_q3_output_contract.json").read_text(encoding="utf-8")
+        )
+        bundles = (
+            (self.q2_res, "q2_arrays.npz", "Q2"),
+            (self.q3w_res, "q3_wall_arrays.npz", "Q3-Wall"),
+            (self.q3m_res, "q3_metal_arrays.npz", "Q3-Metal"),
+        )
+        for res, npz_name, phase in bundles:
+            self.assertEqual(res["phase"], phase)
+            self.assertRegex(res["implementation_sha"], r"^[0-9a-f]{40}$")
+            self.assertIn(res["status"], contract["status_enum"])
+
+            prov = res["provenance"]
+            self.assertEqual(prov["implementation_sha"], res["implementation_sha"])
+            self.assertEqual(prov["implementation_sha_kind"], "generation_code_commit")
+            self.assertEqual(prov["applies_to_phase"], phase)
+            self.assertIsInstance(prov["git_dirty"], bool)
+            self.assertIn("run_q2_q3_synthetic.py", prov["command"])
+            self.assertIn("T", prov["generated_at"])
+            self.assertIn("Z", prov["generated_at"])
+            self.assertEqual(prov["environment"]["numpy"], np.__version__)
+            self.assertEqual(prov["input_fixture"]["real_dat_files_read"], 0)
+
+            scope = res["arrays_sha256_scope"]
+            with np.load(self.out_dir / npz_name, allow_pickle=False) as npz:
+                self.assertEqual(scope["covered_arrays"], sorted(npz.files))
+                self.assertEqual(scope["array_count"], len(npz.files))
+            self.assertEqual(scope["algorithm"], "sha256")
+            self.assertTrue(scope["excludes"])
+            self.assertIn("rtol=1e-9", scope["cross_run_policy"])
+
+        anomaly = self.q3m_res["anomaly_isolation"]
+        self.assertEqual(anomaly["group8_sync_common"], 3)
+        expected_stats = {
+            "real_dat_files_read",
+            "packet_mismatch_groups",
+            "orphan_skipped",
+            "group8_sync_common",
+            "group8_int16_min_count",
+            "group8_d1_gate_action",
+        }
+        self.assertEqual(set(anomaly["provenance"]), expected_stats)
+        for stat, entry in anomaly["provenance"].items():
+            self.assertTrue(entry["source_path"].strip(), stat)
+            self.assertTrue(entry["field"].strip(), stat)
+            self.assertTrue(entry["derivation"].strip(), stat)
+        self.assertEqual(
+            anomaly["provenance"]["group8_sync_common"]["source_path"],
+            "synthetic_scene#j_p_common[7]",
+        )
+        self.assertEqual(anomaly["provenance"]["group8_sync_common"]["field"], "j_p_common[7]")
+
+    def test_validator_rejects_provenance_and_scope_tampering(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            copy_dir = Path(td) / "case"
+            shutil.copytree(self.out_dir, copy_dir)
+            q2_path = copy_dir / "q2_results.json"
+            original = q2_path.read_text(encoding="utf-8")
+
+            # Drop G7 generation provenance
+            bad = json.loads(original)
+            del bad["provenance"]
+            q2_path.write_text(json.dumps(bad), encoding="utf-8")
+            with self.assertRaises(AssertionError):
+                validate_output_dir(copy_dir)
+            q2_path.write_text(original, encoding="utf-8")
+
+            # G11 scope must cover exactly the NPZ arrays
+            bad = json.loads(original)
+            bad["arrays_sha256_scope"]["covered_arrays"] = bad["arrays_sha256_scope"]["covered_arrays"][:-1]
+            q2_path.write_text(json.dumps(bad), encoding="utf-8")
+            with self.assertRaises(AssertionError):
+                validate_output_dir(copy_dir)
+            q2_path.write_text(original, encoding="utf-8")
+
+            # G6 anomaly statistics must carry source_path/field provenance
+            bad = json.loads(original)
+            del bad["anomaly_isolation"]["provenance"]["packet_mismatch_groups"]
+            q2_path.write_text(json.dumps(bad), encoding="utf-8")
+            with self.assertRaises(AssertionError):
+                validate_output_dir(copy_dir)
+            q2_path.write_text(original, encoding="utf-8")
+
+            self.assertEqual(validate_output_dir(copy_dir)["status"], "ALL_Q2_Q3_CONTRACT_CHECKS_PASSED")
+
     def test_validator_rejects_contract_violations(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             copy_dir = Path(td) / "case"

@@ -88,6 +88,20 @@ class TestQ2Q3OutputContract(unittest.TestCase):
                 if arr_key.startswith(("image_", "slice_", "proj_", "shadow_profile_")):
                     self.assertEqual(meta["unit"], "normalized_energy", f"{c_name}.{arr_key} must store linear normalized_energy")
 
+    def test_status_enum_and_generation_provenance_contract(self) -> None:
+        status_enum = self.data["status_enum"]
+        self.assertIn("synthetic_baseline_only", status_enum)
+        self.assertEqual(set(status_enum), set(self.data["unit_conventions"]["runtime_status_enum"]))
+        for c_name in ("q2_contract", "q3_wall_contract", "q3_metal_contract"):
+            fields = self.data[c_name]["json_fields"]
+            prov_keys = fields["provenance"]["keys"]
+            for key in ("implementation_sha", "git_dirty", "generated_at", "command", "environment", "contract_sha256"):
+                self.assertIn(key, prov_keys)
+            scope_keys = fields["arrays_sha256_scope"]["keys"]
+            for key in ("algorithm", "covered_arrays", "array_count", "cross_run_policy", "excludes"):
+                self.assertIn(key, scope_keys)
+        self.assertIn("provenance", self.data["q3_metal_contract"]["json_fields"]["anomaly_isolation"]["keys"])
+
     def test_no_unverified_real_dat_results_claimed(self) -> None:
         self.assertEqual(self.data["status"], "contract_only_empirical_slots_tbd")
         self.assertGreaterEqual(self.md.count("[待补]"), 7)

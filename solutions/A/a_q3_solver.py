@@ -143,6 +143,7 @@ def solve_q3_wall_synthetic(
     q2_results: dict[str, Any],
     q2_arrays: dict[str, np.ndarray],
     step_m: tuple[float, float, float] = (0.02, 0.02, 0.02),
+    provenance: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, np.ndarray]]:
     """Run Q3.1 63-RX 3D wall reconstruction and cross-reconcile air segments with Q2 z_slice_m=0.545 m."""
     dx_m, dy_m, dz_m = step_m
@@ -258,6 +259,7 @@ def solve_q3_wall_synthetic(
         groups_used=scene_wall["j_group_ids"].tolist(),
         anomaly=anomaly,
         energy_prefixes=("image_", "slice_", "proj_"),
+        provenance=provenance,
     )
 
     results = {
@@ -390,6 +392,7 @@ def solve_q3_metal_synthetic(
     scene_metal: dict[str, Any],
     q2_results: dict[str, Any],
     step_m: tuple[float, float, float] = (0.02, 0.02, 0.02),
+    provenance: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, np.ndarray]]:
     """Run Q3.2 63-RX 3D metal localization + rear-wall occlusion diagnostics under PR #38 contract."""
     dx_m, dy_m, dz_m = step_m
@@ -481,6 +484,7 @@ def solve_q3_metal_synthetic(
         groups_used=scene_metal["j_group_ids"].tolist(),
         anomaly=anomaly_isolation,
         energy_prefixes=("image_", "shadow_profile_"),
+        provenance=provenance,
     )
 
     results = {

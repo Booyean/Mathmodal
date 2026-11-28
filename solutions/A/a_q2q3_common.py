@@ -6,8 +6,12 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import os
+import platform
 import subprocess
+import sys
 import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -35,17 +39,127 @@ def repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def git_head_short(default: str = "unknown") -> str:
+def _git_output(args: list[str]) -> str | None:
     try:
-        out = subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"],
+        return subprocess.check_output(
+            ["git", *args],
             cwd=str(repo_root()),
             stderr=subprocess.DEVNULL,
             text=True,
         )
-        return out.strip() or default
     except Exception:
-        return default
+        return None
+
+
+def git_head_full(default: str = "unknown") -> str:
+    out = _git_output(["rev-parse", "HEAD"])
+    return (out or "").strip() or default
+
+
+def git_head_short(default: str = "unknown") -> str:
+    out = _git_output(["rev-parse", "--short", "HEAD"])
+    return (out or "").strip() or default
+
+
+def git_branch_name(default: str = "unknown") -> str:
+    out = _git_output(["rev-parse", "--abbrev-ref", "HEAD"])
+    return (out or "").strip() or default
+
+
+def git_worktree_dirty() -> bool | None:
+    """True/False from `git status --porcelain`; None when git is unavailable."""
+    out = _git_output(["status", "--porcelain"])
+    if out is None:
+        return None
+    return out.strip() != ""
+
+
+def utc_now_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def build_generation_provenance(
+    preset: str,
+    generated_at: str,
+    command: str,
+    contract_path: Path | None = None,
+) -> dict[str, Any]:
+    """Capture a portable, commit-anchored provenance record for one generator invocation.
+
+    `git_dirty` must be sampled before the generator writes any artifact, so a clean checkout
+    that only becomes dirty because of the freshly written outputs still reports False.
+    """
+    repo = repo_root()
+    contract = contract_path or (repo / "solutions" / "A" / "q2_q3_output_contract.json")
+    return {
+        "implementation_sha": git_head_full(),
+        "implementation_sha_kind": "generation_code_commit",
+        "git_dirty": git_worktree_dirty(),
+        "git_branch": git_branch_name(),
+        "generated_at": generated_at,
+        "command": command,
+        "generator_script": "solutions/A/run_q2_q3_synthetic.py",
+        "preset": preset,
+        "contract_path": "solutions/A/q2_q3_output_contract.json",
+        "contract_sha256": _sha256_file(contract) if contract.exists() else None,
+        "environment": {
+            "python": platform.python_version(),
+            "numpy": np.__version__,
+            "platform": platform.platform(),
+            "byte_order": sys.byteorder,
+        },
+        "input_fixture": {
+            "input_mode": "synthetic_only",
+            "real_dat_files_read": 0,
+            "seed": SYNTHETIC_SEED,
+            "scene_builders": [
+                "a_q2q3_common.build_synthetic_wall_scene_63rx",
+                "a_q2q3_common.build_synthetic_metal_scene_63rx",
+            ],
+        },
+    }
+
+
+def arrays_sha256_scope(arrays: dict[str, np.ndarray]) -> dict[str, Any]:
+    """Machine-checkable declaration of exactly what `arrays_sha256` covers.
+
+    The digest is deliberately an intra-run integrity check over the NPZ arrays only. It is not a
+    JSON digest, not a file-level digest, and not a cross-environment reproducibility claim:
+    independent runs are expected to be compared numerically at rtol=1e-9.
+    """
+    covered = sorted(arrays)
+    return {
+        "algorithm": "sha256",
+        "aggregate_definition": (
+            "sha256 over canonical JSON (UTF-8, separators=(',',':'), sort_keys=True) of "
+            "{array_name: per_array_sha256}, one entry per covered array"
+        ),
+        "per_array_definition": "sha256(dtype_string + repr(shape) + C-contiguous raw value bytes)",
+        "covers": "all arrays stored in this bundle's NPZ; no array is excluded or subsampled",
+        "covered_arrays": covered,
+        "array_count": len(covered),
+        "includes": ["array name", "dtype", "shape", "raw array values"],
+        "excludes": [
+            "scalar JSON fields in the companion results JSON",
+            "the companion results JSON itself",
+            "SHA256SUMS.txt",
+            "NPZ ZIP container headers and compression metadata",
+        ],
+        "dtype_byte_order": "native byte order of the generating machine (little-endian on x86_64)",
+        "cross_run_policy": (
+            "intra-run integrity digest; SVD/LAPACK last-bit differences can change it between "
+            "runs. Cross-run or cross-implementation equivalence must be asserted numerically at "
+            "rtol=1e-9, not by this digest."
+        ),
+        "file_level_ledger": (
+            "SHA256SUMS.txt is the byte-level ledger over the JSON+NPZ files of one run; it is "
+            "run-specific and is not expected to match across environments."
+        ),
+    }
 
 
 def canonical_json_bytes(obj: Any) -> bytes:
@@ -83,7 +197,12 @@ def save_npz_deterministic(path: Path, arrays: dict[str, np.ndarray]) -> None:
 
 
 def compute_anomaly_isolation(scene: dict[str, Any], phase: str) -> dict[str, Any]:
-    """Build anomaly_isolation purely from input scene metadata (never hardcoded fixture constants)."""
+    """Build anomaly_isolation purely from input scene metadata (never hardcoded fixture constants).
+
+    Every reported statistic carries an explicit `provenance` entry naming the input path and
+    field it was derived from (G6). Synthetic-only items still declare their source path instead
+    of presenting fixture constants as measured counts.
+    """
     gids = [str(g) for g in scene["j_group_ids"].tolist()]
     p_counts = [int(p) for p in scene["j_p_common"].tolist()]
     max_p = max(p_counts) if p_counts else 0
@@ -95,6 +214,24 @@ def compute_anomaly_isolation(scene: dict[str, Any], phase: str) -> dict[str, An
     raw_anomalies = scene.get("anomaly_inputs", {})
     real_dat_count = int(raw_anomalies.get("real_dat_files_read", 0))
 
+    provenance: dict[str, Any] = {
+        "real_dat_files_read": {
+            "source_path": "synthetic_scene#anomaly_inputs",
+            "field": "anomaly_inputs.real_dat_files_read",
+            "derivation": "passthrough of scene metadata; hard-constrained to 0 for the synthetic fixture",
+        },
+        "packet_mismatch_groups": {
+            "source_path": "synthetic_scene#j_p_common",
+            "field": "j_p_common[*] paired with j_group_ids[*]",
+            "derivation": "groups whose P_common is below max(j_p_common); group_index is 1-based",
+        },
+        "orphan_skipped": {
+            "source_path": "synthetic_scene#anomaly_inputs",
+            "field": "anomaly_inputs.orphan_files",
+            "derivation": "passthrough when supplied; otherwise explicit not_covered_by_synthetic_fixture status",
+        },
+    }
+
     if phase == "Q3-Metal":
         orphans = raw_anomalies.get("orphan_files")
         orphan_entry: Any = (
@@ -103,8 +240,24 @@ def compute_anomaly_isolation(scene: dict[str, Any], phase: str) -> dict[str, An
         g8_idx = 7
         if g8_idx < len(p_counts) and raw_anomalies.get("packet_mismatch_exercised", False):
             g8_sync: Any = int(p_counts[g8_idx])
+            provenance["group8_sync_common"] = {
+                "source_path": "synthetic_scene#j_p_common[7]",
+                "field": "j_p_common[7]",
+                "derivation": (
+                    "int(P_common) of the 8th group (0-based index 7) when "
+                    "anomaly_inputs.packet_mismatch_exercised is true"
+                ),
+            }
         else:
             g8_sync = {"status": "not_covered_by_synthetic_fixture", "count": None}
+            provenance["group8_sync_common"] = {
+                "source_path": "synthetic_scene#j_p_common[7]",
+                "field": "j_p_common[7]",
+                "derivation": (
+                    "no numeric count: group index 8 absent or "
+                    "anomaly_inputs.packet_mismatch_exercised is false"
+                ),
+            }
 
         g8_int16 = raw_anomalies.get("group8_int16_min_count")
         if g8_int16 is None:
@@ -112,6 +265,16 @@ def compute_anomaly_isolation(scene: dict[str, Any], phase: str) -> dict[str, An
         g8_gate = raw_anomalies.get("group8_d1_gate_action")
         if g8_gate is None:
             g8_gate = {"status": "not_covered_by_synthetic_fixture", "action": "none"}
+        provenance["group8_int16_min_count"] = {
+            "source_path": "synthetic_scene#anomaly_inputs",
+            "field": "anomaly_inputs.group8_int16_min_count",
+            "derivation": "passthrough when supplied; otherwise explicit not_covered_by_synthetic_fixture status",
+        }
+        provenance["group8_d1_gate_action"] = {
+            "source_path": "synthetic_scene#anomaly_inputs",
+            "field": "anomaly_inputs.group8_d1_gate_action",
+            "derivation": "passthrough when supplied; otherwise explicit not_covered_by_synthetic_fixture status",
+        }
         return {
             "real_dat_files_read": real_dat_count,
             "packet_mismatch_groups": mismatch,
@@ -119,12 +282,14 @@ def compute_anomaly_isolation(scene: dict[str, Any], phase: str) -> dict[str, An
             "group8_sync_common": g8_sync,
             "group8_int16_min_count": g8_int16,
             "group8_d1_gate_action": g8_gate,
+            "provenance": provenance,
         }
 
     return {
         "real_dat_files_read": real_dat_count,
         "packet_mismatch_groups": mismatch,
         "orphan_skipped": raw_anomalies.get("orphan_files", {"status": "not_covered_by_synthetic_fixture", "count": 0}),
+        "provenance": provenance,
     }
 
 
@@ -437,13 +602,26 @@ def build_synthetic_metal_scene_63rx(seed: int = SYNTHETIC_SEED) -> dict[str, An
     return scene
 
 
-def upstream_synthetic_metadata(phase: str, arrays: dict[str, np.ndarray], groups_used: list[str], anomaly: dict[str, Any], energy_prefixes: tuple[str, ...]) -> dict[str, Any]:
+def upstream_synthetic_metadata(
+    phase: str,
+    arrays: dict[str, np.ndarray],
+    groups_used: list[str],
+    anomaly: dict[str, Any],
+    energy_prefixes: tuple[str, ...],
+    provenance: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    prov = dict(provenance) if provenance is not None else build_generation_provenance(
+        preset="unspecified",
+        generated_at=utc_now_iso(),
+        command="python solutions/A/run_q2_q3_synthetic.py",
+    )
+    prov["applies_to_phase"] = phase
     return {
         "phase": phase,
         "input_mode": "synthetic_only",
         "real_dat_files_read": 0,
         "citable": False,
-        "implementation_sha": git_head_short(),
+        "implementation_sha": prov["implementation_sha"],
         "main_commit": "934b089",
         "q1_frozen_config_path": "synthetic://q1-frozen-baseline",
         "q1_frozen_config_sha256": canonical_json_sha256({"seed": SYNTHETIC_SEED, "alpha_dw": 1.0, "model": "M0-Cal-Base+M0-DW-Base"}),
@@ -452,6 +630,8 @@ def upstream_synthetic_metadata(phase: str, arrays: dict[str, np.ndarray], group
         "groups_used": groups_used,
         "anomaly_isolation": anomaly,
         "arrays_sha256": arrays_dict_sha256(arrays),
+        "arrays_sha256_scope": arrays_sha256_scope(arrays),
+        "provenance": prov,
         "finite": all_arrays_finite_and_valid(arrays, energy_prefixes),
         "status": "synthetic_baseline_only",
     }
