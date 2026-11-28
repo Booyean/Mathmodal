@@ -191,31 +191,53 @@ class TestQ2Q3SyntheticSolvers(unittest.TestCase):
             copy_dir = Path(td) / "case"
             shutil.copytree(self.out_dir, copy_dir)
             q2_path = copy_dir / "q2_results.json"
-            original = q2_path.read_text(encoding="utf-8")
+            sums_path = copy_dir / "SHA256SUMS.txt"
+            original_q2 = q2_path.read_bytes()
+            original_sums = sums_path.read_bytes()
+
+            def restore() -> None:
+                q2_path.write_bytes(original_q2)
+                sums_path.write_bytes(original_sums)
+
+            def tamper(mutator) -> None:
+                bad = json.loads(original_q2.decode("utf-8"))
+                mutator(bad)
+                payload = (json.dumps(bad, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+                q2_path.write_bytes(payload)
+                # Keep the byte ledger consistent with the tampered JSON so the validator reaches
+                # the specific provenance/scope check instead of failing early on SHA256SUMS.
+                digest = hashlib.sha256(payload).hexdigest()
+                lines = original_sums.decode("utf-8").splitlines()
+                rewritten = [
+                    f"{digest}  q2_results.json" if line.split(None, 1)[1].strip() == "q2_results.json" else line
+                    for line in lines
+                ]
+                sums_path.write_bytes(("\n".join(rewritten) + "\n").encode("utf-8"))
 
             # Drop G7 generation provenance
-            bad = json.loads(original)
-            del bad["provenance"]
-            q2_path.write_text(json.dumps(bad), encoding="utf-8")
+            tamper(lambda bad: bad.pop("provenance"))
             with self.assertRaises(AssertionError):
                 validate_output_dir(copy_dir)
-            q2_path.write_text(original, encoding="utf-8")
+            restore()
 
             # G11 scope must cover exactly the NPZ arrays
-            bad = json.loads(original)
-            bad["arrays_sha256_scope"]["covered_arrays"] = bad["arrays_sha256_scope"]["covered_arrays"][:-1]
-            q2_path.write_text(json.dumps(bad), encoding="utf-8")
+            def drop_scope_entry(bad) -> None:
+                scope = bad["arrays_sha256_scope"]
+                scope["covered_arrays"] = scope["covered_arrays"][:-1]
+
+            tamper(drop_scope_entry)
             with self.assertRaises(AssertionError):
                 validate_output_dir(copy_dir)
-            q2_path.write_text(original, encoding="utf-8")
+            restore()
 
             # G6 anomaly statistics must carry source_path/field provenance
-            bad = json.loads(original)
-            del bad["anomaly_isolation"]["provenance"]["packet_mismatch_groups"]
-            q2_path.write_text(json.dumps(bad), encoding="utf-8")
+            def drop_anomaly_provenance(bad) -> None:
+                del bad["anomaly_isolation"]["provenance"]["packet_mismatch_groups"]
+
+            tamper(drop_anomaly_provenance)
             with self.assertRaises(AssertionError):
                 validate_output_dir(copy_dir)
-            q2_path.write_text(original, encoding="utf-8")
+            restore()
 
             self.assertEqual(validate_output_dir(copy_dir)["status"], "ALL_Q2_Q3_CONTRACT_CHECKS_PASSED")
 
