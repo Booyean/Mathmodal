@@ -19,9 +19,11 @@ import hashlib
 import json
 import os
 import shutil
+import stat
 import struct
 import subprocess
 import sys
+import tempfile
 import unittest
 import uuid
 from pathlib import Path
@@ -41,15 +43,22 @@ import e0c_preflight as PF  # noqa: E402
 import run_q2_q3_empirical as RUN  # noqa: E402
 
 
-WORK_TMP = REPO / "tmp"
-WORK_TMP.mkdir(parents=True, exist_ok=True)
 DAT_MAGIC = 963072
 
 
 def _make_tmp_dir(tag: str) -> Path:
-    path = WORK_TMP / f"q2q3_s1_{tag}_{uuid.uuid4().hex[:8]}"
-    path.mkdir(parents=True, exist_ok=False)
-    return path
+    return Path(tempfile.mkdtemp(prefix=f"q2q3_s1_{tag}_"))
+
+
+def _rmtree_force(path: Path) -> None:
+    def _on_err(func: Any, p: str, _exc_info: Any) -> None:
+        try:
+            os.chmod(p, stat.S_IWRITE)
+            func(p)
+        except OSError:
+            pass
+
+    shutil.rmtree(path, onerror=_on_err)
 
 
 def _sha256_file(path: Path) -> str:
@@ -486,8 +495,12 @@ def _init_trusted_test_repo(repo_dir: Path, payload: Dict[str, Any]) -> Tuple[Pa
     ):
         shutil.copy2(HERE / rel_name, sol_dir / rel_name)
 
+    cfg_dir = repo_dir / "configs"
+    cfg_dir.mkdir(parents=True, exist_ok=True)
+    (cfg_dir / "a_e0_c.json").write_bytes(b'{"schema_version": 1}\n')
+
     subprocess.run(
-        ["git", "-C", str(repo_dir), "add", ".gitattributes", "coordination/A_Q2Q3_APPROVALS.json"],
+        ["git", "-C", str(repo_dir), "add", ".gitattributes", "coordination/A_Q2Q3_APPROVALS.json", "solutions/A", "configs"],
         check=True,
         capture_output=True,
     )
@@ -604,7 +617,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             self.assertTrue(res_exec_diag["preconditions_pass"])
             self.assertEqual(res_exec_diag["q1"]["status"], "unfrozen_q1_diagnostic_only")
         finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+            _rmtree_force(tmp)
 
     def test_path_guard_rejects_escape_reparse_and_out_of_scope(self) -> None:
         tmp = _make_tmp_dir("pathguard")
@@ -668,7 +681,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
                 else:
                     wall_dir.unlink()
         finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+            _rmtree_force(tmp)
 
     def test_cli_guards_approval_overwrite_repeat_and_q1_frozen(self) -> None:
         tmp = _make_tmp_dir("cliguards")
@@ -767,7 +780,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             self.assertEqual(_sha256_file(sentinel_d1), sha_d1_before)
             self.assertEqual(_sha256_file(sentinel_q2), sha_q2_before)
         finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+            _rmtree_force(tmp)
 
     def test_q1_frozen_binding_and_diagnostic_approval_isolation(self) -> None:
         tmp = _make_tmp_dir("q1bind")
@@ -888,7 +901,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             self.assertFalse(res_pre["preconditions_pass"])
             self.assertIn("q1.dependency", res_pre["summary"]["blocking_ids"])
         finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+            _rmtree_force(tmp)
 
     def test_approval_registry_untrusted_git_origin_and_reparse_rejections(self) -> None:
         tmp = _make_tmp_dir("origin_trust")
@@ -922,8 +935,99 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
                 approval_ref="LOCAL-FORGED",
             )
             self.assertFalse(ok_dirty)
-            self.assertIn("未提交或本地修改", info_dirty["reason"])
+            self.assertIn("工作区存在未提交改动或未追踪文件", info_dirty["reason"])
             app_reg.write_bytes(orig_bytes)
+
+            # 1b) Full-workspace dirty-tree rejections outside coordination/ (source, config, staged edit, untracked file)
+            solver_path = trusted_repo / "solutions/A/a_q2_solver.py"
+            orig_solver = solver_path.read_bytes()
+            solver_path.write_bytes(orig_solver + b"# dirty edit\n")
+            ok_src, info_src = PF2.verify_approval_authorization(
+                repo=trusted_repo,
+                mode="d1-audit",
+                approval_ref="CODEX-S1-D1-TEST",
+            )
+            self.assertFalse(ok_src)
+            self.assertIn("solutions/A/a_q2_solver.py", info_src["reason"])
+
+            # CLI must also exit 2 when repo has uncommitted source edit
+            p_dirty_cli = subprocess.run(
+                [sys.executable, str(HERE / "run_q2_q3_empirical.py"), "--repo", str(trusted_repo), "--mode", "d1-audit", "--approval-ref", "CODEX-S1-D1-TEST", "--out", str(tmp / "out_dirty")],
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(p_dirty_cli.returncode, 2)
+
+            # Staged edit (even if clean in diff? no, staged relative to HEAD) must also fail
+            subprocess.run(["git", "-C", str(trusted_repo), "add", "solutions/A/a_q2_solver.py"], check=True, capture_output=True)
+            ok_staged, _ = PF2.verify_approval_authorization(
+                repo=trusted_repo,
+                mode="d1-audit",
+                approval_ref="CODEX-S1-D1-TEST",
+            )
+            self.assertFalse(ok_staged)
+            subprocess.run(["git", "-C", str(trusted_repo), "reset", "HEAD", "--", "solutions/A/a_q2_solver.py"], check=True, capture_output=True)
+            solver_path.write_bytes(orig_solver)
+
+            # Modified config file must fail
+            cfg_path = trusted_repo / "configs/a_e0_c.json"
+            orig_cfg = cfg_path.read_bytes()
+            cfg_path.write_bytes(b'{"schema_version": 2}\n')
+            ok_cfg, info_cfg = PF2.verify_approval_authorization(
+                repo=trusted_repo,
+                mode="d1-audit",
+                approval_ref="CODEX-S1-D1-TEST",
+            )
+            self.assertFalse(ok_cfg)
+            self.assertIn("configs/a_e0_c.json", info_cfg["reason"])
+            cfg_path.write_bytes(orig_cfg)
+
+            # Untracked source/override file anywhere in workspace must fail
+            untracked_override = trusted_repo / "solutions/A/local_override.py"
+            untracked_override.write_bytes(b"OVERRIDE = True\n")
+            ok_untracked, info_untracked = PF2.verify_approval_authorization(
+                repo=trusted_repo,
+                mode="d1-audit",
+                approval_ref="CODEX-S1-D1-TEST",
+            )
+            self.assertFalse(ok_untracked)
+            self.assertIn("solutions/A/local_override.py", info_untracked["reason"])
+            untracked_override.unlink()
+
+            # 1c) Worker-2 dual-run tolerance: only deliverable run-1 files under experiments/A/A-Q2Q3-EMP/... are tolerated in worker-2, never arbitrary/rogue files
+            emp_d1_dir = trusted_repo / "experiments/A/A-Q2Q3-EMP/d1_audit"
+            emp_run2_dir = emp_d1_dir / "repeat_runs/run-2"
+            emp_run2_dir.mkdir(parents=True, exist_ok=True)
+            (emp_d1_dir / "worker_meta.json").write_bytes(b'{"run_id": "1"}\n')
+            (emp_d1_dir / "q2q3_d1_audit.json").write_bytes(b'{"ok": true}\n')
+            self.assertIsNone(
+                RUN.validate_cli_guards(
+                    repo=trusted_repo,
+                    mode="d1-audit-worker",
+                    approval_ref="CODEX-S1-D1-TEST",
+                    approval_record_path=None,
+                    repeat_runs=2,
+                    out_dir=emp_run2_dir,
+                    overwrite=True,
+                    q1_dir=None,
+                    allow_unfrozen_q1_diagnostic=False,
+                )
+            )
+            (emp_d1_dir / "rogue_override.py").write_bytes(b"EVIL = 1\n")
+            err_rogue = RUN.validate_cli_guards(
+                repo=trusted_repo,
+                mode="d1-audit-worker",
+                approval_ref="CODEX-S1-D1-TEST",
+                approval_record_path=None,
+                repeat_runs=2,
+                out_dir=emp_run2_dir,
+                overwrite=True,
+                q1_dir=None,
+                allow_unfrozen_q1_diagnostic=False,
+            )
+            self.assertIsNotNone(err_rogue)
+            self.assertIn("rogue_override.py", str(err_rogue))
+            shutil.rmtree(trusted_repo / "experiments", ignore_errors=True)
 
             # 2) Unmerged branch commit not in origin/main -> rejected even when working copy is clean
             subprocess.run(["git", "-C", str(trusted_repo), "checkout", "-b", "feature/self-approve"], check=True, capture_output=True)
@@ -987,7 +1091,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
                     coord_dir.unlink()
                 shutil.move(str(coord_backup), str(coord_dir))
         finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+            _rmtree_force(tmp)
 
     def test_dual_process_d1_audit_without_q1_and_repeat_tamper_cases(self) -> None:
         tmp = _make_tmp_dir("dual_d1")
@@ -1084,7 +1188,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
                 run2_path.write_bytes(orig_run2_bytes)
                 rep_path.write_text(orig_rep, encoding="utf-8")
         finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+            _rmtree_force(tmp)
 
     def test_dual_process_execute_end_to_end_synthetic_q1_frozen(self) -> None:
         tmp = _make_tmp_dir("dual_exec")
@@ -1158,7 +1262,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             finally:
                 r2_q2_path.write_bytes(orig_r2_q2)
         finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+            _rmtree_force(tmp)
 
     def test_gitattributes_lf_checkout_on_windows_autocrlf_true(self) -> None:
         tmp = _make_tmp_dir("git_lf")
@@ -1204,7 +1308,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
                     dig, fn = line.split(None, 1)
                     self.assertEqual(_sha256_file(sums_file.parent / fn.strip()), dig)
         finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+            _rmtree_force(tmp)
 
 
 if __name__ == "__main__":

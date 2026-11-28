@@ -178,6 +178,25 @@ def existing_protected_artifacts(out_dir: Path) -> List[str]:
     return hits
 
 
+def _allowed_run1_rel_dir_for_worker(repo: Path, worker_mode: str, out_dir: Path) -> Optional[str]:
+    """Allow only run-1 deliverable outputs in run-2 worker when out_dir is repo/experiments/A/A-Q2Q3-EMP/<run>/repeat_runs/run-2."""
+    if worker_mode not in ("d1-audit-worker", "execute-worker"):
+        return None
+    out_res = out_dir.resolve()
+    if out_res.name != "run-2" or out_res.parent.name != REPEAT_DIR_NAME:
+        return None
+    run1_dir = out_res.parent.parent
+    emp_base = (repo.resolve() / "experiments/A/A-Q2Q3-EMP").resolve()
+    try:
+        rel_posix = run1_dir.relative_to(repo.resolve()).as_posix()
+        run1_dir.relative_to(emp_base)
+    except ValueError:
+        return None
+    if not (run1_dir / "worker_meta.json").is_file():
+        return None
+    return rel_posix
+
+
 def validate_cli_guards(
     repo: Path,
     mode: str,
@@ -209,6 +228,7 @@ def validate_cli_guards(
             q1_frozen_sha256=q1_info.get("frozen_sha256"),
             q1_arrays_sha256=q1_info.get("arrays_sha256"),
             q1_results_sha256=q1_info.get("results_sha256"),
+            allowed_run1_rel_dir=_allowed_run1_rel_dir_for_worker(repo, mode, out_dir),
         )
         if not app_ok:
             return str(app_info.get("reason") or "审批状态或范围校验未通过")
@@ -516,6 +536,7 @@ def run_d1_audit_worker(
         check_hashes=True,
         expected_manifest_overall_sha256=expected_manifest_overall_sha256,
         expected_counts=expected_counts,
+        allowed_run1_rel_dir=_allowed_run1_rel_dir_for_worker(repo, "d1-audit-worker", out_dir),
     )
     if not pre["preconditions_pass"]:
         raise Q2Q3Stop("D1 审计预检失败，拒绝解析 .dat：" + ", ".join(pre["summary"]["blocking_ids"]))
@@ -782,6 +803,7 @@ def run_execute_worker(
         check_hashes=True,
         expected_manifest_overall_sha256=expected_manifest_overall_sha256,
         expected_counts=expected_counts,
+        allowed_run1_rel_dir=_allowed_run1_rel_dir_for_worker(repo, "execute-worker", out_dir),
     )
     if not pre["preconditions_pass"]:
         raise Q2Q3Stop("execute 预检失败，拒绝解析 .dat：" + ", ".join(pre["summary"]["blocking_ids"]))

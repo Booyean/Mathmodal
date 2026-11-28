@@ -219,6 +219,63 @@ DEFAULT_TRUSTED_GIT_REF = "origin/main"
 TRUSTED_APPROVERS = ("codex",)
 APPROVAL_REGISTRY_ID = "A-Q2Q3-EMPIRICAL-APPROVALS"
 _SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
+_RUN1_DELIVERABLE_FILENAMES = frozenset(
+    {
+        "q2q3_d1_audit.json",
+        "q2_results.json",
+        "q2_arrays.npz",
+        "q3_wall_results.json",
+        "q3_wall_arrays.npz",
+        "q3_metal_results.json",
+        "q3_metal_arrays.npz",
+        "q2q3_summary.json",
+        "run.log",
+        "SHA256SUMS.txt",
+        "worker_meta.json",
+    }
+)
+
+
+def _parse_git_status_z(raw_stdout: bytes) -> List[Tuple[str, str]]:
+    """Parse NUL-delimited ``git status --porcelain=v1 -z`` entries into ``(xy, rel_posix)``."""
+    tokens = raw_stdout.split(b"\x00")
+    entries: List[Tuple[str, str]] = []
+    idx = 0
+    n = len(tokens)
+    while idx < n:
+        tok = tokens[idx]
+        if not tok:
+            idx += 1
+            continue
+        rec = tok.decode("utf-8", errors="replace")
+        if len(rec) < 4:
+            idx += 1
+            continue
+        xy = rec[:2]
+        rel_path = rec[3:].replace("\\", "/").rstrip("/")
+        entries.append((xy, rel_path))
+        if xy[0] in ("R", "C") or xy[1] in ("R", "C"):
+            idx += 2
+        else:
+            idx += 1
+    return entries
+
+
+def _is_allowed_worker2_run1_entry(
+    xy: str,
+    rel_path: str,
+    allowed_run1_rel_dir: Optional[str],
+) -> bool:
+    if not allowed_run1_rel_dir or xy != "??":
+        return False
+    base_rel = allowed_run1_rel_dir.strip("/").replace("\\", "/")
+    if not base_rel.startswith("experiments/A/A-Q2Q3-EMP/"):
+        return False
+    prefix = base_rel + "/"
+    if not rel_path.startswith(prefix):
+        return False
+    sub = rel_path[len(prefix) :]
+    return "/" not in sub and sub in _RUN1_DELIVERABLE_FILENAMES
 
 
 def _resolve_inside_dir(base_dir: Path, rel: str) -> Optional[Path]:
@@ -250,8 +307,9 @@ def _verify_approval_registry_origin(
     repo: Path,
     approval_record_path: Optional[Path] = None,
     trusted_git_ref: str = DEFAULT_TRUSTED_GIT_REF,
+    allowed_run1_rel_dir: Optional[str] = None,
 ) -> Tuple[bool, Dict[str, Any]]:
-    """Enforce canonical registry path, anti-reparse guard, clean status, and origin/main provenance."""
+    """Enforce canonical registry path, anti-reparse guard, full-repo clean workspace, and origin/main provenance."""
     canonical_rel_posix = DEFAULT_APPROVAL_RECORD_REL.as_posix()
     expected_lex = Path(os.path.abspath(str(repo / DEFAULT_APPROVAL_RECORD_REL)))
     if approval_record_path is not None:
@@ -271,7 +329,7 @@ def _verify_approval_registry_origin(
     real_repo = Path(os.path.realpath(str(repo)))
     try:
         real_coord_dir = PF.guard_group_dir(coord_dir, repo)
-        real_rec = PF.guard_dat_path(rec_lex, real_coord_dir, real_repo)
+        real_rec = PF.guard_dat_path(real_coord_dir / DEFAULT_APPROVAL_RECORD_REL.name, real_coord_dir, real_repo)
     except PF.PathGuardError as exc:
         return False, {
             "reason": f"审批登记路径未通过安全/反重解析校验：{exc}",
@@ -291,16 +349,30 @@ def _verify_approval_registry_origin(
             "approval_record": str(real_rec),
         }
 
-    st_proc = _run_git(repo, ["status", "--porcelain", "--", canonical_rel_posix])
-    if st_proc.returncode != 0 or st_proc.stdout.strip():
-        dirty_text = st_proc.stdout.decode("utf-8", errors="replace").strip()
+    st_proc = _run_git(repo, ["status", "--porcelain=v1", "-z", "--untracked-files=all"])
+    if st_proc.returncode != 0:
+        err_text = st_proc.stderr.decode("utf-8", errors="replace").strip()
+        return False, {
+            "reason": f"无法检查整个 Git 工作区干净性：{err_text or f'exit={st_proc.returncode}'}",
+            "approval_record": str(real_rec),
+        }
+    status_entries = _parse_git_status_z(st_proc.stdout)
+    dirty_entries = [
+        f"{xy} {rel}"
+        for xy, rel in status_entries
+        if not _is_allowed_worker2_run1_entry(xy, rel, allowed_run1_rel_dir)
+    ]
+    if dirty_entries:
+        preview = ", ".join(dirty_entries[:10])
+        if len(dirty_entries) > 10:
+            preview += f" (+{len(dirty_entries) - 10} more)"
         return False, {
             "reason": (
-                f"{canonical_rel_posix} 存在未提交或本地修改 ({dirty_text or 'status error'})；"
-                f"审批登记表必须与受信任基线 {trusted_git_ref} 完全一致且工作区干净"
+                f"工作区存在未提交改动或未追踪文件（{len(dirty_entries)} 项: {preview}）；"
+                f"执行前整个仓库工作区必须保持干净且与 {trusted_git_ref} 一致"
             ),
             "approval_record": str(real_rec),
-            "git_status": dirty_text,
+            "dirty_entries": dirty_entries,
         }
 
     ref_proc = _run_git(repo, ["rev-parse", "--verify", "--quiet", trusted_git_ref])
@@ -395,8 +467,9 @@ def verify_approval_authorization(
     q1_arrays_sha256: Optional[str] = None,
     q1_results_sha256: Optional[str] = None,
     trusted_git_ref: str = DEFAULT_TRUSTED_GIT_REF,
+    allowed_run1_rel_dir: Optional[str] = None,
 ) -> Tuple[bool, Dict[str, Any]]:
-    """Verify canonical trusted-origin registry, approver, scope, and mandatory Q1 calibration digests."""
+    """Verify canonical trusted-origin registry, clean repo workspace, approver, scope, and mandatory Q1 calibration digests."""
     if not approval_ref or not str(approval_ref).strip():
         return False, {"reason": "缺少非空 --approval-ref", "approval_ref": approval_ref}
     ref = str(approval_ref).strip()
@@ -405,6 +478,7 @@ def verify_approval_authorization(
         repo=repo,
         approval_record_path=approval_record_path,
         trusted_git_ref=trusted_git_ref,
+        allowed_run1_rel_dir=allowed_run1_rel_dir,
     )
     if not ok_origin:
         return False, {"approval_ref": ref, **origin_info}
@@ -1141,6 +1215,7 @@ def run_preflight(
     check_hashes: bool = True,
     expected_manifest_overall_sha256: Optional[str] = None,
     expected_counts: Optional[Dict[str, int]] = None,
+    allowed_run1_rel_dir: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Run Q2/Q3 preflight checks without parsing any ``.dat`` signal packet."""
     if mode not in ("d1-audit", "execute"):
@@ -1168,6 +1243,7 @@ def run_preflight(
             q1_frozen_sha256=q1_info.get("frozen_sha256"),
             q1_arrays_sha256=q1_info.get("arrays_sha256"),
             q1_results_sha256=q1_info.get("results_sha256"),
+            allowed_run1_rel_dir=allowed_run1_rel_dir,
         )
         approval_info = {"checked": True, **info_app}
         ck.add(
