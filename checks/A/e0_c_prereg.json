@@ -1,0 +1,163 @@
+{
+ "_comment": "E0-PREREG-3 冻结常量。所有阈值取自 experiments/A/A-Q1-E0/config.json#gates_and_thresholds 与 PLAN.md §5.2，不新增、不放宽。修改本文件即视为新预登记版本，须重新计算并登记 SHA256。",
+ "schema_version": 1,
+ "prereg_id": "E0-PREREG-3",
+ "phase": "E0-C",
+ "status": "frozen_before_real_signal_run",
+ "frozen_at_ref": "3b8b67e58156b9618c788ec8e114e50d960bbb0d",
+ "anchors": {
+  "config_sha256": "8fb6821fa3335ef748e16ad2f5b5b8fc818c13cbe9d3315377faf48d5e40e06a",
+  "plan_sha256": "073511c0b6ae44dbc90d228b7d79c2de9d0687d4e65949494803b19f24595a88",
+  "split_sha256": "d623da4ea186f372f2be094121c202c55dae0e236f4683005ab88d220a248b3a",
+  "e0_s_decision_sha256": "ee2ed0f8d2e1885d5d1ca8cde84857f5bc7130b6453b0d07f6ac12866cf21ff5",
+  "e0_s_results_sha256": "171f55f75e464d289815af7352fb6fcb6635b8d73db97b3af2dcbb687eab3fdf",
+  "e0_s_arrays_sha256": "27bea969f27589bca74031e02b88e163fc5865190a9f555dd4cecd97ee972df5",
+  "fold_gate_contract_version": "D1-2"
+ },
+ "whitelist": {
+  "groups": [
+   "空场数据/data1",
+   "空场数据/data2",
+   "空场数据/data3",
+   "空场数据/data4",
+   "空场数据/data5",
+   "空场数据/data6",
+   "空场数据/data7",
+   "空场数据/data8",
+   "空场数据/data9",
+   "空场数据/data10",
+   "墙体数据/data1-42cm",
+   "金属板数据/data1-69cm"
+  ],
+  "forbidden_patterns": [
+   "_test",
+   "data20-73cm",
+   "data5-60cm",
+   "附件3",
+   "B题"
+  ],
+  "total_files": 96,
+  "total_bytes": 88073632,
+  "oracle": "checks/A/e0_c_data_oracle.json",
+  "oracle_sha256": "f8c7572eaa0a6d54c02b3b84f033d4a91b6e0cca7585f2228918081963595f3c"
+ },
+ "air_groups": [
+  "空场数据/data1",
+  "空场数据/data2",
+  "空场数据/data3",
+  "空场数据/data4",
+  "空场数据/data5",
+  "空场数据/data6",
+  "空场数据/data7",
+  "空场数据/data8",
+  "空场数据/data9",
+  "空场数据/data10"
+ ],
+ "target_groups": {
+  "墙体数据/data1-42cm": {
+   "type": "wall",
+   "d_true_cm": 42.0,
+   "split": "wall_cal"
+  },
+  "金属板数据/data1-69cm": {
+   "type": "metal",
+   "d_true_cm": 69.0,
+   "split": "metal_cal"
+  }
+ },
+ "gates": {
+  "valid_rx_required": 63,
+  "pslr_min_db": 3.0,
+  "pnr_min_db": 6.0,
+  "cal_err_eligible_max_cm": 5.0,
+  "cal_err_hard_stop_cm": 10.71,
+  "air_loo_eligible_min_db": 10.0,
+  "air_loo_hard_stop_db": 6.0,
+  "supp_dw_win_min_db": 20.0,
+  "supp_dw_win_applies_to": "E0-S2_only_diagnostic_in_E0-C",
+  "max_wall_s": 600,
+  "max_rss_mib": 4096
+ },
+ "loo": {
+  "lambda_grid": [0.0001, 0.001, 0.01],
+  "default": [0.001, 0.001],
+  "n_pairs": 9,
+  "n_folds": 10,
+  "objective": "median(Supp_air_LOO_dB) + 0.5 * min(Supp_air_LOO_dB)",
+  "switch_margin_db": 0.5,
+  "tie_tol_db": 1e-06,
+  "tie_break_order": [
+   "smaller_lambda_cal_plus_lambda_inv",
+   "closer_grid_index_manhattan_then_euclid_accepted",
+   "lexicographically_smaller"
+  ],
+  "tolerances_db": 1e-06
+ },
+ "eta_wall_candidates": [0.15, 0.25, 0.35],
+ "eta_wall_default": 0.25,
+ "constants": {
+  "c0_m_s": 299792458.0,
+  "tp_ns": 1000.0,
+  "pslr_half_width_m": 0.1606031,
+  "wall_first_peak_bg_margin_db": 6.0,
+  "rayleigh_range_resolution_cm": 10.7068735,
+  "sample_two_way_step_cm": 3.747405725
+ },
+ "tolerances": {
+  "db": 1e-06,
+  "meters": 1e-09,
+  "cm": 1e-09,
+  "hash": "exact"
+ },
+ "array_schema": {
+  "npz": "e0c_arrays.npz",
+  "dtype": "float64(<f8) / complex128(<c16), C-order, no Fortran order",
+  "per_target_group_keys": [
+   "<prefix>__tau_ns (N,) float64",
+   "<prefix>__tau_dir_ns (63,) float64",
+   "<prefix>__z_before (63,N) complex128",
+   "<prefix>__z_after (63,N) complex128",
+   "<prefix>__d_m (M,) float64 — 0.1 mm fine grid over [0.15,2.00] m",
+   "<prefix>__P_after (M,) float64 — linear power of P_norm,eff (not dB)"
+  ],
+  "air_loo_keys": [
+   "<air_prefix>__p_cal (9,10,63) float64 — per-pair/pair-fold/channel calibrated in-band power sum",
+   "<air_prefix>__p_sup (9,10,63) float64 — per-pair/fold/channel suppressed power sum"
+  ],
+  "mapping": "e0c_results.json#array_map.group_prefix maps each group_key to <prefix>; array_map.air_loo_prefix gives <air_prefix>",
+  "ordering": "group grid order = array_map order, must equal Cartesian lambda_cal x lambda_inv row-major: (1e-4,1e-4),(1e-4,1e-3),...; fold order = air_groups order (data1..data10)"
+ },
+ "checks": [
+  {"id": "C1", "blocking": true, "title": "版本锚点：config/PLAN/SPLIT/E0-S 结果 SHA256 与 D1-2 契约版本"},
+  {"id": "C2", "blocking": true, "title": "实现身份：40 位 SHA、非自引用、父提交可追溯"},
+  {"id": "C3", "blocking": true, "title": "边界：恰好 12 组白名单，无检验组/附件3/B 题命中"},
+  {"id": "C4", "blocking": true, "title": "数据身份：96 个 .dat 的 size+SHA256 与 R0 清单逐文件一致"},
+  {"id": "C5", "blocking": true, "title": "方法范围：固定 alpha=1.0，未引入 N0（声明+源码提示）"},
+  {"id": "C6", "blocking": true, "title": "E0-S 前置：已验收结果一致且 overall_pass"},
+  {"id": "C7", "blocking": true, "title": "有效通道/有限性：逐组 valid_rx=63、数组无 NaN/Inf"},
+  {"id": "C8", "blocking": true, "title": "空场 LOO：9 对 x 10 折独立重算、J_air、并列裁决、切换触发与门槛分类"},
+  {"id": "C9", "blocking": true, "title": "目标组门控：PSLR/PNR/校准测距与灰区/硬停分类"},
+  {"id": "C10", "blocking": true, "title": "指标独立重算：BG_proxy/PNR/PSLR/Supp_dw-win/d_hat/abs_err 与交付一致"},
+  {"id": "C11", "blocking": true, "title": "冻结完整性：仅全部门控可冻结时才写 frozen，lambda/eta 与选定值一致"},
+  {"id": "C12", "blocking": true, "title": "确定性证据：两次运行摘要绑定可核验"},
+  {"id": "C13", "blocking": true, "title": "资源预算：<=600 s、<=4096 MiB、单进程单线程"},
+  {"id": "C14", "blocking": true, "title": "证据完整：必需文件、SHA256SUMS、run.log"},
+  {"id": "C15", "blocking": true, "title": "真值隔离：d_true 仅用于评价，未进入数组/估计路径"}
+ ],
+ "report_format": {
+  "verdicts": ["PASS", "FAIL", "INSUFFICIENT"],
+  "required_fields_per_group_in_results_json": [
+   "group_key", "target_type", "split", "d_true_cm", "d_hat_m", "abs_err_cm",
+   "supp_dw_win_db", "pslr_db", "pnr_db", "echo_ret_db", "valid_rx", "finite",
+   "status", "gate_results", "stop_reason"
+  ],
+  "required_top_level_in_results_json": [
+   "experiment_id", "phase", "scope", "implementation_sha", "parent_commit",
+   "main_commit", "branch", "config_sha256", "plan_sha256", "split_sha256",
+   "e0_s_results_sha256", "fold_gate_contract_version", "environment", "command",
+   "resource", "methods", "inputs", "air_loo_folds", "array_map", "lambda_selected",
+   "eta_wall", "freeze", "arrays_sha256", "metrics_sha256", "repeat_run",
+   "d_true_usage", "files_sha256", "stop_reason"
+  ]
+ }
+}
