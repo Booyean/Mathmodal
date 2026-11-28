@@ -92,26 +92,11 @@ def run_checker(checker: Path, package: Path, anchor_repo: Path, report: Path) -
         return json.load(f)
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(description="E0-C 两进程合成包的官方检查器预检")
-    ap.add_argument("--checker", required=True, help="官方 accept_e0c.py 路径（建议取 main）")
-    ap.add_argument("--anchor-repo", default=str(REPO),
-                    help="锚点/E0-S 结果所在仓库副本（默认本副本）")
-    ap.add_argument("--work", default=str(Path(tempfile.gettempdir()) / "e0c_official_precheck"),
-                    help="合成数据与交付包的临时工作目录（默认系统临时目录）")
-    ap.add_argument("--report", default=None, help="报告 JSON 路径（默认 <work>/report.json）")
-    args = ap.parse_args()
-
-    work = Path(args.work)
-    work.mkdir(parents=True, exist_ok=True)
-    report_path = Path(args.report) if args.report else work / "report.json"
-
-    package = build_package(work)
-    rep = run_checker(Path(args.checker), package, Path(args.anchor_repo), report_path)
-
+def summarize(rep: Dict[str, Any]) -> Dict[str, Any]:
+    """把官方检查器报告压成预检摘要（只做映射，不重判 C1–C15）。"""
     checks = {c["id"]: c["status"] for c in rep["checks"]}
     c12 = next(c for c in rep["checks"] if c["id"] == "C12")
-    summary = {
+    return {
         "verdict": rep["verdict"],
         "failed_checks": rep.get("failed_checks"),
         "insufficient_checks": rep.get("insufficient_checks"),
@@ -130,10 +115,30 @@ def main() -> int:
             "真实 E0-C 结论仍需 B-02 放行后的真实双跑。"
         ),
     }
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description="E0-C 两进程合成包的官方检查器预检")
+    ap.add_argument("--checker", required=True, help="官方 accept_e0c.py 路径（建议取 main）")
+    ap.add_argument("--anchor-repo", default=str(REPO),
+                    help="锚点/E0-S 结果所在仓库副本（默认本副本）")
+    ap.add_argument("--work", default=str(Path(tempfile.gettempdir()) / "e0c_official_precheck"),
+                    help="合成数据与交付包的临时工作目录（默认系统临时目录）")
+    ap.add_argument("--report", default=None, help="报告 JSON 路径（默认 <work>/report.json）")
+    args = ap.parse_args()
+
+    work = Path(args.work)
+    work.mkdir(parents=True, exist_ok=True)
+    report_path = Path(args.report) if args.report else work / "report.json"
+
+    package = build_package(work)
+    rep = run_checker(Path(args.checker), package, Path(args.anchor_repo), report_path)
+
+    summary = summarize(rep)
     out = work / "summary.json"
     out.write_text(json.dumps(summary, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     print(json.dumps(summary, ensure_ascii=False, indent=1))
-    return 0 if c12["status"] == "pass" else 1
+    return 0 if summary["c12_status"] == "pass" else 1
 
 
 if __name__ == "__main__":
