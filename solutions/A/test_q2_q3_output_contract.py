@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import json
+import math
+import statistics
 import unittest
 from pathlib import Path
 
@@ -90,6 +92,84 @@ class TestQ2Q3OutputContract(unittest.TestCase):
         self.assertEqual(self.data["status"], "contract_only_empirical_slots_tbd")
         self.assertGreaterEqual(self.md.count("[待补]"), 7)
         self.assertIn("ShadowRatio", self.md)
+
+    def test_fig3_2_multi_target_distinct_references(self) -> None:
+        """Verify whole-map dB uses shadow_unocc_global_med while per-target annotations bind by object_id."""
+        axis_defaults = self.data["q3_metal_contract"]["json_fields"]["shadow_profile_axis_spec"]["defaults"]
+        ref_key = axis_defaults["ref_energy_key"]
+        floor_ratio = axis_defaults["db_floor_ratio"]
+
+        x_grid_m = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.1, 1.2]
+        # Energy over wall band: occluded under [0.2,0.4] (0.15) & [0.8,1.0] (0.50);
+        # unoccluded x in {0.0, 0.6, 1.1, 1.2} has values [1.0, 2.0, 2.0, 4.0] -> median = 2.0
+        shadow_profile_x_y = [
+            [1.0, 0.15, 0.15, 2.0, 0.50, 0.50, 2.0, 4.0],
+            [1.0, 0.15, 0.15, 2.0, 0.50, 0.50, 2.0, 4.0],
+        ]
+        metal_objects = [
+            {"object_id": "metal_col", "bbox_10db_m": [0.2, 0.4, 1.0, 1.2, 0.25, 0.75]},
+            {"object_id": "metal_shv", "bbox_10db_m": [0.8, 1.0, 0.65, 0.85, 0.28, 0.42]},
+        ]
+        # Distinct per-target i_unocc_med values (1.0 vs 4.0), both != global union-excluded median (2.0)
+        shadow_diagnostics = [
+            {
+                "object_id": "metal_col",
+                "i_shadow_bar": 0.15,
+                "i_unocc_med": 1.0,
+                "shadow_ratio_db": 10.0 * math.log10(0.15 / 1.0),
+                "shadow_confirmed": True,
+            },
+            {
+                "object_id": "metal_shv",
+                "i_shadow_bar": 0.50,
+                "i_unocc_med": 4.0,
+                "shadow_ratio_db": 10.0 * math.log10(0.50 / 4.0),
+                "shadow_confirmed": True,
+            },
+        ]
+
+        # Recompute global unoccluded median per rule: exclude union of all detected [x_min, x_max]
+        unocc_vals = []
+        for row in shadow_profile_x_y:
+            for xi, val in zip(x_grid_m, row):
+                inside_any = any(obj["bbox_10db_m"][0] <= xi <= obj["bbox_10db_m"][1] for obj in metal_objects)
+                if not inside_any:
+                    unocc_vals.append(val)
+        recomputed_global_med = statistics.median(unocc_vals)
+        self.assertAlmostEqual(recomputed_global_med, 2.0)
+
+        def render_fig3_2_db_and_bind(results_json: dict, profile: list[list[float]]) -> tuple[list[list[float]], dict[str, dict]]:
+            i_ref = results_json[ref_key]
+            floor = floor_ratio * i_ref
+            db_map = [[10.0 * math.log10(max(v, floor) / i_ref) for v in row] for row in profile]
+            by_id = {item["object_id"]: item for item in results_json["shadow_diagnostics"]}
+            return db_map, by_id
+
+        res_order_a = {
+            ref_key: recomputed_global_med,
+            "shadow_diagnostics": shadow_diagnostics,
+        }
+        res_order_b = {
+            ref_key: recomputed_global_med,
+            "shadow_diagnostics": list(reversed(shadow_diagnostics)),
+        }
+        db_a, bind_a = render_fig3_2_db_and_bind(res_order_a, shadow_profile_x_y)
+        db_b, bind_b = render_fig3_2_db_and_bind(res_order_b, shadow_profile_x_y)
+
+        # Whole-map dB grid is invariant to target ordering and anchored to global_med=2.0 (0 dB at val=2.0)
+        self.assertEqual(db_a, db_b)
+        self.assertAlmostEqual(db_a[0][3], 0.0)
+        self.assertAlmostEqual(db_a[0][0], 10.0 * math.log10(1.0 / 2.0))
+        self.assertAlmostEqual(db_a[0][7], 10.0 * math.log10(4.0 / 2.0))
+
+        # Per-object annotations bind deterministically by object_id despite distinct i_unocc_med
+        self.assertNotAlmostEqual(bind_a["metal_col"]["i_unocc_med"], bind_a["metal_shv"]["i_unocc_med"])
+        self.assertAlmostEqual(bind_a["metal_col"]["i_unocc_med"], 1.0)
+        self.assertAlmostEqual(bind_b["metal_col"]["i_unocc_med"], 1.0)
+        self.assertAlmostEqual(bind_a["metal_shv"]["i_unocc_med"], 4.0)
+        self.assertAlmostEqual(bind_b["metal_shv"]["i_unocc_med"], 4.0)
+        self.assertAlmostEqual(bind_b["metal_col"]["shadow_ratio_db"], 10.0 * math.log10(0.15 / 1.0))
+        self.assertAlmostEqual(bind_b["metal_shv"]["shadow_ratio_db"], 10.0 * math.log10(0.50 / 4.0))
 
 
 if __name__ == "__main__":
