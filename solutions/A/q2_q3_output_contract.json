@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "contract_id": "A-Q2Q3-OUTPUT-FIGURE-CONTRACT",
+  "base_commit": "40c637e066616d9e108f1cbf9d84e0ee33d61167",
+  "status": "contract_only_empirical_slots_tbd",
+  "sources": [
+    "solutions/A/model_q2.md",
+    "solutions/A/model_q3.md",
+    "solutions/A/e0_s1s2_contract.md",
+    "paper/A/NOTATION_TABLE.md",
+    "paper/A/RESULTS_AND_FIGURES_CHECKLIST.md",
+    "paper/A/draft_ch5_7.md"
+  ],
+  "unit_conventions": {
+    "machine_scalars_and_axes": "SI (m, s, rad/deg, linear_energy, power_ratio_10log10_db)",
+    "paper_table_presentation": "cm (value_cm = value_m * 100.0), deg, dB, %",
+    "symbol_aliases": {
+      "C_B/A": "Delta_B/A -> delta_ba_db",
+      "C_B/bg": "PBR_B -> pbr_b_db"
+    }
+  },
+  "q2_contract": {
+    "results_json": "q2_results.json",
+    "arrays_npz": "q2_arrays.npz",
+    "json_fields": {
+      "row_id": {"type": "int", "unit": "dimensionless", "default": 4},
+      "rx_indices": {"type": "list[int]", "unit": "dimensionless", "default": [24, 25, 26, 28, 29, 30, 31]},
+      "z_slice_m": {"type": "float", "unit": "m", "default": 0.545},
+      "gain_params.beta": {"type": "float", "unit": "dimensionless", "default": 1.0},
+      "gain_params.alpha_gain_per_ns": {"type": "float", "unit": "ns^-1"},
+      "gain_params.alpha_y_per_m": {"type": "float", "unit": "m^-1"},
+      "gain_params.slope_db_per_m": {"type": "float", "unit": "dB/m"},
+      "gain_params.y0_m": {"type": "float", "unit": "m", "default": 0.25},
+      "gain_params.tau0_s": {"type": "float", "unit": "s"},
+      "gain_params.y_sat_m": {"type": "float", "unit": "m", "default": 2.6},
+      "gain_params.tau_sat_s": {"type": "float", "unit": "s"},
+      "gain_params.g_cap": {"type": "float", "unit": "dimensionless", "default": 20.0},
+      "gain_selection": {"type": "dict", "unit": "ns^-1 and dB", "keys": ["alpha_grid_per_ns", "delta_far_near_db", "c_far_med_db", "selected_alpha_per_ns"]},
+      "metrics_before_gain": {"type": "dict[float]", "unit": "dB and %", "keys": ["delta_ba_db", "pbr_b_db", "pslr_b_db", "b_coverage_pct", "delta_far_near_db", "c_far_med_db"]},
+      "metrics_after_gain_coh": {"type": "dict[float]", "unit": "dB and %", "keys": ["delta_ba_db", "pbr_b_db", "pslr_b_db", "b_coverage_pct", "delta_far_near_db", "c_far_med_db"]},
+      "metrics_after_gain_env": {"type": "dict[float]", "unit": "dB and %", "keys": ["delta_ba_db", "pbr_b_db", "pslr_b_db", "b_coverage_pct"]},
+      "wall_a_apparent": {"type": "dict[float]", "unit": "m and deg", "keys": ["x_min_m", "x_max_m", "y_start_m", "y_end_m", "slope_dy_dx", "tilt_deg", "fit_r2"]},
+      "wall_b_apparent": {"type": "dict", "unit": "m, deg, dimensionless", "keys": ["air_x_ranges_m", "air_y_mean_m", "air_tilt_deg", "behind_a_x_range_m", "behind_a_y_mean_m", "delta_y_app_m", "eps_r_diag"]},
+      "row_consistency": {"type": "dict[float]", "unit": "m and cm", "keys": ["row_3_wall_b_y_m", "row_5_wall_b_y_m", "max_row_diff_cm"]}
+    },
+    "npz_arrays": {
+      "x_grid_m": {"shape": ["N_x"], "dtype": "float64", "unit": "m"},
+      "y_grid_m": {"shape": ["N_y"], "dtype": "float64", "unit": "m"},
+      "x_scan_m": {"shape": [33], "dtype": "float64", "unit": "m"},
+      "tau_curve_s": {"shape": ["K_tau"], "dtype": "float64", "unit": "s"},
+      "w_comp_curve": {"shape": ["K_tau"], "dtype": "float64", "unit": "dimensionless"},
+      "image_before_gain_coh": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
+      "image_after_gain_coh": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
+      "image_after_gain_env": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
+      "image_row3_coh": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy", "optional": true},
+      "image_row5_coh": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy", "optional": true}
+    }
+  },
+  "q3_wall_contract": {
+    "results_json": "q3_wall_results.json",
+    "arrays_npz": "q3_wall_arrays.npz",
+    "json_fields": {
+      "grid_spec": {"type": "dict[float]", "unit": "m", "keys": ["x_range_m", "y_range_m", "z_range_m", "coarse_step_m", "fine_step_m"]},
+      "aperture_weights": {"type": "dict", "unit": "deg and count", "keys": ["theta_x_flat_deg", "theta_x_cut_deg", "theta_z_flat_deg", "theta_z_cut_deg", "valid_rx_count"]},
+      "inherited_gain_params": {"type": "dict[float]", "unit": "ns^-1 and dimensionless", "keys": ["beta", "alpha_gain_per_ns", "g_cap"]},
+      "wall_a_3d": {"type": "dict", "unit": "m and deg", "keys": ["x_span_m", "y_front_mean_m", "y_front_range_m", "z_envelope_m", "tilt_deg"]},
+      "wall_b_3d": {"type": "dict", "unit": "m, cm, dB", "keys": ["air_y_mean_m", "behind_a_y_mean_m", "z_consistency_cm", "pbr_b_coh_db", "pbr_b_env_db"]},
+      "q2_q3_reconciliation": {"type": "dict", "unit": "m, cm, bool", "keys": ["z_slice_m", "air_segment_max_diff_cm", "air_segment_mae_cm", "passed_le_2cm"]}
+    },
+    "npz_arrays": {
+      "x_grid_m": {"shape": ["N_x"], "dtype": "float64", "unit": "m"},
+      "y_grid_m": {"shape": ["N_y"], "dtype": "float64", "unit": "m"},
+      "z_grid_m": {"shape": ["N_z"], "dtype": "float64", "unit": "m"},
+      "image_3d_coh": {"shape": ["N_z", "N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
+      "image_3d_env": {"shape": ["N_z", "N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
+      "slice_xy_z4": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
+      "proj_xy_max": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
+      "proj_xz_max": {"shape": ["N_z", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
+      "proj_yz_max": {"shape": ["N_z", "N_y"], "dtype": "float64", "unit": "normalized_energy"}
+    }
+  },
+  "q3_metal_contract": {
+    "results_json": "q3_metal_results.json",
+    "arrays_npz": "q3_metal_arrays.npz",
+    "json_fields": {
+      "grid_spec": {"type": "dict[float]", "unit": "m", "keys": ["x_range_m", "y_range_m", "z_range_m", "coarse_step_m", "fine_step_m"]},
+      "anomaly_isolation": {"type": "dict", "unit": "count and status", "keys": ["orphan_skipped", "group8_sync_common", "group8_int16_min_count", "group8_d1_gate_action"]},
+      "gain_modes": {"type": "dict", "unit": "ns^-1", "keys": ["primary_localization", "shadow_diagnostic"]},
+      "nms_params": {"type": "dict[float]", "unit": "m and dB", "keys": ["radius_x_m", "radius_y_m", "min_peak_above_med_db", "contour_drop_db"]},
+      "metal_objects": {"type": "list[dict]", "unit": "m and dB", "item_keys": ["object_id", "inferred_class", "peak_xyz_m", "centroid_10db_xyz_m", "bbox_10db_m", "delta_z_10db_m", "peak_above_med_db"]},
+      "shadow_diagnostics": {"type": "list[dict]", "unit": "m, energy, dB, bool", "item_keys": ["object_id", "y_shadow_start_m", "y_wall_band_m", "i_shadow_bar", "i_unocc_med", "shadow_ratio_db", "shadow_confirmed"]},
+      "resolution_limits": {"type": "dict[float]", "unit": "m", "keys": ["dy_res_m", "dx_res_m", "dz_res_at_08m_m", "dz_res_at_20m_m"]}
+    },
+    "npz_arrays": {
+      "x_grid_m": {"shape": ["N_x"], "dtype": "float64", "unit": "m"},
+      "y_grid_m": {"shape": ["N_y"], "dtype": "float64", "unit": "m"},
+      "z_grid_m": {"shape": ["N_z"], "dtype": "float64", "unit": "m"},
+      "image_3d_coh": {"shape": ["N_z", "N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
+      "image_3d_env": {"shape": ["N_z", "N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
+      "image_3d_shadow_gain": {"shape": ["N_z", "N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
+      "shadow_profile_x_y": {"shape": ["N_y_wall", "N_x"], "dtype": "float64", "unit": "normalized_energy"}
+    }
+  },
+  "paper_slots": {
+    "Fig 2-1": {"section": "6.4", "status": "[待补]", "source_contract": "q2_contract", "required_fields": ["x_grid_m", "y_grid_m", "image_before_gain_coh", "image_after_gain_coh", "wall_a_apparent", "wall_b_apparent"]},
+    "Fig 2-2": {"section": "6.4", "status": "[待补]", "source_contract": "q2_contract", "required_fields": ["tau_curve_s", "w_comp_curve", "gain_selection", "row_consistency"]},
+    "Table 2-1": {"section": "6.4", "status": "[待补]", "source_contract": "q2_contract", "required_fields": ["metrics_before_gain", "metrics_after_gain_coh", "metrics_after_gain_env", "wall_a_apparent", "wall_b_apparent"]},
+    "Fig 3-1": {"section": "7.2-7.4", "status": "[待补]", "source_contract": "q3_wall_contract", "required_fields": ["x_grid_m", "y_grid_m", "z_grid_m", "image_3d_coh", "slice_xy_z4", "proj_xy_max", "proj_xz_max", "proj_yz_max"]},
+    "Table 3-1": {"section": "7.4", "status": "[待补]", "source_contract": "q3_wall_contract", "required_fields": ["wall_a_3d", "wall_b_3d", "q2_q3_reconciliation"]},
+    "Fig 3-2": {"section": "7.3-7.4", "status": "[待补]", "source_contract": "q3_metal_contract", "required_fields": ["x_grid_m", "y_grid_m", "z_grid_m", "image_3d_coh", "shadow_profile_x_y", "metal_objects", "shadow_diagnostics"]},
+    "Table 3-2": {"section": "7.4", "status": "[待补]", "source_contract": "q3_metal_contract", "required_fields": ["metal_objects", "shadow_diagnostics", "anomaly_isolation"]}
+  }
+}
