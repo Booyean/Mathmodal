@@ -633,6 +633,15 @@ def _write_json(path: str, obj: Any) -> None:
 
 
 def _write_npz(path: str, arrays: Dict[str, Any]) -> None:
+    """确定性 `.npz`：固定 zip 成员时间戳，使同一组数组两次序列化逐字节一致。
+
+    与 `a_e0_c.save_npz_deterministic` / `a_q2q3_common` 同口径。C12 两进程证据要求
+    两次独立序列化后的 `arrays_sha256` 相同；`np.savez` 会把当前墙钟写进 zip
+    成员时间戳，导致“数组相同、字节不同”。
+    """
+    import io
+    import zipfile
+
     import numpy as np  # 仅此处需要；数组本身按嵌套 list 传递
 
     payload = {}
@@ -641,8 +650,16 @@ def _write_npz(path: str, arrays: Dict[str, Any]) -> None:
         n_grid = len(_flatten(arrays["air_loo__p_cal"])) // (10 * N_CH)
         resolved = tuple(n_grid if s == "n_grid" else int(s) for s in shape)
         payload[member] = np.asarray(_flatten(arr), dtype=np.float64).reshape(resolved)
-    with open(path, "wb") as f:
-        np.savez(f, **payload)
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED,
+                         compresslevel=6) as zf:
+        for member in sorted(payload):
+            info = zipfile.ZipInfo(filename=member + ".npy",
+                                   date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            buf = io.BytesIO()
+            np.lib.format.write_array(
+                buf, np.ascontiguousarray(payload[member]), allow_pickle=False)
+            zf.writestr(info, buf.getvalue())
 
 
 def _sums_line(path: str, rel: str) -> str:
