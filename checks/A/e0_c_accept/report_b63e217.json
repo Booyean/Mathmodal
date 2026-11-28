@@ -1,0 +1,294 @@
+{
+ "prereg_id": "E0-PREREG-3",
+ "prereg_path": "C:\\Users\\30461\\.openagents\\agents\\my_deepseek\\_tmp\\c12\\checks\\A\\e0_c_prereg.json",
+ "prereg_sha256": "ae7c41baa550d77a9d7d4919e4b721ba5d5b41191f56c436b334fb6a7206e94f",
+ "repeat_contract_id": "E0-C-C12-REPEAT-1",
+ "repeat_contract_sha256": "a32429e2a7b396c31ed5c4469603008683dded9f80ad65dfd0543a9b2fd9f7b8",
+ "results_dir": "C:\\Users\\30461\\.openagents\\agents\\my_deepseek\\_tmp\\verify_e0c\\experiments\\A\\A-Q1-E0\\e0c\\results",
+ "verdict": "FAIL",
+ "failed_checks": [
+  "C9",
+  "C12"
+ ],
+ "insufficient_checks": [],
+ "checks": [
+  {
+   "id": "C1",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "mismatches": {},
+    "git_recomputed_at_main": {
+     "config.json": "8fb6821fa3335ef748e16ad2f5b5b8fc818c13cbe9d3315377faf48d5e40e06a",
+     "PLAN.md": "073511c0b6ae44dbc90d228b7d79c2de9d0687d4e65949494803b19f24595a88",
+     "split": "d623da4ea186f372f2be094121c202c55dae0e236f4683005ab88d220a248b3a",
+     "e0_s_results": "171f55f75e464d289815af7352fb6fcb6635b8d73db97b3af2dcbb687eab3fdf"
+    }
+   }
+  },
+  {
+   "id": "C2",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "implementation_sha": "4cb44a0d59bfc8999187f40efe57318d70a033b7",
+    "parent_commit": "5ad8417b677ec727dc77ec0b5f12d00e4efe41f1",
+    "main_commit": "3b8b67e58156b9618c788ec8e114e50d960bbb0d",
+    "problems": [],
+    "git_parent_of_impl": "5ad8417b677ec727dc77ec0b5f12d00e4efe41f1",
+    "git_impl_exists": true
+   }
+  },
+  {
+   "id": "C3",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "n_groups": 12,
+    "extra": [],
+    "missing": [],
+    "problems": []
+   }
+  },
+  {
+   "id": "C4",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "source": "results.inputs",
+    "expected_files": 96,
+    "got_files": 96,
+    "expected_bytes": 88073632,
+    "computed_bytes": 88073632,
+    "problems": []
+   }
+  },
+  {
+   "id": "C5",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "declared": {
+     "alpha_mode": "fixed_1.0",
+     "n0_improvements_enabled": false,
+     "adaptive_alpha": false,
+     "subspace_suppression": false,
+     "wls_ranging": false,
+     "nonuniform_channel_weights": false
+    },
+    "problems": [],
+    "static_scan_hits": [
+     "subspace"
+    ],
+    "static_scan_note": "关键词扫描仅作提示，不作为通过依据"
+   }
+  },
+  {
+   "id": "C6",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "path": "..\\verify_e0c\\experiments\\A\\A-Q1-E0\\s1s2\\results\\e0_s1s2_results.json",
+    "sha256": "171f55f75e464d289815af7352fb6fcb6635b8d73db97b3af2dcbb687eab3fdf",
+    "overall_pass": true,
+    "cases": [
+     "E0-S1",
+     "E0-S2@0.42",
+     "E0-S2@0.69"
+    ],
+    "problems": []
+   }
+  },
+  {
+   "id": "C7",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "problems": [],
+    "arrays_finite": [
+     {
+      "group": "墙体数据/data1-42cm",
+      "arrays_finite": true
+     },
+     {
+      "group": "金属板数据/data1-69cm",
+      "arrays_finite": true
+     }
+    ]
+   }
+  },
+  {
+   "id": "C8",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "j_air": [
+     11.636621551,
+     11.800838744,
+     12.227073385,
+     11.626636977,
+     11.793198802,
+     12.22176875,
+     11.463839998,
+     11.682674897,
+     12.166309653
+    ],
+    "min": [
+     2.963998464,
+     2.987058304,
+     3.129798648,
+     2.960931175,
+     2.984433999,
+     3.128232582,
+     2.90936377,
+     2.963523003,
+     3.117138545
+    ],
+    "selected": [
+     0.001,
+     0.001
+    ],
+    "switched": false,
+    "eligibility": "hard_stop",
+    "near_tie_grid": [
+     [
+      0.0001,
+      0.01
+     ]
+    ],
+    "problems": []
+   }
+  },
+  {
+   "id": "C9",
+   "blocking": true,
+   "status": "fail",
+   "detail": {
+    "groups": [
+     {
+      "group": "墙体数据/data1-42cm",
+      "abs_err_cm": 6.179999999996349,
+      "status": "hard_stop",
+      "pslr_db": 2.664330228102982,
+      "pnr_db": 34.29380923376331
+     },
+     {
+      "group": "金属板数据/data1-69cm",
+      "abs_err_cm": 4.3699999999935795,
+      "status": "eligible",
+      "pslr_db": 4.17257974985938,
+      "pnr_db": 35.42927899434393
+     }
+    ],
+    "problems": [
+     "墙体数据/data1-42cm: PSLR=2.664330228102982 dB < 3.0 dB（硬停）"
+    ]
+   }
+  },
+  {
+   "id": "C10",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "groups": [
+     {
+      "group": "墙体数据/data1-42cm",
+      "recomputed": {
+       "supp_dw_win_db": 3.268659668,
+       "pslr_db": 2.664330228,
+       "pnr_db": 34.293809234,
+       "d_hat_m": 0.4817999999999635,
+       "abs_err_cm": 6.18,
+       "bg_proxy": 18393037242.888958,
+       "window_samples": 2583,
+       "ranging_rule": "wall_first_peak"
+      }
+     },
+     {
+      "group": "金属板数据/data1-69cm",
+      "recomputed": {
+       "supp_dw_win_db": 4.185473075,
+       "pslr_db": 4.17257975,
+       "pnr_db": 35.429278994,
+       "d_hat_m": 0.7336999999999357,
+       "abs_err_cm": 4.37,
+       "bg_proxy": 41982779656.59265,
+       "window_samples": 2583,
+       "ranging_rule": "global_argmax"
+      }
+     }
+    ],
+    "problems": []
+   }
+  },
+  {
+   "id": "C11",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "status_expected": "hard_stop",
+    "status_actual": "hard_stop",
+    "eta_wall": 0.25,
+    "frozen_file": false,
+    "problems": []
+   }
+  },
+  {
+   "id": "C12",
+   "blocking": true,
+   "status": "fail",
+   "detail": {
+    "duplicate_serialization_detected": true,
+    "run_evidence": "missing",
+    "metrics_sha256_recomputed": "1cce102f1513aff209c6ef095e3f7fea46dc3e5367db5926a040a8fd3ea90dd7",
+    "metrics_sha256_reported": "1cce102f1513aff209c6ef095e3f7fea46dc3e5367db5926a040a8fd3ea90dd7",
+    "manifest_source": null,
+    "problems": [
+     "缺少两次独立运行证据：未提供 repeat_run.runs 或 e0c_repeat.json；现有字段 ['arrays_sha256_second_serialization'] 只证明同一批数组被序列化两次"
+    ]
+   }
+  },
+  {
+   "id": "C13",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "wall_time_s": 153.236,
+    "peak_rss_mib": 296.85546875,
+    "single_process": true,
+    "threads": {
+     "OMP_NUM_THREADS": "1",
+     "OPENBLAS_NUM_THREADS": "1",
+     "MKL_NUM_THREADS": "1",
+     "NUMEXPR_NUM_THREADS": "1"
+    },
+    "problems": []
+   }
+  },
+  {
+   "id": "C14",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "present": {
+     "e0c_results.json": true,
+     "e0c_arrays.npz": true,
+     "e0c_air_loo.json": true,
+     "SHA256SUMS.txt": true,
+     "e0c_frozen.json": false
+    },
+    "problems": []
+   }
+  },
+  {
+   "id": "C15",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "declared": "evaluation_only",
+    "problems": [],
+    "static_scan_note": "d_true 出现次数: 14（仅提示，人工复核是否只进入评价）"
+   }
+  }
+ ]
+}

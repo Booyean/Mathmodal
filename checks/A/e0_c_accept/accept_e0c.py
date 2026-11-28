@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import array
 import ast
+import datetime
 import hashlib
 import json
 import math
@@ -48,6 +49,30 @@ REQUIRED_FILES = (
 )
 
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
+HEX64 = re.compile(r"^[0-9a-f]{64}$")
+
+# C12 独立运行证据契约（E0-C-C12-REPEAT-1，见 checks/A/e0_c_repeat_contract.json）。
+# 契约缺失时退回本文件的默认值：两次独立进程、各自交付数组/结果文件与独立时间窗。
+DEFAULT_REPEAT_CONTRACT = {
+    "n_runs": 2,
+    "required_run_fields": ["run_id", "pid", "started_at", "finished_at",
+                            "results_file", "results_sha256",
+                            "arrays_file", "arrays_sha256", "wall_time_s"],
+    "provenance_must_differ": ["run_id", "pid", "started_at", "finished_at",
+                               "arrays_file", "results_file"],
+}
+
+
+def load_repeat_contract(prereg_path: str):
+    """Load the C12 amendment contract next to the frozen prereg, if present."""
+    path = os.path.join(os.path.dirname(prereg_path), "e0_c_repeat_contract.json")
+    if not os.path.exists(path):
+        return path, dict(DEFAULT_REPEAT_CONTRACT)
+    doc = load_json(path)
+    merged = dict(DEFAULT_REPEAT_CONTRACT)
+    merged.update(doc)
+    return path, merged
+
 
 
 # --------------------------------------------------------------------------- #
@@ -202,13 +227,20 @@ def _abs2(flat, idx: int) -> float:
 # --------------------------------------------------------------------------- #
 class Checker:
     def __init__(self, results_dir, prereg, prereg_path, oracle, repo=None,
-                 e0s_path=None):
+                 e0s_path=None, repeat_contract=None):
         self.dir = results_dir
         self.prereg = prereg
         self.prereg_path = prereg_path
         self.oracle = oracle
         self.repo = repo
         self.e0s_path = e0s_path
+        if repeat_contract is None:
+            self.repeat_contract_path, repeat_contract = load_repeat_contract(
+                prereg_path)
+        else:
+            self.repeat_contract_path = os.path.join(
+                os.path.dirname(prereg_path), "e0_c_repeat_contract.json")
+        self.repeat_contract = repeat_contract
         self.results = None
         self.air_loo = None
         self.npz = None
@@ -490,18 +522,25 @@ class Checker:
         return ("fail" if problems else "pass"), detail
 
     # -- 按组取数组 --------------------------------------------------------- #
-    def group_arrays(self, group_key: str):
-        amap = self.results.get("array_map") or {}
+    def group_arrays(self, group_key: str, npz=None, amap=None):
+        npz = npz or self.npz
+        amap = amap if amap is not None else (self.results.get("array_map") or {})
         prefixes = amap.get("group_prefix") or {}
         if group_key not in prefixes:
             raise KeyError(f"array_map.group_prefix 未给出 {group_key!r}")
         p = prefixes[group_key]
-        tau_shape, tau_kind, tau = self.arr(f"{p}__tau_ns")
-        dir_shape, dir_kind, tau_dir = self.arr(f"{p}__tau_dir_ns")
-        zb_shape, zb_kind, zb = self.arr(f"{p}__z_before")
-        za_shape, za_kind, za = self.arr(f"{p}__z_after")
-        d_shape, d_kind, d_m = self.arr(f"{p}__d_m")
-        pa_shape, pa_kind, pa = self.arr(f"{p}__P_after")
+
+        def read(name):
+            if npz is self.npz:
+                return self.arr(name)
+            return npz.read(name)
+
+        tau_shape, tau_kind, tau = read(f"{p}__tau_ns")
+        dir_shape, dir_kind, tau_dir = read(f"{p}__tau_dir_ns")
+        zb_shape, zb_kind, zb = read(f"{p}__z_before")
+        za_shape, za_kind, za = read(f"{p}__z_after")
+        d_shape, d_kind, d_m = read(f"{p}__d_m")
+        pa_shape, pa_kind, pa = read(f"{p}__P_after")
         if tau_kind != "f8" or dir_kind != "f8" or d_kind != "f8" or pa_kind != "f8":
             raise ValueError(f"{group_key}: tau/tau_dir/d_m/P_after 必须为 float64")
         if zb_kind != "c16" or za_kind != "c16":
@@ -516,9 +555,9 @@ class Checker:
         return {"tau": list(tau), "tau_dir": list(tau_dir), "zb": zb, "za": za,
                 "d_m": list(d_m), "P": list(pa), "n": n}
 
-    def _recompute_group(self, g):
+    def _recompute_group(self, g, npz=None, amap=None, eta=None):
         key = g["group_key"]
-        A = self.group_arrays(key)
+        A = self.group_arrays(key, npz=npz, amap=amap)
         tau = A["tau"]
         n = A["n"]
         bg_idx = [k for k, t in enumerate(tau) if 50.0 <= t <= 950.0]
@@ -577,7 +616,10 @@ class Checker:
             d_sel = d_m[max(range(len(P)), key=lambda k: P[k])]
             rule = "global_argmax"
         elif typ == "wall":
-            eta = float(self.results.get("eta_wall", self.prereg["eta_wall_default"]))
+            if eta is None:
+                eta = float(self.results.get("eta_wall",
+                                             self.prereg["eta_wall_default"]))
+            eta = float(eta)
             pmax = max(P)
             thr = max(eta * pmax, 10.0 ** 0.6 * bg)
             cand = None
@@ -788,12 +830,22 @@ class Checker:
                 if name in declared and bool(declared[name]) != bool(val):
                     problems.append(f"{key}: gate_results.{name}={declared[name]} "
                                     f"与独立判定 {val} 不符")
-            if abs_err > g["cal_err_hard_stop_cm"]:
+            # 门控本身：PSLR/PNR 无灰区，任一不达标即硬停；abs_err 超过硬停线亦为硬停。
+            # 灰区只对 abs_err 成立（5.0 < err <= 10.71 cm），不掩盖 PSLR/PNR 失败。
+            if not checks["pslr_ge_3db"]:
+                problems.append(f"{key}: PSLR={grp.get('pslr_db')!r} dB < "
+                                f"{g['pslr_min_db']} dB（硬停）")
+            if not checks["pnr_ge_6db"]:
+                problems.append(f"{key}: PNR={grp.get('pnr_db')!r} dB < "
+                                f"{g['pnr_min_db']} dB（硬停）")
+            if not checks["abs_err_not_hard"]:
+                problems.append(f"{key}: abs_err={abs_err:.9f} cm > "
+                                f"{g['cal_err_hard_stop_cm']} cm（硬停）")
+            if not checks["pslr_ge_3db"] or not checks["pnr_ge_6db"] \
+                    or not checks["abs_err_not_hard"]:
                 status = "hard_stop"
-            elif abs_err > g["cal_err_eligible_max_cm"]:
+            elif not checks["abs_err_eligible"]:
                 status = "gray"
-            elif not (checks["pslr_ge_3db"] and checks["pnr_ge_6db"]):
-                status = "hard_stop"
             else:
                 status = "eligible"
             want_status = {"eligible": "eligible", "gray": "not_eligible_for_freeze",
@@ -908,7 +960,49 @@ class Checker:
         return ("fail" if problems else "pass"), detail
 
     # -- C12 确定性证据 ------------------------------------------------------ #
+    def _repeat_manifest(self):
+        """Return (source, runs, error) for the two-independent-run evidence."""
+        rr = self.results.get("repeat_run") or {}
+        runs = rr.get("runs")
+        if isinstance(runs, list) and runs:
+            return "e0c_results.json#repeat_run.runs", runs, None
+        path = os.path.join(self.dir, "e0c_repeat.json")
+        if os.path.exists(path):
+            try:
+                man = load_json(path)
+            except Exception as exc:
+                return "e0c_repeat.json", None, (
+                    f"e0c_repeat.json 不可解析: {type(exc).__name__}: {exc}")
+            runs = man.get("runs") if isinstance(man, dict) else None
+            if isinstance(runs, list) and runs:
+                return "e0c_repeat.json#runs", runs, None
+            return "e0c_repeat.json", None, "e0c_repeat.json 缺少 runs 列表"
+        return None, None, None
+
+    def _rel_file(self, rel):
+        if not isinstance(rel, str) or not rel.strip():
+            raise ValueError("路径为空")
+        raw = rel.replace("\\", "/")
+        if raw.startswith("/") or re.match(r"^[A-Za-z]:", raw):
+            raise ValueError(f"不允许绝对路径: {rel!r}")
+        norm = os.path.normpath(raw).replace("\\", "/")
+        if norm == ".." or norm.startswith("../"):
+            raise ValueError(f"路径逃出交付目录: {rel!r}")
+        return os.path.join(self.dir, *norm.split("/")), norm
+
+    @staticmethod
+    def _parse_utc(value):
+        text = str(value).strip()
+        if text.endswith("Z"):
+            text = text[:-1] + "+00:00"
+        ts = datetime.datetime.fromisoformat(text)
+        if ts.tzinfo is None:
+            raise ValueError(f"时间戳缺少时区: {value!r}")
+        return ts
+
     def c12(self):
+        pr = self.prereg["tolerances"]
+        contract = self.repeat_contract or DEFAULT_REPEAT_CONTRACT
         problems = []
         rr = self.results.get("repeat_run") or {}
         metrics = []
@@ -917,6 +1011,10 @@ class Checker:
                 "group_key", "d_hat_m", "abs_err_cm", "supp_dw_win_db",
                 "pslr_db", "pnr_db", "valid_rx", "finite")})
         digest = hashlib.sha256(canonical_json(metrics).encode("utf-8")).hexdigest()
+        detail = {"duplicate_serialization_detected": False,
+                  "run_evidence": "missing",
+                  "metrics_sha256_recomputed": digest,
+                  "metrics_sha256_reported": self.results.get("metrics_sha256")}
         if not rr:
             problems.append("缺少 repeat_run 证据块（两次运行一致性）")
         else:
@@ -931,9 +1029,210 @@ class Checker:
                 problems.append("repeat_run.metrics_sha256 与按 groups 规范化重算的摘要不同")
         if self.results.get("metrics_sha256") != digest:
             problems.append("metrics_sha256 与按 groups 规范化重算的摘要不同")
-        detail = {"metrics_sha256_recomputed": digest,
-                  "metrics_sha256_reported": self.results.get("metrics_sha256"),
-                  "problems": problems}
+
+        source, runs, err = self._repeat_manifest()
+        detail["manifest_source"] = source
+        if err:
+            problems.append(err)
+        if not runs:
+            # 只有同一批交付数组的重复序列化/哈希相等，不构成两次独立运行。
+            detail["duplicate_serialization_detected"] = True
+            hint = ""
+            if isinstance(rr, dict):
+                sig = sorted(k for k in rr if "serializ" in k.lower())
+                if sig:
+                    hint = f"；现有字段 {sig} 只证明同一批数组被序列化两次"
+            problems.append("缺少两次独立运行证据：未提供 repeat_run.runs 或 "
+                            "e0c_repeat.json" + hint)
+            detail["problems"] = problems
+            return "fail", detail
+
+        need = int(contract.get("n_runs", 2))
+        required = list(contract.get("required_run_fields")
+                        or DEFAULT_REPEAT_CONTRACT["required_run_fields"])
+        differ = list(contract.get("provenance_must_differ")
+                      or DEFAULT_REPEAT_CONTRACT["provenance_must_differ"])
+        if len(runs) != need:
+            problems.append(f"独立运行次数应为 {need}，实为 {len(runs)}")
+        recs = []
+        for idx, rec in enumerate(runs[:need]):
+            if not isinstance(rec, dict):
+                problems.append(f"runs[{idx}] 不是对象")
+                continue
+            miss = [f for f in required if f not in rec]
+            if miss:
+                problems.append(f"runs[{idx}] 缺少字段 {miss}")
+                continue
+            ok = True
+            for hf in ("results_sha256", "arrays_sha256"):
+                if not HEX64.match(str(rec.get(hf) or "")):
+                    problems.append(f"runs[{idx}].{hf} 不是 64 位小写 hex")
+                    ok = False
+            entry = {"run_id": rec.get("run_id"), "pid": rec.get("pid"),
+                     "started_at": rec.get("started_at"),
+                     "finished_at": rec.get("finished_at"),
+                     "wall_time_s": rec.get("wall_time_s"),
+                     "results_sha256": rec.get("results_sha256"),
+                     "arrays_sha256": rec.get("arrays_sha256")}
+            for kind in ("results", "arrays"):
+                try:
+                    path, norm = self._rel_file(rec[kind + "_file"])
+                except (TypeError, ValueError) as exc:
+                    problems.append(f"runs[{idx}].{kind}_file 非法: {exc}")
+                    ok = False
+                    continue
+                entry[kind + "_file"] = norm
+                entry["_" + kind + "_path"] = path
+                if not os.path.exists(path):
+                    problems.append(f"runs[{idx}].{kind}_file 不存在: {norm}")
+                    ok = False
+                    continue
+                if sha256_file(path) != rec[kind + "_sha256"]:
+                    problems.append(f"runs[{idx}].{kind}_sha256 与文件 {norm} 不符")
+                    ok = False
+            try:
+                if float(rec.get("wall_time_s")) <= 0:
+                    problems.append(f"runs[{idx}].wall_time_s 非正")
+            except (TypeError, ValueError):
+                problems.append(f"runs[{idx}].wall_time_s 不是数值")
+            if ok:
+                recs.append(entry)
+
+        detail["run_evidence"] = "present"
+        detail["runs"] = [{k: v for k, v in r.items() if not k.startswith("_")}
+                          for r in recs]
+        if len(recs) != need:
+            detail["problems"] = problems
+            return "fail", detail
+
+        # 0) runs[0] 必须绑定本次交付的顶层文件
+        top_npz = os.path.realpath(os.path.join(self.dir, "e0c_arrays.npz"))
+        top_res = os.path.realpath(os.path.join(self.dir, "e0c_results.json"))
+        if os.path.realpath(recs[0]["_arrays_path"]) != top_npz:
+            problems.append("runs[0].arrays_file 不是本次交付的 e0c_arrays.npz")
+        if os.path.realpath(recs[0]["_results_path"]) != top_res:
+            problems.append("runs[0].results_file 不是本次交付的 e0c_results.json")
+
+        # 1) 独立进程/时间窗/文件必须互不相同（重复序列化的特征）
+        for field in differ:
+            vals = [canonical_json(r.get(field)) for r in recs]
+            if len(set(vals)) != len(vals):
+                detail["duplicate_serialization_detected"] = True
+                problems.append(f"两次运行的 {field} 相同 → 不是独立运行（重复序列化）")
+        if len({os.path.realpath(r["_arrays_path"]) for r in recs}) != need or \
+                len({os.path.realpath(r["_results_path"]) for r in recs}) != need:
+            detail["duplicate_serialization_detected"] = True
+            problems.append("两次运行复用同一数组/结果文件 → 重复序列化")
+        try:
+            windows = []
+            for r in recs:
+                s = self._parse_utc(r["started_at"])
+                f_ = self._parse_utc(r["finished_at"])
+                if not s < f_:
+                    problems.append(f"run {r['run_id']}: started_at 不早于 finished_at")
+                windows.append((s, f_))
+            for i in range(len(windows) - 1):
+                if windows[i][1] > windows[i + 1][0]:
+                    problems.append("两次运行的时间窗重叠/顺序颠倒 → 不构成顺序独立复跑")
+            for p in (r.get("pid") for r in recs):
+                if not isinstance(p, int) or p <= 0:
+                    problems.append(f"pid 非法: {p!r}")
+        except (TypeError, ValueError) as exc:
+            problems.append(f"运行时间戳不可解析: {exc}")
+
+        # 2) 第二次运行的 JSON 必须与第一次一致，且绑定它自己的 npz
+        second = recs[1]
+        try:
+            rep = load_json(second["_results_path"])
+        except Exception as exc:
+            problems.append(f"第二次运行结果不可解析: {type(exc).__name__}: {exc}")
+            rep = None
+        if rep is not None:
+            rep_groups = rep.get("groups") or []
+            base = {g.get("group_key"): g for g in (self.results.get("groups") or [])}
+            got = {g.get("group_key"): g for g in rep_groups}
+            if set(got) != set(base):
+                problems.append(f"两次运行的组集合不同: 仅第一次 "
+                                f"{sorted(set(base) - set(got))}，仅第二次 "
+                                f"{sorted(set(got) - set(base))}")
+            for key in base:
+                if key not in got:
+                    continue
+                a, b = base[key], got[key]
+                for field, tol in (("d_hat_m", pr["meters"]),
+                                   ("abs_err_cm", pr["cm"]),
+                                   ("supp_dw_win_db", pr["db"]),
+                                   ("pslr_db", pr["db"]),
+                                   ("pnr_db", pr["db"])):
+                    av, bv = a.get(field), b.get(field)
+                    if av is None and bv is None:
+                        continue
+                    if av is None or bv is None or abs(float(av) - float(bv)) > tol:
+                        problems.append(f"{key}.{field}: 运行1={av!r} 运行2={bv!r} 不一致")
+                for field in ("valid_rx", "finite"):
+                    if a.get(field) != b.get(field):
+                        problems.append(f"{key}.{field}: 运行1={a.get(field)!r} "
+                                        f"运行2={b.get(field)!r} 不一致")
+            rep_metrics = [{k: g.get(k) for k in (
+                "group_key", "d_hat_m", "abs_err_cm", "supp_dw_win_db",
+                "pslr_db", "pnr_db", "valid_rx", "finite")} for g in rep_groups]
+            rep_digest = hashlib.sha256(
+                canonical_json(rep_metrics).encode("utf-8")).hexdigest()
+            if rep.get("metrics_sha256") != rep_digest:
+                problems.append("第二次运行自身 metrics_sha256 与其 groups 重算不符")
+            if rep_digest != digest:
+                problems.append("两次运行的指标摘要不同（第一次与第二次结果不一致）")
+            if not rep.get("arrays_sha256"):
+                problems.append("第二次运行结果缺少 arrays_sha256，无法绑定其数组文件")
+            elif rep["arrays_sha256"] != second["arrays_sha256"]:
+                problems.append("第二次运行结果中的 arrays_sha256 与其 npz 文件不符")
+
+            # 3) 用第二次运行的 npz 独立重算 C10 指标
+            try:
+                npz2 = NpzFile(second["_arrays_path"])
+            except Exception as exc:
+                problems.append(f"第二次运行 npz 不可解析: {type(exc).__name__}: {exc}")
+                npz2 = None
+            if npz2 is not None:
+                try:
+                    if self.npz is not None and set(npz2.names) != set(self.npz.names):
+                        problems.append("两次运行的数组集合不同")
+                    amap2 = rep.get("array_map") or self.results.get("array_map")
+                    eta2 = rep.get("eta_wall", self.results.get("eta_wall"))
+                    rows2 = []
+                    for key in self.prereg["target_groups"]:
+                        g1 = base.get(key)
+                        if g1 is None:
+                            continue
+                        rc = self._recompute_group(g1, npz=npz2, amap=amap2, eta=eta2)
+                        for field, want, tol in (
+                                ("supp_dw_win_db", rc["supp_dw_win_db"], pr["db"]),
+                                ("pslr_db", rc["pslr_db"], pr["db"]),
+                                ("pnr_db", rc["pnr_db"], pr["db"]),
+                                ("abs_err_cm", rc["abs_err_recomputed_cm"], pr["cm"]),
+                                ("d_hat_m", rc["d_hat_recomputed_m"], pr["meters"])):
+                            gotv = g1.get(field)
+                            if gotv is None or abs(float(gotv) - want) > tol:
+                                problems.append(f"{key}.{field} 与第二次运行数组重算 "
+                                                f"{want:.9f} 不符（容差 {tol}）")
+                        rows2.append({"group": key, "recomputed": {
+                            "supp_dw_win_db": round(rc["supp_dw_win_db"], 9),
+                            "pslr_db": round(rc["pslr_db"], 9),
+                            "pnr_db": round(rc["pnr_db"], 9),
+                            "d_hat_m": rc["d_hat_recomputed_m"],
+                            "abs_err_cm": round(rc["abs_err_recomputed_cm"], 9)}})
+                    detail["recomputed_from_second_run"] = rows2
+                except Exception as exc:
+                    problems.append(f"第二次运行数组重算失败: "
+                                    f"{type(exc).__name__}: {exc}")
+                finally:
+                    npz2.close()
+
+        detail["arrays_byte_identical_between_runs"] = (
+            recs[0]["arrays_sha256"] == recs[1]["arrays_sha256"])
+        detail["note"] = ("两次运行字节相同可接受（单线程确定性）；独立性由进程 PID、"
+                          "运行时间窗与各自独立文件承载，不接受同一批数组的重复序列化")
+        detail["problems"] = problems
         return ("fail" if problems else "pass"), detail
 
     # -- C13 资源预算 -------------------------------------------------------- #
@@ -1050,14 +1349,19 @@ class Checker:
             verdict = "INSUFFICIENT"
         else:
             verdict = "PASS"
-        return {"prereg_id": self.prereg.get("prereg_id"),
-                "prereg_path": self.prereg_path,
-                "prereg_sha256": sha256_file(self.prereg_path),
-                "results_dir": os.path.abspath(self.dir),
-                "verdict": verdict,
-                "failed_checks": fails,
-                "insufficient_checks": insuff,
-                "checks": self.checks}
+        report = {"prereg_id": self.prereg.get("prereg_id"),
+                  "prereg_path": self.prereg_path,
+                  "prereg_sha256": sha256_file(self.prereg_path),
+                  "repeat_contract_id": self.repeat_contract.get("id"),
+                  "repeat_contract_sha256": (
+                      sha256_file(self.repeat_contract_path)
+                      if os.path.exists(self.repeat_contract_path) else None),
+                  "results_dir": os.path.abspath(self.dir),
+                  "verdict": verdict,
+                  "failed_checks": fails,
+                  "insufficient_checks": insuff,
+                  "checks": self.checks}
+        return report
 
 
 def main(argv=None):
