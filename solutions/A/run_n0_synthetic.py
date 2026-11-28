@@ -218,10 +218,13 @@ def _write_ledger(dirpath: str, names: Sequence[str]) -> List[str]:
     lines: List[str] = []
     written: List[str] = []
     for rel in names:
-        path = os.path.join(dirpath, *rel.replace("\\", "/").split("/"))
+        rel = rel.replace("\\", "/")
+        if rel == "SHA256SUMS.txt":  # 台账不登记自身（否则哈希自指）
+            continue
+        path = os.path.join(dirpath, *rel.split("/"))
         if not os.path.isfile(path):
             continue
-        lines.append("%s  %s\n" % (sha256_raw(path), rel.replace("\\", "/")))
+        lines.append("%s  %s\n" % (sha256_raw(path), rel))
         written.append(rel)
     with open(os.path.join(dirpath, "SHA256SUMS.txt"), "w",
               encoding="utf-8", newline="\n") as fh:
