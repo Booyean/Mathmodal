@@ -482,7 +482,13 @@ def build_rank2_basis(
             ortho_rel[f] = 0.0
             continue
         # rel_dev 是 (组, 通道)：右奇异向量落在通道域，才是模态权重 v(f)。
-        v = vh[0].conj().astype(np.complex128)
+        # 约定警告（codex 2026-11-28 复核 / 回归 `N0-CHREG-1`）：numpy 的 SVD 满足
+        #   A = U·S·Vh  ⇒  A[g, c] = Σ_k s_k u_k[g] · conj(v_k[c])，
+        # 所以**"每组通道行向量"是 conj(v_k)，而 `Vh` 的行正好就是 conj(v_k)**，
+        # 即行方向 = `vh[0]`。此前的 `vh[0].conj()` 把相对通道相位整体反转：
+        # 对实通道方向只差全局相位（旧夹具看不出），对复方向则与真方向正交
+        # （`(1, e^{2πi/3}, e^{4πi/3})/√3` 上 Σγ² = 0），行方向无法重建。
+        v = vh[0].astype(np.complex128)
         v = v / max(float(np.linalg.norm(v)), 1e-300)
         if randomize_phase:
             local = np.random.default_rng(1000 + f) if rng is None else rng
@@ -1450,10 +1456,12 @@ def run_check(config_path: Path = CONFIG_PATH) -> Dict[str, Any]:
 # 落盘
 # --------------------------------------------------------------------------
 def _sha256(path: Path) -> str:
+    # 与 `b63e217` 的 `lf_sha256` 同口径：按 LF 归一化后取 SHA256。
+    # 本仓 `core.autocrlf=true`，CRLF 检出不会让复核值漂移。
     h = hashlib.sha256()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
+            h.update(chunk.replace(b"\r\n", b"\n"))
     return h.hexdigest()
 
 
@@ -1572,7 +1580,7 @@ def render_markdown(doc: Dict[str, Any]) -> str:
     lines.append("- 合成 `L1` 只用来验证判定逻辑分支；`L2` 因无冻结证据必然 FAIL（即提案 `S8`），不是方法失败。")
     lines.append("- 数值内核（`solve_bundle` 等）未改动；分簇、窗宽、λ、η 全部固定。")
     lines.append("")
-    lines.append("复跑：`python solutions/A/a_e0_n0.py --mode synthetic --out experiments/A/A-Q1-E0/n0/synthetic`")
+    lines.append("复跑：`python solutions/A/a_e0_n0.py --mode synthetic --out experiments/A/A-Q1-E0/n0/synthetic --overwrite`")
     lines.append("")
     return "\n".join(lines) + "\n"
 

@@ -11,13 +11,17 @@
    负例（逐频点随机相位）会让第二模态在直射波窗内的能量显著塌陷；
 4. **近零内积处理**：偏差只剩“整组复标度”时判 `near_parallel`、`rank_effective=1`、
    `c2` 退化为 `c1`（不做近零除法、不产生 NaN）；Gram 近奇异时加相对岭并标记；
-5. **拟合可复算**：已知 (a,b) 的合成窗数据可被 2×2 LS 回收；充分统计量与数组两条
+5. **复数秩一通道模态回归**（`N0-CHREG-1`，codex 2026-11-28 复核要求）：解析方向
+   `(1, e^{2πi/3}, e^{4πi/3})/√3` 下由 `rel_dev` 行方向恢复通道模态、以 `b_g = α_g`
+   精确重建训练数据行向量；旧式 `vh[0].conj()` 作为负例必须被抓住；实方向夹具
+   在同一变异下不可分辨（记录“旧夹具为何漏检”）；
+6. **拟合可复算**：已知 (a,b) 的合成窗数据可被 2×2 LS 回收；充分统计量与数组两条
    独立路径的 `Supp` 一致（C8' 口径，≤1e-6 dB）；
-6. **判定链**：P1 三档（`<6` / `6–<10` / `≥10`）、P1/P2 取较低档、P3 单侧非退化、
+7. **判定链**：P1 三档（`<6` / `6–<10` / `≥10`）、P1/P2 取较低档、P3 单侧非退化、
    L1 三值互斥、L2 的 C9b/灰区/frozen 条件、`L1 PASS / L2 FAIL → S8`；
-7. **夹具全流程**：`P1` 秩 2 比秩 1 至少高 5 dB、P4 保留、`citable=false`、
+8. **夹具全流程**：`P1` 秩 2 比秩 1 至少高 5 dB、P4 保留、`citable=false`、
    `real_dat_reads=0`、`L1=PASS` 而 `L2=FAIL（S8）`；
-8. **CLI**：`check` 只读；`synthetic` 写出三件产物且拒绝覆盖非空目录（退出码 3）。
+9. **CLI**：`check` 只读；`synthetic` 写出三件产物且拒绝覆盖非空目录（退出码 3）。
 
 用法::
 
@@ -41,6 +45,7 @@ REPO = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 
 import a_e0_n0 as N  # noqa: E402
+import a_e0_n0_channel_regression as R  # noqa: E402
 import a_e0_s1s2 as E0S  # noqa: E402
 
 CONFIG = N.CONFIG_PATH
@@ -201,6 +206,109 @@ class BasisTests(unittest.TestCase):
         e_r = float(np.mean(np.abs(z_r) ** 2))
         self.assertGreater(e_a, 0.0)
         self.assertLess(e_r / e_a, 0.1, "随机相位负例应显著塌陷：%.3g" % (e_r / e_a))
+
+
+class ComplexChannelRegressionTests(unittest.TestCase):
+    """`N0-CHREG-1`：复数秩一通道模态回归（codex 2026-11-28 复核要求）。
+
+    解析夹具 `γ = (1, e^{2πi/3}, e^{4πi/3})/√3` 同时满足 `Σγ = 0`（扣整组复标度
+    不变）与 `Σγ² = 0`（`γ ⟂ conj(γ)`），因此“取向量相位反转”这一缺陷既可解析
+    预测、又只能在这一维上被抓住。
+    """
+
+    def test_fixture_direction_is_zero_mean_and_isotropic(self):
+        g = R.CHANNEL_DIRECTION
+        self.assertLess(abs(complex(np.sum(g))), 1e-15)
+        self.assertLess(abs(complex(np.sum(g**2))), 1e-15)
+        self.assertAlmostEqual(float(np.linalg.norm(g)), 1.0, places=15)
+
+    def test_complex_channel_direction_is_recovered(self):
+        for case in R.FIXTURE_CASES:
+            res = R.evaluate_case(case)
+            self.assertLess(
+                res["direction_recovery"]["error_to_true_max"],
+                R.DIRECTION_OK_MAX,
+                msg=case,
+            )
+            self.assertGreater(
+                res["direction_recovery"]["error_to_conjugate_min"],
+                R.NEGATIVE_DIRECTION_MIN,
+                msg=case,
+            )
+            self.assertEqual(res["production_basis"]["rank_effective"], 2, msg=case)
+
+    def test_training_rows_reconstructed_with_b_equals_alpha(self):
+        for case in R.FIXTURE_CASES:
+            res = R.evaluate_case(case)
+            self.assertLess(
+                res["row_reconstruction"]["row_rel_residual_max"],
+                R.ROW_RESIDUAL_OK_MAX,
+                msg=case,
+            )
+            self.assertLess(
+                res["row_reconstruction"]["coeff_rel_error_max"],
+                R.COEFF_REL_OK_MAX,
+                msg=case,
+            )
+            # 第二模态系数必须非零（否则秩 2 退化成秩 1）。
+            self.assertGreater(
+                res["row_reconstruction"]["second_coeff_abs_max"], 0.4, msg=case
+            )
+
+    def test_legacy_conjugate_mutation_is_detected(self):
+        for case in R.FIXTURE_CASES:
+            neg = R.evaluate_case(case)["negative_control"]
+            self.assertTrue(neg["detected"], msg=case)
+            self.assertGreater(neg["direction_error_to_true_min"], R.NEGATIVE_DIRECTION_MIN)
+            self.assertGreater(neg["row_rel_residual_min"], R.NEGATIVE_ROW_RESIDUAL_MIN)
+            if case == "flat_T":
+                # 解析结论：<T⊙γ, T⊙conjγ> = Σγ²·|T|² = 0 → 第二模态系数必须恒为 0。
+                self.assertLess(neg["second_coeff_abs_max"], R.NEGATIVE_SECOND_COEFF_MAX)
+
+    def test_real_fixture_cannot_distinguish_conjugation(self):
+        blind = R.evaluate_real_fixture_blindness()
+        self.assertTrue(blind["conjugate_is_equivalent"])
+        self.assertLess(blind["row_rel_residual_production"], 1e-12)
+        self.assertLess(blind["row_rel_residual_legacy_mutant"], 1e-12)
+        self.assertLess(blind["direction_error_legacy_mutant"], 1e-12)
+
+    def test_local_replica_matches_production_basis(self):
+        for case in R.FIXTURE_CASES:
+            res = R.evaluate_case(case)
+            self.assertLessEqual(
+                res["production_basis"]["local_replica_gap_rel"], 1e-12, msg=case
+            )
+
+    def test_regression_verdict_and_scope(self):
+        doc = R.run()
+        self.assertEqual(doc["contract"], "N0-CHREG-1")
+        self.assertEqual(int(doc["real_dat_files_read"]), 0)
+        self.assertTrue(doc["verdict"]["pass"])
+        self.assertTrue(doc["verdict"]["negative_control_detected"])
+        self.assertTrue(doc["scope"]["numeric_core_untouched"])
+        self.assertEqual(doc["defect"]["pre_fix"], "v = vh[0].conj()")
+        self.assertEqual(doc["defect"]["post_fix"], "v = vh[0]")
+        json.dumps(R.json_safe(doc), ensure_ascii=False)
+
+    def test_evidence_outputs_are_self_consistent(self):
+        tmp = _work_tmp()
+        try:
+            doc = R.run()
+            info = R.write_outputs(doc, tmp / "out")
+            out = tmp / "out"
+            for name in ("n0_channel_regression.json", "N0_CHANNEL_REGRESSION.md", "SHA256SUMS.txt"):
+                self.assertTrue((out / name).is_file(), name)
+            sums = (out / "SHA256SUMS.txt").read_text(encoding="utf-8")
+            for name, digest in info["sha256"].items():
+                self.assertIn("%s  %s" % (digest, name), sums)
+            reloaded = json.loads((out / "n0_channel_regression.json").read_text(encoding="utf-8"))
+            self.assertEqual(reloaded["contract"], "N0-CHREG-1")
+            self.assertTrue(reloaded["verdict"]["pass"])
+            # 输出目录非空且未给 overwrite → 拒绝（与 `n0/synthetic` 同约定）。
+            with self.assertRaises(SystemExit):
+                R.write_outputs(doc, out)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
 
 class CoefficientTests(unittest.TestCase):

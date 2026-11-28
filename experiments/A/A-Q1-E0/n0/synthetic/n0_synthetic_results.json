@@ -124,7 +124,7 @@
    0.001,
    0.001
   ],
-  "max_delta_db": 2.7355895326763857e-12,
+  "max_delta_db": 9.670486633694964e-12,
   "note": "固定 λ 的逐值复算；不做 9 对 λ 选择/并列裁决",
   "pass": true
  },
@@ -134,17 +134,17 @@
    "墙体数据/data1-42cm": {
     "abs_err_cm": 0.10000000000002784,
     "abs_err_ok": true,
-    "pnr_db": 78.25691157449019,
+    "pnr_db": 78.33855371650944,
     "pnr_ok": true,
-    "pslr_db": 9.387706920456083,
+    "pslr_db": 9.387731583747817,
     "pslr_ok": true
    },
    "金属板数据/data1-69cm": {
     "abs_err_cm": 4.440892098500626e-14,
     "abs_err_ok": true,
-    "pnr_db": 77.56447021236306,
+    "pnr_db": 78.23380943160431,
     "pnr_ok": true,
-    "pslr_db": 9.206267192905184,
+    "pslr_db": 9.207321366809452,
     "pslr_ok": true
    }
   },
@@ -154,9 +154,9 @@
  "contract": "N0-SYN-1",
  "contrasts": {
   "c1_over_c0_p1_db": 2.823899509884596,
-  "c2_over_c0_p1_db": 13.99163552401542,
-  "c2_over_c1_p1_db": 11.167736014130824,
-  "c2_over_c1_p2_db": 11.650240078509666
+  "c2_over_c0_p1_db": 16.927739509546356,
+  "c2_over_c1_p1_db": 14.103839999661762,
+  "c2_over_c1_p2_db": 15.475716213771276
  },
  "decision_version": "A-Q1-N0-DEC-2",
  "fold_lock": {
@@ -339,10 +339,10 @@
   "decision_version": "A-Q1-N0-DEC-2",
   "l1": "pass",
   "lower_tier": "met",
-  "p1_min_db": 23.179092097153223,
+  "p1_min_db": 26.11519608268416,
   "p1_tier": "met",
-  "p2_median_db": 26.873619977377626,
-  "p2_min_db": 24.570239934802494,
+  "p2_median_db": 29.97067353104186,
+  "p2_min_db": 28.395716070064104,
   "p2_tier": "met",
   "p3_items": [
    {
@@ -360,9 +360,9 @@
     "abs_err_ok": true,
     "arm": "c2",
     "group": "墙体数据/data1-42cm",
-    "pnr_delta_db": 5.651107969462359,
+    "pnr_delta_db": 5.732750111481607,
     "pnr_ok": true,
-    "pslr_delta_db": 0.048761315842799746,
+    "pslr_delta_db": 0.048785979134533974,
     "pslr_ok": true
    },
    {
@@ -380,9 +380,9 @@
     "abs_err_ok": true,
     "arm": "c2",
     "group": "金属板数据/data1-69cm",
-    "pnr_delta_db": 6.090425119711028,
+    "pnr_delta_db": 6.75976433895228,
     "pnr_ok": true,
-    "pslr_delta_db": 0.006640536267687125,
+    "pslr_delta_db": 0.0076947101719557764,
     "pslr_ok": true
    }
   ],
@@ -398,17 +398,17 @@
     "墙体数据/data1-42cm": {
      "abs_err_cm": 0.10000000000002784,
      "abs_err_ok": true,
-     "pnr_db": 78.25691157449019,
+     "pnr_db": 78.33855371650944,
      "pnr_ok": true,
-     "pslr_db": 9.387706920456083,
+     "pslr_db": 9.387731583747817,
      "pslr_ok": true
     },
     "金属板数据/data1-69cm": {
      "abs_err_cm": 4.440892098500626e-14,
      "abs_err_ok": true,
-     "pnr_db": 77.56447021236306,
+     "pnr_db": 78.23380943160431,
      "pnr_ok": true,
-     "pslr_db": 9.206267192905184,
+     "pslr_db": 9.207321366809452,
      "pslr_ok": true
     }
    },
@@ -443,7 +443,7 @@
   "near_zero": {
    "events": [],
    "full_pool_ortho_residual_max": 0.9940804477751121,
-   "full_pool_ortho_residual_median": 0.9940578712015624,
+   "full_pool_ortho_residual_median": 0.9940578712015623,
    "gram_cond_max": 1000000000000.0,
    "min_second_mode_energy": 1e-06,
    "ortho_rel_threshold": 1e-09
@@ -629,89 +629,89 @@
    ]
   },
   "c2": {
-   "median_db": 25.251708746872378,
-   "min_db": 23.179092097153223,
+   "median_db": 26.997865833975883,
+   "min_db": 26.11519608268416,
    "tier": "met",
    "values": [
     {
-     "c8_delta_supp_db": 1.1013412404281553e-12,
+     "c8_delta_supp_db": 1.595168441781425e-12,
      "fold": 0,
      "group": "空场数据/data1",
      "regularized": false,
      "second_mode_used": true,
-     "supp_db": 26.461852970359757
+     "supp_db": 28.003335010868042
     },
     {
-     "c8_delta_supp_db": 7.496225862269057e-13,
+     "c8_delta_supp_db": 2.348343741687131e-12,
      "fold": 0,
      "group": "空场数据/data2",
      "regularized": false,
      "second_mode_used": true,
-     "supp_db": 26.46185297048366
+     "supp_db": 28.00333501087179
     },
     {
-     "c8_delta_supp_db": 7.815970093361102e-14,
+     "c8_delta_supp_db": 1.1901590823981678e-12,
      "fold": 1,
      "group": "空场数据/data3",
      "regularized": false,
      "second_mode_used": true,
-     "supp_db": 23.179092097153223
+     "supp_db": 26.99786583400847
     },
     {
-     "c8_delta_supp_db": 2.0961010704922955e-13,
+     "c8_delta_supp_db": 2.291500322826323e-12,
      "fold": 1,
      "group": "空场数据/data4",
      "regularized": false,
      "second_mode_used": true,
-     "supp_db": 23.179092097154985
+     "supp_db": 26.997865833943298
     },
     {
-     "c8_delta_supp_db": 1.4424017535930034e-12,
+     "c8_delta_supp_db": 2.369660023759934e-12,
      "fold": 2,
      "group": "空场数据/data5",
      "regularized": false,
      "second_mode_used": true,
-     "supp_db": 26.02494027682257
+     "supp_db": 27.478222653446043
     },
     {
-     "c8_delta_supp_db": 2.7355895326763857e-12,
+     "c8_delta_supp_db": 4.835243316847482e-12,
      "fold": 2,
      "group": "空场数据/data6",
      "regularized": false,
      "second_mode_used": true,
-     "supp_db": 26.02494027681248
+     "supp_db": 27.478222653373624
     },
     {
-     "c8_delta_supp_db": 1.5631940186722204e-13,
+     "c8_delta_supp_db": 8.419931418757187e-13,
      "fold": 3,
      "group": "空场数据/data7",
      "regularized": false,
      "second_mode_used": true,
-     "supp_db": 24.89334297623687
+     "supp_db": 26.115196082750064
     },
     {
-     "c8_delta_supp_db": 1.609379296496627e-12,
+     "c8_delta_supp_db": 1.6413537196058314e-12,
      "fold": 3,
      "group": "空场数据/data8",
      "regularized": false,
      "second_mode_used": true,
-     "supp_db": 24.89334297630287
+     "supp_db": 26.11519608268416
     },
     {
-     "c8_delta_supp_db": 1.1830536550405668e-12,
+     "c8_delta_supp_db": 1.8829382497642655e-12,
      "fold": 4,
      "group": "空场数据/data9",
      "regularized": false,
      "second_mode_used": true,
-     "supp_db": 25.251708746850102
+     "supp_db": 26.985193867788904
     },
     {
-     "c8_delta_supp_db": 2.113864638886298e-12,
+     "c8_delta_supp_db": 1.900701818158268e-12,
      "fold": 4,
      "group": "空场数据/data10",
      "regularized": false,
      "second_mode_used": true,
-     "supp_db": 25.251708746894654
+     "supp_db": 26.985193867800135
     }
    ]
   }
@@ -812,49 +812,49 @@
    ]
   },
   "c2": {
-   "median_db": 26.873619977377626,
-   "min_db": 24.570239934802494,
+   "median_db": 29.97067353104186,
+   "min_db": 28.395716070064104,
    "tier": "met",
    "values": [
     {
      "group": "空场数据/data1",
-     "supp_db": 27.933435314850577
+     "supp_db": 30.319624958887076
     },
     {
      "group": "空场数据/data2",
-     "supp_db": 27.811082116205704
+     "supp_db": 30.10827105697264
     },
     {
      "group": "空场数据/data3",
-     "supp_db": 24.644324566780455
+     "supp_db": 30.326414651729706
     },
     {
      "group": "空场数据/data4",
-     "supp_db": 24.570239934802494
+     "supp_db": 29.83307600511108
     },
     {
      "group": "空场数据/data5",
-     "supp_db": 26.869006802724243
+     "supp_db": 30.27676169009957
     },
     {
      "group": "空场数据/data6",
-     "supp_db": 26.878233152031008
+     "supp_db": 30.251312648513043
     },
     {
      "group": "空场数据/data7",
-     "supp_db": 26.933113555520887
+     "supp_db": 28.395716070064104
     },
     {
      "group": "空场数据/data8",
-     "supp_db": 27.031936873957317
+     "supp_db": 28.522324148723506
     },
     {
      "group": "空场数据/data9",
-     "supp_db": 26.2420995224103
+     "supp_db": 29.173633618176233
     },
     {
      "group": "空场数据/data10",
-     "supp_db": 26.145941006482104
+     "supp_db": 29.030151678632844
     }
    ]
   }
@@ -876,9 +876,9 @@
     "abs_err_ok": true,
     "arm": "c2",
     "group": "墙体数据/data1-42cm",
-    "pnr_delta_db": 5.651107969462359,
+    "pnr_delta_db": 5.732750111481607,
     "pnr_ok": true,
-    "pslr_delta_db": 0.048761315842799746,
+    "pslr_delta_db": 0.048785979134533974,
     "pslr_ok": true
    },
    {
@@ -896,9 +896,9 @@
     "abs_err_ok": true,
     "arm": "c2",
     "group": "金属板数据/data1-69cm",
-    "pnr_delta_db": 6.090425119711028,
+    "pnr_delta_db": 6.75976433895228,
     "pnr_ok": true,
-    "pslr_delta_db": 0.006640536267687125,
+    "pslr_delta_db": 0.0076947101719557764,
     "pslr_ok": true
    }
   ],
@@ -908,8 +908,8 @@
   "items": [
    {
     "peak_ok": true,
-    "peak_retention_db": -0.016319254496655458,
-    "range_shift_mm": 0.7999999999966367,
+    "peak_retention_db": -0.016551085305782472,
+    "range_shift_mm": 0.8999999999966257,
     "shift_ok": true
    }
   ],
@@ -925,7 +925,7 @@
     "rank_fixed": true
    },
    "p5a_2_self_consistency": {
-    "c8_max_delta_db": 2.7355895326763857e-12,
+    "c8_max_delta_db": 9.670486633694964e-12,
     "c8_pass": true,
     "fold_count": 5,
     "p1_values": 30
@@ -976,7 +976,7 @@
      "abs_err_cm": 0.10000000000002784,
      "bg_proxy": 95018591.4470915,
      "c8": {
-      "delta_coeff": 1.1039661684354816,
+      "delta_coeff": 1.124608960497278,
       "delta_supp_db": 6.217248937900877e-14
      },
      "coefficients": {
@@ -1016,7 +1016,7 @@
      "abs_err_cm": 0.10000000000002784,
      "bg_proxy": 40294722.12777316,
      "c8": {
-      "delta_coeff": 1.1039661684354816,
+      "delta_coeff": 1.124608960497278,
       "delta_supp_db": 1.6697754290362354e-13
      },
      "coefficients": {
@@ -1054,26 +1054,26 @@
     "c2": {
      "abs_err_before_cm": 2.7755575615628914e-14,
      "abs_err_cm": 0.10000000000002784,
-     "bg_proxy": 25852387.875314023,
+     "bg_proxy": 25362557.75004994,
      "c8": {
-      "delta_coeff": 3.243010675330844e-15,
-      "delta_supp_db": 3.232969447708456e-13
+      "delta_coeff": 3.4488466675883937e-15,
+      "delta_supp_db": 5.222489107836736e-13
      },
      "coefficients": {
       "a": [
-       0.9448082502209304,
-       0.2555095576522305
+       0.9448082502265643,
+       0.2555095576517487
       ],
       "b": [
-       -0.89399923619932,
-       -0.647693343122466
+       0.8156791196980963,
+       -0.7742175971387535
       ]
      },
      "d_hat_before_m": 0.42000000000000026,
      "d_hat_m": 0.42100000000000026,
-     "peak_retention_db": -0.016319254496655458,
+     "peak_retention_db": -0.016551085305782472,
      "peak_rule": "wall_first_peak",
-     "pnr_db": 78.25691157449019,
+     "pnr_db": 78.33855371650944,
      "profile": {
       "d_max_m": 2.0,
       "d_min_m": 0.15,
@@ -1083,13 +1083,13 @@
       "p4_step_m": 0.0001
      },
      "pslr_before_db": 0.6952172868318697,
-     "pslr_db": 9.387706920456083,
-     "range_shift_mm": 0.7999999999966367,
+     "pslr_db": 9.387731583747817,
+     "range_shift_mm": 0.8999999999966257,
      "range_shift_vs_before_mm": 1.0000000000000009,
      "regularized": false,
-     "second_mode_energy_fraction": 0.5683198790531164,
+     "second_mode_energy_fraction": 0.5897723358381705,
      "second_mode_used": true,
-     "supp_dw_win_db": 18.475451492658216
+     "supp_dw_win_db": 18.6968225478247
     }
    },
    "case_id": "N0-SYN/Wall-42cm",
@@ -1103,7 +1103,7 @@
      "abs_err_cm": 4.440892098500626e-14,
      "bg_proxy": 54548674.23111016,
      "c8": {
-      "delta_coeff": 1.6872306502729835,
+      "delta_coeff": 1.7341433902824648,
       "delta_supp_db": 6.750155989720952e-14
      },
      "coefficients": {
@@ -1143,7 +1143,7 @@
      "abs_err_cm": 4.440892098500626e-14,
      "bg_proxy": 47219634.14094296,
      "c8": {
-      "delta_coeff": 1.6872306502729835,
+      "delta_coeff": 1.7341433902824648,
       "delta_supp_db": 7.638334409421077e-14
      },
      "coefficients": {
@@ -1181,26 +1181,26 @@
     "c2": {
      "abs_err_before_cm": 54.0,
      "abs_err_cm": 4.440892098500626e-14,
-     "bg_proxy": 13420072.993815718,
+     "bg_proxy": 11503402.74248567,
      "c8": {
-      "delta_coeff": 3.202853923578809e-15,
-      "delta_supp_db": 1.1404210908949608e-12
+      "delta_coeff": 2.861122294462807e-15,
+      "delta_supp_db": 9.670486633694964e-12
      },
      "coefficients": {
       "a": [
-       1.032693137066634,
-       0.09124094650900313
+       1.0326931370598353,
+       0.09124094650340774
       ],
       "b": [
-       0.28216649838563546,
-       1.6634690662616403
+       -1.7333563767455367,
+       -0.052239537286893685
       ]
      },
      "d_hat_before_m": 0.15,
      "d_hat_m": 0.6900000000000005,
-     "peak_retention_db": -0.00259486217424191,
+     "peak_retention_db": -0.002680555208422984,
      "peak_rule": "global_argmax",
-     "pnr_db": 77.56447021236306,
+     "pnr_db": 78.23380943160431,
      "profile": {
       "d_max_m": 2.0,
       "d_min_m": 0.15,
@@ -1210,13 +1210,13 @@
       "p4_step_m": 0.0001
      },
      "pslr_before_db": 2.689609150771288,
-     "pslr_db": 9.206267192905184,
+     "pslr_db": 9.207321366809452,
      "range_shift_mm": -0.5000000000032756,
      "range_shift_vs_before_mm": 540.0000000000005,
      "regularized": false,
-     "second_mode_energy_fraction": 0.9333089901321114,
+     "second_mode_energy_fraction": 0.9859310557708182,
      "second_mode_used": true,
-     "supp_dw_win_db": 25.594223930358133
+     "supp_dw_win_db": 32.35228178753963
     }
    },
    "case_id": "N0-SYN/Metal-69cm",

@@ -5,8 +5,9 @@
 | 契约 | `N0-SYN-1`（**合成原型**，不是 N0 实测） |
 | 判定口径 | `A-Q1-N0-DEC-2`（`coordination/A_Q1_N0_PROPOSAL.md` @ `4904bc8`） |
 | 入口 | `solutions/A/a_e0_n0.py`（`--mode check` / `--mode synthetic`，**无 execute**） |
-| 自检 | `solutions/A/test_a_e0_n0.py`（41 项，188.6 s，全 PASS） |
-| 产物 | `experiments/A/A-Q1-E0/n0/synthetic/{n0_synthetic_results.json,N0_SYNTHETIC.md,SHA256SUMS.txt}` |
+| 自检 | `solutions/A/test_a_e0_n0.py`（49 项，200.5 s，全 PASS） |
+| 回归 | `solutions/A/a_e0_n0_channel_regression.py`（`N0-CHREG-1`，8 项自检，全 PASS） |
+| 产物 | `experiments/A/A-Q1-E0/n0/synthetic/{n0_synthetic_results.json,N0_SYNTHETIC.md,SHA256SUMS.txt}`；`experiments/A/A-Q1-E0/n0/channel_regression/{n0_channel_regression.json,N0_CHANNEL_REGRESSION.md,SHA256SUMS.txt}` |
 | 首轮结果 | 合成夹具 **L1 PASS / L2 FAIL（`S8`）**；`real_dat_reads=0`、`opened_files=0` |
 | 状态 | **待统筹复审**；N0 实测（B-02）、E0-C 重跑、E0-T 均**未放行** |
 
@@ -50,7 +51,7 @@
 `cond > 1e12` 或非有限时加相对岭 `trace·1e-12` 并标 `regularized=true`；第二模态能量占比
 （相对**秩 1 拟合后的残余**）`< 1e-6` 时标 `second_mode_used=false`。
 
-### 1.4 两个“字面口径 vs 可实现口径”的差异（**请建模/统筹确认**）
+### 1.4 字面口径 vs 可实现口径：两处待确认差异 + 一处已修复缺陷（**请建模/统筹确认**）
 
 合成原型把提案 §3 的两处字面写法跑出了可实现性问题，均已按“保留提案语义、写清实现差异”处理，
 并在产物里显式记录：
@@ -60,7 +61,7 @@
 向量**（`mode_form="unit"`），它在直射波窗内几乎不携带能量：`A22/A11 ≈ 1e-15`，`c2` 与 `c1`
 抑制完全相同（秩 2 名存实亡）。原因：单位范数向量没有 `T` 的频谱包络，压缩到延迟域后不落在
 `τ_dir` 附近。原型默认改为**调制模态** `D_1(f) = T(f) ⊙ v(f)`（把通道权重调制到公共波形上），
-此时 `A22/A11 ≈ 1.5e-2`、`c2` 比 `c1` 高 **+11.2 dB**。
+此时 `A22/A11 ≈ 1.5e-2`、`c2` 比 `c1` 高 **+14.1 dB**（P1 min；修复通道相位约定后，见 (c)）。
 → 请 `@antigravity02` 确认这与 `model_q1.md` §5.2 `M0-DW-Subspace` 的“第二模态”是否等价；
 若建模方坚持字面定义，则需明确“秩 2 在该窗内不可识别”，N0 的 P1/P2 只能按秩 1 解释。
 
@@ -72,6 +73,26 @@
 
 两项都只影响**实现口径**，不新增/放宽任何门槛；`P1/P2/P3/P4/C9b` 数值全按提案原式。
 
+**(c) 通道模态取向量约定（复数相位，codex 2026-11-28 复核发现并已修复）。**
+`rel_dev` 是「组 × 通道」矩阵，`numpy` 的 `A = U·S·Vh` 意味着
+`A[g,c] = Σ s_k u_k[g]·conj(v_k[c])`，**行方向是 `conj(v_k)`，而 `Vh` 的行正好就是它**。
+原型初版写成 `v = vh[0].conj()`，把相对通道相位整体反转。合成/实测流水线里 `T` 是
+**组均值**，`rel_dev = (X−T)/T` 带着 `T` 的逐通道相位、行方向本身是复向量，因此这不是
+全局相位问题：`D_1` 会变成 `dev ⊙ exp(2i∠T)` 而不是 `dev`。
+
+- 修复：`v = vh[0]`（一行），数值内核零改动；
+- 回归：`solutions/A/a_e0_n0_channel_regression.py`（契约 `N0-CHREG-1`）用解析夹具
+  `γ = (1, e^{2πi/3}, e^{4πi/3})/√3`（`Σγ = 0` 且 `Σγ² = 0`）在允许任意全局相位的
+  判据下验证方向恢复与行重建；旧式 `vh[0].conj()` 作为负例被同一夹具抓住
+  （方向误差 √2、行残差 27.7%–50%、`b ≡ 0`）；实方向 + 共用 `T` 的旧夹具则完全
+  分辨不出（这正是初版 41 项自检漏掉它的原因）；
+- 影响：P1 min **23.179 → 26.115 dB**、P2 min **24.570 → 28.396 dB**、`c2−c1`
+  （P1/P2 min）**11.168/11.650 → 14.104/15.476 dB**；**判定不变**（`L1=PASS`、
+  `L2=FAIL（S8）`、`P3/P4/C8′/P5a` 仍 PASS）；
+- 产物已重新生成：`n0_synthetic_results.json = 731d5935…6ffad8`、
+  `N0_SYNTHETIC.md = 90259f7e…37025d`；修复前字节（`e2835b91…` / `0c342a4f…`）可用
+  `207510c` 逐字节复现，证据见 `experiments/A/A-Q1-E0/n0/channel_regression/`。
+
 ---
 
 ## 2. 首轮合成结果（`--mode synthetic`，seed `20261128`，1 mm 剖面网格）
@@ -80,19 +101,21 @@
 |---|---:|---:|---|---:|---:|---|
 | `c0`（Σ 均值，a≡1） | 9.187 | 12.348 | `not_met` | 9.252 | 12.709 | `not_met` |
 | `c1`（单秩窗内拟合） | 12.011 | 13.481 | `met` | 12.920 | 14.490 | `met` |
-| `c2`（秩 2，本提案） | **23.179** | 25.252 | `met` | **24.570** | 26.874 | `met` |
+| `c2`（秩 2，本提案） | **26.115** | 26.998 | `met` | **28.396** | 29.971 | `met` |
 
-对照：`c2−c1`（P1 min）`+11.168 dB`、`c2−c0`（P1 min）`+13.992 dB`、`c2−c1`（P2 min）`+11.650 dB`。
+对照：`c2−c1`（P1 min）`+14.104 dB`、`c2−c0`（P1 min）`+16.928 dB`、`c2−c1`（P2 min）`+15.476 dB`。
+（以上为**修复 `vh[0].conj()` 之后**的数值；修复前为 23.179 / 24.570 dB 与 11.168 / 11.650 dB，
+判定链相同，见 §1.4(c)。）
 
 目标侧（全 10 组池，c2）：
 
 | 目标 | Supp (dB) | PSLR (dB) | PNR (dB) | `d_hat` (m) | abs_err (cm) | 峰值保留 (dB) | 测距偏移 (mm) |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| 墙体 `data1-42cm` | 18.475 | 9.388 | 78.257 | 0.421000 | 0.100 | −0.016 | +0.8 |
-| 金属 `data1-69cm` | 25.594 | 9.206 | 77.564 | 0.690000 | 0.000 | −0.003 | −0.5 |
+| 墙体 `data1-42cm` | 18.697 | 9.388 | 78.339 | 0.421000 | 0.100 | −0.017 | +0.9 |
+| 金属 `data1-69cm` | 32.352 | 9.207 | 78.234 | 0.690000 | 0.000 | −0.003 | −0.5 |
 
 守卫：P3 单侧非退化 **PASS**、P4（−0.1 dB / 2 mm）**PASS**、C8′ 固定 λ 逐值复算
-`max|Δ| = 2.74e-12 dB` **PASS**、P5a **PASS**、近零内积事件 **0**。
+`max|Δ| = 9.67e-12 dB` **PASS**、P5a **PASS**、近零内积事件 **0**。
 
 判定链：**L1 = `pass`**（P1/P2 均 `met`，P3/P4/P5a 全过）；**L2 = `fail`**，原因只有
 `freeze.status='not_eligible_for_freeze'` 与 `e0c_frozen.json` 不存在 → 落 `S8`
@@ -117,11 +140,17 @@ python solutions/A/a_e0_n0.py --mode check
 python solutions/A/a_e0_n0.py --mode synthetic \
   --out experiments/A/A-Q1-E0/n0/synthetic --overwrite
 
-# 自检（41 项，约 190 s）
+# 复数秩一通道模态回归（N0-CHREG-1，约 0.1 s）
+python solutions/A/a_e0_n0_channel_regression.py \
+  --out experiments/A/A-Q1-E0/n0/channel_regression
+
+# 自检（49 项，约 200 s）
 python solutions/A/test_a_e0_n0.py
 ```
 
 - 主分支基线：`934b089`（PR #33 已合入）；本批分支 `data/a-q1-n0-batch`。
+- 产物 SHA256 按 **LF 归一化**计算（`lf_sha256`，与 `b63e217` 产物同口径）；本仓
+  `core.autocrlf=true`，CRLF 检出不会让复核值漂移。
 - 合成夹具：`E0S.synth_group_spectrum`（直射波 + 1/R 回波）+ `E0S.calibrate_air(λ_cal=λ_inv=1e-3)`；
   五簇第一模态通道形状相同、簇复系数不同（秩 2 可精确表示），第二模态逐簇不同（留给残差）。
 - 数值内核未改动；`E0-C` 仍硬停、`E0-T` 未放行、N0 实测未开工。
@@ -134,3 +163,7 @@ python solutions/A/test_a_e0_n0.py
    请给出替代的“第二模态”定义（要求：与 `T` 可分离、在直射波窗内有能量）。
 3. `@my_deepseek`：按本文件 §1 的四项锁定搭独立复算（折分、相位锚、近零内积、C8′ 双路径），
    重点检查“退化时 c2 必须逐值等于 c1”与“`anchor_idx` 处处为 27”。
+4. `@codex`：PR #41 上要求的**复数秩一回归已交付**（`N0-CHREG-1`）：解析夹具
+   `(1, e^{2πi/3}, e^{4πi/3})/√3` 下确认旧式 `vh[0].conj()` 会反转相对通道相位
+   （方向误差 √2、行重建残差 27.7%–50%、`b ≡ 0`），已修正为 `vh[0]` 并重生成合成产物；
+   证据 `experiments/A/A-Q1-E0/n0/channel_regression/`，请复审后裁定合并。
