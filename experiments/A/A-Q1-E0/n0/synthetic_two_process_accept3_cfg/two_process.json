@@ -1,0 +1,133 @@
+{
+ "contract": "E0-N0-C12-SYNTHETIC-1",
+ "synthetic": true,
+ "citable": false,
+ "entry": "solutions/A/run_n0_synthetic.py",
+ "runs": [
+  {
+   "run_index": 1,
+   "run_id": "run-1",
+   "pid": 46668,
+   "exit_code": 0,
+   "started_at": "2026-11-28T16:31:21.388Z",
+   "finished_at": "2026-11-28T16:33:06.149Z",
+   "wall_time_s": 104.76,
+   "results_sha256": "5a01480cdd2d6353c5e468d22da51b3cdec2cfb7f07e4a19e172f18d0753a87e",
+   "arrays_sha256": "95fae44accb132afe0515a7986369b303a45960e213e2b2d2f46b58b75d04794"
+  },
+  {
+   "run_index": 2,
+   "run_id": "run-2",
+   "pid": 54076,
+   "exit_code": 0,
+   "started_at": "2026-11-28T16:33:08.619Z",
+   "finished_at": "2026-11-28T16:34:49.693Z",
+   "wall_time_s": 101.073,
+   "results_sha256": "5a01480cdd2d6353c5e468d22da51b3cdec2cfb7f07e4a19e172f18d0753a87e",
+   "arrays_sha256": "95fae44accb132afe0515a7986369b303a45960e213e2b2d2f46b58b75d04794"
+  }
+ ],
+ "byte_identical_results": true,
+ "byte_identical_arrays": true,
+ "total_wall_time_s": 205.833,
+ "peak_rss_mib": [
+  257.68,
+  257.926
+ ],
+ "real_dat_files_opened": 0,
+ "frozen_artifacts_unchanged": true,
+ "n0_frozen_written": false,
+ "budget": {
+  "total_wall_time_max_s": 600.0,
+  "peak_rss_max_mib": 4096.0,
+  "allowed_exit_codes": [
+   0,
+   3,
+   4
+  ]
+ },
+ "gate_logs": {
+  "preflight": "32/32",
+  "dryrun": "11/11",
+  "synthetic": true,
+  "note": "N0 合成模式门禁（真实断言）；不是 E0-C 实测门禁的转发"
+ },
+ "driver": {
+  "contract": "E0-N0-C12-SYNTHETIC-1",
+  "driver": "solutions/A/run_n0_synthetic.py --mode two-process",
+  "driver_pid": 36052,
+  "started_at": "2026-11-28T16:31:19.537Z",
+  "finished_at": "2026-11-28T16:34:49.887Z",
+  "runs": [
+   {
+    "run_index": 1,
+    "command": [
+     "D:\\anaconda3\\python.exe",
+     "D:\\数模\\tmp\\n0iface-wt\\solutions\\A\\run_n0_synthetic.py",
+     "--mode",
+     "worker",
+     "--run-index",
+     "1",
+     "--out",
+     "D:\\数模\\tmp\\n0cfg-runs\\run1",
+     "--config",
+     "D:\\数模\\tmp\\n0iface-wt\\experiments\\A\\A-Q1-E0\\config.json",
+     "--n0-config",
+     "D:/数模/tmp/n0iface-wt\\experiments\\A\\A-Q1-E0\\n0\\n0_config.json",
+     "--prereg",
+     "D:/数模/tmp/n0iface-wt\\checks\\A\\e0_n0_prereg.json",
+     "--oracle",
+     "D:/数模/tmp/n0iface-wt\\checks\\A\\e0_c_data_oracle.json",
+     "--prototype",
+     "D:/数模/tmp/n0iface-wt\\experiments\\A\\A-Q1-E0\\n0\\synthetic\\n0_synthetic_results.json",
+     "--seed",
+     "20261128"
+    ],
+    "pid": 46668,
+    "exit_code": 0,
+    "driver_started_at": "2026-11-28T16:31:19.537Z",
+    "driver_finished_at": "2026-11-28T16:33:06.350Z",
+    "driver_wall_time_s": 106.813,
+    "worker_started_at": "2026-11-28T16:31:21.388Z",
+    "worker_finished_at": "2026-11-28T16:33:06.149Z",
+    "results_sha256": "5a01480cdd2d6353c5e468d22da51b3cdec2cfb7f07e4a19e172f18d0753a87e",
+    "arrays_sha256": "95fae44accb132afe0515a7986369b303a45960e213e2b2d2f46b58b75d04794"
+   },
+   {
+    "run_index": 2,
+    "command": [
+     "D:\\anaconda3\\python.exe",
+     "D:\\数模\\tmp\\n0iface-wt\\solutions\\A\\run_n0_synthetic.py",
+     "--mode",
+     "worker",
+     "--run-index",
+     "2",
+     "--out",
+     "D:\\数模\\tmp\\n0cfg-runs\\run2",
+     "--config",
+     "D:\\数模\\tmp\\n0iface-wt\\experiments\\A\\A-Q1-E0\\config.json",
+     "--n0-config",
+     "D:/数模/tmp/n0iface-wt\\experiments\\A\\A-Q1-E0\\n0\\n0_config.json",
+     "--prereg",
+     "D:/数模/tmp/n0iface-wt\\checks\\A\\e0_n0_prereg.json",
+     "--oracle",
+     "D:/数模/tmp/n0iface-wt\\checks\\A\\e0_c_data_oracle.json",
+     "--prototype",
+     "D:/数模/tmp/n0iface-wt\\experiments\\A\\A-Q1-E0\\n0\\synthetic\\n0_synthetic_results.json",
+     "--seed",
+     "20261128"
+    ],
+    "pid": 54076,
+    "exit_code": 0,
+    "driver_started_at": "2026-11-28T16:33:06.351Z",
+    "driver_finished_at": "2026-11-28T16:34:49.887Z",
+    "driver_wall_time_s": 103.536,
+    "worker_started_at": "2026-11-28T16:33:08.619Z",
+    "worker_finished_at": "2026-11-28T16:34:49.693Z",
+    "results_sha256": "5a01480cdd2d6353c5e468d22da51b3cdec2cfb7f07e4a19e172f18d0753a87e",
+    "arrays_sha256": "95fae44accb132afe0515a7986369b303a45960e213e2b2d2f46b58b75d04794"
+   }
+  ],
+  "note": "driver 记录的子进程退出码 = worker_meta.exit_code（已逐项核对）"
+ }
+}

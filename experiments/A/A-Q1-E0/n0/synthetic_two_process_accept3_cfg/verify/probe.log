@@ -1,0 +1,14 @@
+{
+ "mode": "results-dir",
+ "contract": "E0-N0-PRODUCER-CONTRACT-2",
+ "verdict": "READY",
+ "counts": {
+  "ok": 722,
+  "missing": 0,
+  "mismatch": 0,
+  "total": 722
+ },
+ "missing": [],
+ "mismatch": [],
+ "note": "结构预检；READY 不等于验收通过，数值判定见 accept_e0n0.py"
+}

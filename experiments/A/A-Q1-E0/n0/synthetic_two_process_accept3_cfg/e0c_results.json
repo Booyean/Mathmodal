@@ -1,0 +1,993 @@
+{
+ "experiment_id": "A-Q1-N0",
+ "phase": "N0",
+ "method_scope": "M0-DW-Subspace/rank-2/in-window-2coef",
+ "implementation_sha": "9f8ab780f15dcceea148835d07609985ed4eeb36",
+ "main_commit": "c7b841efe67192a73a96894fb5a0243b336a9468",
+ "n0_config_sha256": "86b472416f30c7fbfa26b958d577a105e049571a863981b4d8285d7dea2d9470",
+ "git": {
+  "head_sha": "9f8ab780f15dcceea148835d07609985ed4eeb36",
+  "parent_sha": null,
+  "origin_main_sha": "c7b841efe67192a73a96894fb5a0243b336a9468",
+  "working_tree_clean": true,
+  "branch": "synthetic-fixture",
+  "dirty": false,
+  "commit": "c7b841efe67192a73a96894fb5a0243b336a9468"
+ },
+ "inputs": [
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_0.dat",
+   "size_bytes": 1024112,
+   "sha256": "984281dd7c721ca686cd631bb878e611d872d8fb68b0f6517d922e0023aa7e42"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_1.dat",
+   "size_bytes": 1024112,
+   "sha256": "ce3590b69e23c1badeeb8a363c35f9f6b9f3ab8480d472c481859251746a0940"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_2.dat",
+   "size_bytes": 1024112,
+   "sha256": "b34240a1d2616fb87d82b6941727021bbbb81a3e36b2796becac0aa89fa2fe1e"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_3.dat",
+   "size_bytes": 1024112,
+   "sha256": "9478b059614ce95d316777d4b32701690716060b62b1463d503874999ae76d11"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_4.dat",
+   "size_bytes": 1024112,
+   "sha256": "81db6f99258653187e60619880cd04b96e73c2f0cb898ba26bc7b1183d189e8b"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_5.dat",
+   "size_bytes": 1024112,
+   "sha256": "364a32910dc325b77639977e2b71cc9697346a6e781152f9a236c3f5715a0fa5"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_6.dat",
+   "size_bytes": 1024112,
+   "sha256": "875e53ce994200e10193443bf2787e992041529f5bd599189ae76cd7428a884f"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_7.dat",
+   "size_bytes": 1024112,
+   "sha256": "65b0b86585c7f306e7802a730804c454d704b1439f25bab747e27c2dea2791a7"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_0.dat",
+   "size_bytes": 1280140,
+   "sha256": "7e1131b696403849d3a878f3e1f770b8533d16bca9a3b7c3a5c19cc122a31f1b"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_1.dat",
+   "size_bytes": 1280140,
+   "sha256": "dc0be35585ded00ccec0bf54a427c74c8724ee282711eee703d6a9be7fd95cdb"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_2.dat",
+   "size_bytes": 1280140,
+   "sha256": "2771fbdb08ed42a534c792729d172a43570e7d765df4aaa65ed7943243f13a37"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_3.dat",
+   "size_bytes": 1280140,
+   "sha256": "ea992dbfbdc13e2c59ce9cb57337a6f67dfc46113a3474371070a4ce4d9053dc"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_4.dat",
+   "size_bytes": 1280140,
+   "sha256": "da687a31fdb0c7ce0c756acbbbf17f69f022c3fc50ce8d4af4535e172cb6817a"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_5.dat",
+   "size_bytes": 1280140,
+   "sha256": "99f0e32feeaeb6e2734de33c2c5e3351ca7ddac74b407e2168c901d9c9cd6f08"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_6.dat",
+   "size_bytes": 1280140,
+   "sha256": "c102b7916dec447c2153f7778a722fdf67ab102ce09812dcf60013c534173e28"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_7.dat",
+   "size_bytes": 1280140,
+   "sha256": "6f7355213b9282c546be1a6895f318dd98b9fd7ae2e8c5395c0d1fa37544f6e7"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_0.dat",
+   "size_bytes": 512056,
+   "sha256": "94cea670c2288e227a0aae902f17479dd126d810086bd7b429de21be7536fab1"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_1.dat",
+   "size_bytes": 512056,
+   "sha256": "7c7bc4a2ed86a3c99a1f937710725eefa0bcc683010a21e41247d81385270cc3"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_2.dat",
+   "size_bytes": 512056,
+   "sha256": "45bb58979ee3f6cbe9e8dab72febdfaa2a5dd173eba5bd0e750d8bc69081cd95"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_3.dat",
+   "size_bytes": 512056,
+   "sha256": "633f2575b23f6814508e26630a0467f2526c80c3b63f91a08d0ccb6aae3ec816"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_4.dat",
+   "size_bytes": 512056,
+   "sha256": "2a242c4192e60eee5b6a7ad747533c43610958d16763376b022baaf7bcaf06e1"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_5.dat",
+   "size_bytes": 512056,
+   "sha256": "588e9bfd128942f4b4933b7a50c5b28c18e5e7b088efe1de25c65b172f3adbcb"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_6.dat",
+   "size_bytes": 512056,
+   "sha256": "5d347beb3de3b9962deb44f422d8966b692742f59b896d65e69d9ad47e5da28e"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_7.dat",
+   "size_bytes": 512056,
+   "sha256": "15fde5c7b245f153a34e930455612481aafd214d0cb96950bd5c857f5bd0a0a0"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_0.dat",
+   "size_bytes": 1024112,
+   "sha256": "d3c9085025d52308d3dbf6f739e535c88f8f86ee93bea864c1dfd824346a73cd"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_1.dat",
+   "size_bytes": 1024112,
+   "sha256": "ee4d05bd66113c4ab2dbb0622f44dac4811be3533482fe7ea74cfc84633c13c1"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_2.dat",
+   "size_bytes": 1024112,
+   "sha256": "778fbb912c681267c7723f8d3d21babb99610530bbe6c399ff99fbde90dad6b1"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_3.dat",
+   "size_bytes": 1024112,
+   "sha256": "71ae17cd9b1efa1bb595ff8b39425011e71bd2f9e34880d4f579a0d8c0b47ed3"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_4.dat",
+   "size_bytes": 1024112,
+   "sha256": "0f790bf3f1b177d4522868e02f113ad185def7b1600c47fdd05493e5a2ded5d8"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_5.dat",
+   "size_bytes": 1024112,
+   "sha256": "208adc107379c86b1b6798a112460f187c1223abaabd31506e89ed68671a1b7b"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_6.dat",
+   "size_bytes": 1024112,
+   "sha256": "80e6fec5e32efe0e46518d4480c375e56da7b60b6e2d93bfc181f66e00399c7c"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_7.dat",
+   "size_bytes": 1024112,
+   "sha256": "166e1ffdce0ba0e269994cff32412cf26d3c5ad3227261718ca47e8938fa8b3c"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_0.dat",
+   "size_bytes": 768084,
+   "sha256": "57e063c5737fde7812cb6d69a87a40d7102e067fc5cbb3e56fb3582873b4224e"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_1.dat",
+   "size_bytes": 768084,
+   "sha256": "004ed847ffa1407821cd0b6402bbd988bf82a9ab75d29401f07adfa2ceddfc9e"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_2.dat",
+   "size_bytes": 768084,
+   "sha256": "5dc0029cd27b5bcc290859630bee3d2c94d4f5708890b70c8d39753ba132c567"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_3.dat",
+   "size_bytes": 768084,
+   "sha256": "7a84d705b4d0da0ecf2f64fe343cc0b98d4290e991e452c0b1bfd917ee3d6994"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_4.dat",
+   "size_bytes": 768084,
+   "sha256": "4076d9c853ac1f6e696c3f6e97772f7dc29c916c29d37f4b55fafba5e8b1c0f4"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_5.dat",
+   "size_bytes": 768084,
+   "sha256": "eb6656548b4efb6db3a88a27e7639557f603cfbc473de46ab3857928eef9a7c1"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_6.dat",
+   "size_bytes": 768084,
+   "sha256": "3cba4fa3b8a4fa42aeccb0ac6495bbfb929a3a87289495374f9b8c4244cc38ac"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_7.dat",
+   "size_bytes": 768084,
+   "sha256": "d37b60922a8c07142239e59131cfcca09e50b9316fcf06ea30fac7a4560fb657"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_0.dat",
+   "size_bytes": 1024112,
+   "sha256": "e2d8d8122e1c35697f0bd9676a9fa3f3be917c51513277ea780c134e40854d37"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_1.dat",
+   "size_bytes": 1024112,
+   "sha256": "41c64414b6a946aeb4c6c86f49037d1da520c67fec9f1bc0e13b8e83124ee1fb"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_2.dat",
+   "size_bytes": 1024112,
+   "sha256": "c1cbdb998740845b2be67899f39499015a401a7f8315c4692cc985ec5b2b4248"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_3.dat",
+   "size_bytes": 1024112,
+   "sha256": "2f8d4ec96c7753d30298fe1cfbda9383c27785dbc1ce469682c2959958bcbb0f"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_4.dat",
+   "size_bytes": 1024112,
+   "sha256": "5e280cc5194c2e3bc519f88a878020909895132d0be7ae968e7265aa8413948c"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_5.dat",
+   "size_bytes": 1024112,
+   "sha256": "42724543c6eab8a0a466278880cd5321d69e10eedcf9defbf84d5adf5f03d89d"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_6.dat",
+   "size_bytes": 1024112,
+   "sha256": "ab531dcc25f6e54dc6be552f75e8160ade41d689aeed1d1256b2993f86bad765"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_7.dat",
+   "size_bytes": 1024112,
+   "sha256": "d6d538b59f965e310a9c29f4e591bc3e549f931314d877d7661fc64daa40d19f"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_0.dat",
+   "size_bytes": 512056,
+   "sha256": "e3fd4f429c39ace38a247a0b73e40cd0d108b7be8706d7d874003466bc6b60de"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_1.dat",
+   "size_bytes": 512056,
+   "sha256": "c453f3d73bb07a957cd99eb5e78755ebb78e6b1ee9ea3fb4f1c861c388d1a377"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_2.dat",
+   "size_bytes": 512056,
+   "sha256": "c7f36593a3967080f088cf9e32a6bef4e40e1482028ab75bc4d92ca57bed3fa3"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_3.dat",
+   "size_bytes": 512056,
+   "sha256": "fee7de84165b80f5cea892b09fda981112f2e39b3d4e521877e6af82b9bbdb72"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_4.dat",
+   "size_bytes": 512056,
+   "sha256": "46e284be163f74aea687b6c452d368c011f4bae150fa6610cc1a4d599c30953e"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_5.dat",
+   "size_bytes": 512056,
+   "sha256": "58efb9d0345e38a589da50e3d244ab83f5a2db0688ac912b65ca96345b29d46c"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_6.dat",
+   "size_bytes": 512056,
+   "sha256": "ec0ec05b53fe80b8a56a9d81c8361e430f9f85bc7946f4e15261fa1b8b65cea0"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_7.dat",
+   "size_bytes": 512056,
+   "sha256": "464bbdc5ef8fe42886c52b319fa70077c6a8ab53830836bef8723ea226fc795d"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_0.dat",
+   "size_bytes": 768084,
+   "sha256": "1fe61e13540431f87af3dae0b980d4ee48ca8e4b3d8bddd74beeea286ffe6c85"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_1.dat",
+   "size_bytes": 768084,
+   "sha256": "9f69aae1fe379180d630931fb4a70e27b8ddf5f4d0362db9facce49995493373"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_2.dat",
+   "size_bytes": 768084,
+   "sha256": "baceeaa18d975d0cec5ef7aacc7e88ccfbc38348fd0bb63dff9d2481003808e9"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_3.dat",
+   "size_bytes": 768084,
+   "sha256": "a8088c53efd0aca37fc5416f67aacae985d978562f669daf4b9fd19daed174de"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_4.dat",
+   "size_bytes": 768084,
+   "sha256": "c8c833339acb4423edde7ff30a3ccb59991c45e015dbb0c696ee888926b43efd"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_5.dat",
+   "size_bytes": 768084,
+   "sha256": "4d9583158eb679b22502b9fe4ed97cd8e597439a3612d052bf61923bc4c04cee"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_6.dat",
+   "size_bytes": 768084,
+   "sha256": "c4d8ee6f3fe1583b0abb69911bbe56f6708b4502f119f8895bb8ac74b938b0b5"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_7.dat",
+   "size_bytes": 768084,
+   "sha256": "e470a2ca4dbae5703ca068a3dd19aca7e9edddd7523ed95651a3ba9f08f39d68"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_0.dat",
+   "size_bytes": 1024112,
+   "sha256": "29bcb42e9ddfa7e82fce97541c1abe9d323065c1bd2e94ed48752ee80fb7ab4f"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_1.dat",
+   "size_bytes": 1024112,
+   "sha256": "885fb168479de639728e49213705469143e67391dddd4b0e9b47a5ba8cbaf807"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_2.dat",
+   "size_bytes": 1024112,
+   "sha256": "1418185a5409f7166d624dfadd37858dc55236d9ab55841b32a9470e8d7aa39e"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_3.dat",
+   "size_bytes": 1024112,
+   "sha256": "a88f522edd4892a9d9c02787d70ab741471483af64c02af19fe56fa24e998e28"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_4.dat",
+   "size_bytes": 1024112,
+   "sha256": "75b8805430bdd9351e3dcee2b34fab18886301e46af0192a6530a57d52f104b7"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_5.dat",
+   "size_bytes": 1024112,
+   "sha256": "3e2931ac7fa398590edf909e38b1f727434b7a8b582135716b72de7d3438cc48"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_6.dat",
+   "size_bytes": 1024112,
+   "sha256": "abecfdf55855e35f152c16e57e2cfb3f8801856869f5b8fd89b917b89ac8255d"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_7.dat",
+   "size_bytes": 1024112,
+   "sha256": "597e8496d77fdbc8c8c2ba3c730c76d456e99a1ae6993f87dffbd819af421cd3"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_0.dat",
+   "size_bytes": 1536168,
+   "sha256": "b6fb88a756a7f5a71209c97d1a8bcb435e6eaf7e75e1d6da00ac2dcf7a9ec383"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_1.dat",
+   "size_bytes": 1536168,
+   "sha256": "baf89bbd86b827d9c62bab86a22bc5747e8307419b8abda8246bc797f7fa8697"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_2.dat",
+   "size_bytes": 1536168,
+   "sha256": "5fb08a209e768cf0cb38963ba6998a980d44d62485cc6f81143766a56e4f19ab"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_3.dat",
+   "size_bytes": 1536168,
+   "sha256": "b22f9a68f7dd6a3d33dc6a29b4b79c96df3522bf7f4b42d81a2ef3e70b468457"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_4.dat",
+   "size_bytes": 1536168,
+   "sha256": "b87afd2f794a86362c0d4aebe2bfd332005aeea2e4cfe45b3540210a05bd34d4"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_5.dat",
+   "size_bytes": 1536168,
+   "sha256": "8e2e7678061dc98ca07fda7eac52e54196691bd3d241241dcede23a39c331828"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_6.dat",
+   "size_bytes": 1536168,
+   "sha256": "1f6301b4c11ada38913fc4f8657fa88f6621cae25320360208fbe15d9a10c740"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_7.dat",
+   "size_bytes": 1536168,
+   "sha256": "a808b806818577d9c3abef01ad64c10ffc545e324762231f3eb591d1ff975d1f"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_0.dat",
+   "size_bytes": 768084,
+   "sha256": "cbf7d342801faa31b9511fc3ce692eca381e08b00bfc2a6700e2d285ff19443e"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_1.dat",
+   "size_bytes": 768084,
+   "sha256": "d5d7cc54e4b1de58cdfda4f38ca4941027c791659540a6836357c80caf31988a"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_2.dat",
+   "size_bytes": 768084,
+   "sha256": "be269323969a060c3d4098c843697c261d1cb21d8d60e153ab1f3f20ca19002d"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_3.dat",
+   "size_bytes": 768084,
+   "sha256": "46868664f723cb874468ac06acb37010176ad17ea443ec93bb06270c76c0f46f"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_4.dat",
+   "size_bytes": 768084,
+   "sha256": "32fa2c1818516907865813a854ebd96fd7c8a0dd1928790700928400392638a2"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_5.dat",
+   "size_bytes": 768084,
+   "sha256": "79f5a00e3593be6e66d45f63d97a3881beba9d2ef68462f2d488e721a8805027"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_6.dat",
+   "size_bytes": 768084,
+   "sha256": "ea96e81ec346a3b22b1d653c6a6b9f0025fc4ccd1c60317d02b6fef8cc548603"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_7.dat",
+   "size_bytes": 768084,
+   "sha256": "563032455fba1a87a7bece52ce68df8bb708515f62579167f724b2b2cb8a76ed"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_0.dat",
+   "size_bytes": 768084,
+   "sha256": "551c0a0bf41f066aee0b3919caacd12231ef0bf0ca80b55afc96bcae5b71a46d"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_1.dat",
+   "size_bytes": 768084,
+   "sha256": "dae06953e0ea91646387a9a61c3fc3ab50ab6e1aea81407f723d84eab337eaa2"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_2.dat",
+   "size_bytes": 768084,
+   "sha256": "c839ae842e333b8e10ed88b2e584ffe06acbf81c30f65d29d4fc23a87e905f20"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_3.dat",
+   "size_bytes": 768084,
+   "sha256": "7838658f40d38dacf191bd5e6f9f0a044e961df2f1bd6045e4ac4f114376ca41"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_4.dat",
+   "size_bytes": 768084,
+   "sha256": "bafda30268b2b7490db61e88726df1d1c615e5e42820c07fb2d3051e1d0667c2"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_5.dat",
+   "size_bytes": 768084,
+   "sha256": "26e38d655a26d15c47499c857c52b10e356d33a06bd5a93f09142465d5f75eb0"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_6.dat",
+   "size_bytes": 768084,
+   "sha256": "00e624caa1eacee210d4c17758a3eb4a14845da6713215f28a99b67df3d07b18"
+  },
+  {
+   "rel_path": "附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_7.dat",
+   "size_bytes": 768084,
+   "sha256": "440057d72790c7ca1c5e75c45ff9110324a8e94583467969cb9c95b7a6c3d4e2"
+  }
+ ],
+ "groups": [
+  {
+   "group_key": "空场数据/data1",
+   "target_type": "air",
+   "d_hat_m": null,
+   "abs_err_cm": null,
+   "supp_dw_win_db": null,
+   "pslr_db": null,
+   "pnr_db": null,
+   "valid_rx": 63,
+   "finite": true
+  },
+  {
+   "group_key": "空场数据/data2",
+   "target_type": "air",
+   "d_hat_m": null,
+   "abs_err_cm": null,
+   "supp_dw_win_db": null,
+   "pslr_db": null,
+   "pnr_db": null,
+   "valid_rx": 63,
+   "finite": true
+  },
+  {
+   "group_key": "空场数据/data3",
+   "target_type": "air",
+   "d_hat_m": null,
+   "abs_err_cm": null,
+   "supp_dw_win_db": null,
+   "pslr_db": null,
+   "pnr_db": null,
+   "valid_rx": 63,
+   "finite": true
+  },
+  {
+   "group_key": "空场数据/data4",
+   "target_type": "air",
+   "d_hat_m": null,
+   "abs_err_cm": null,
+   "supp_dw_win_db": null,
+   "pslr_db": null,
+   "pnr_db": null,
+   "valid_rx": 63,
+   "finite": true
+  },
+  {
+   "group_key": "空场数据/data5",
+   "target_type": "air",
+   "d_hat_m": null,
+   "abs_err_cm": null,
+   "supp_dw_win_db": null,
+   "pslr_db": null,
+   "pnr_db": null,
+   "valid_rx": 63,
+   "finite": true
+  },
+  {
+   "group_key": "空场数据/data6",
+   "target_type": "air",
+   "d_hat_m": null,
+   "abs_err_cm": null,
+   "supp_dw_win_db": null,
+   "pslr_db": null,
+   "pnr_db": null,
+   "valid_rx": 63,
+   "finite": true
+  },
+  {
+   "group_key": "空场数据/data7",
+   "target_type": "air",
+   "d_hat_m": null,
+   "abs_err_cm": null,
+   "supp_dw_win_db": null,
+   "pslr_db": null,
+   "pnr_db": null,
+   "valid_rx": 63,
+   "finite": true
+  },
+  {
+   "group_key": "空场数据/data8",
+   "target_type": "air",
+   "d_hat_m": null,
+   "abs_err_cm": null,
+   "supp_dw_win_db": null,
+   "pslr_db": null,
+   "pnr_db": null,
+   "valid_rx": 63,
+   "finite": true
+  },
+  {
+   "group_key": "空场数据/data9",
+   "target_type": "air",
+   "d_hat_m": null,
+   "abs_err_cm": null,
+   "supp_dw_win_db": null,
+   "pslr_db": null,
+   "pnr_db": null,
+   "valid_rx": 63,
+   "finite": true
+  },
+  {
+   "group_key": "空场数据/data10",
+   "target_type": "air",
+   "d_hat_m": null,
+   "abs_err_cm": null,
+   "supp_dw_win_db": null,
+   "pslr_db": null,
+   "pnr_db": null,
+   "valid_rx": 63,
+   "finite": true
+  },
+  {
+   "group_key": "墙体数据/data1-42cm",
+   "target_type": "target",
+   "d_hat_m": 0.42100000000000026,
+   "abs_err_cm": 0.10000000000002784,
+   "supp_dw_win_db": 18.6968225478247,
+   "pslr_db": 9.387731583747817,
+   "pnr_db": 78.33855371650944,
+   "valid_rx": 63,
+   "finite": true
+  },
+  {
+   "group_key": "金属板数据/data1-69cm",
+   "target_type": "target",
+   "d_hat_m": 0.6900000000000005,
+   "abs_err_cm": 4.440892098500626e-14,
+   "supp_dw_win_db": 32.35228178753963,
+   "pslr_db": 9.207321366809452,
+   "pnr_db": 78.23380943160431,
+   "valid_rx": 63,
+   "finite": true
+  }
+ ],
+ "array_map": {
+  "xcluster_prefix": "xcluster",
+  "phase_prefix": "phase",
+  "air_loo_prefix": "air_loo"
+ },
+ "methods": {
+  "n0_enabled": true,
+  "rank": 2,
+  "lambda_selection": "fixed_default",
+  "subspace_suppression": true
+ },
+ "d_true_usage": "evaluation_only",
+ "freeze": {
+  "status": "not_eligible_for_freeze",
+  "eligible": false,
+  "written": false
+ },
+ "metrics_sha256": "c758f2250d4be9d87d7913ae04113cac1569cf76dd13cc95d953fb71444364f9",
+ "n0": {
+  "contract": "E0-N0-1",
+  "arms": [
+   "C0",
+   "C1",
+   "C2"
+  ],
+  "decision_arm": "C2",
+  "rank": 2,
+  "lambda": [
+   0.001,
+   0.001
+  ],
+  "lambda_selection": "fixed_default",
+  "eta_wall": 0.25,
+  "xcluster_fold_map": [
+   {
+    "fold": 0,
+    "cluster": "C0",
+    "held_out": [
+     "空场数据/data1",
+     "空场数据/data2"
+    ],
+    "train": [
+     "空场数据/data3",
+     "空场数据/data4",
+     "空场数据/data5",
+     "空场数据/data6",
+     "空场数据/data7",
+     "空场数据/data8",
+     "空场数据/data9",
+     "空场数据/data10"
+    ]
+   },
+   {
+    "fold": 1,
+    "cluster": "C1",
+    "held_out": [
+     "空场数据/data3",
+     "空场数据/data4"
+    ],
+    "train": [
+     "空场数据/data1",
+     "空场数据/data2",
+     "空场数据/data5",
+     "空场数据/data6",
+     "空场数据/data7",
+     "空场数据/data8",
+     "空场数据/data9",
+     "空场数据/data10"
+    ]
+   },
+   {
+    "fold": 2,
+    "cluster": "C2",
+    "held_out": [
+     "空场数据/data5",
+     "空场数据/data6"
+    ],
+    "train": [
+     "空场数据/data1",
+     "空场数据/data2",
+     "空场数据/data3",
+     "空场数据/data4",
+     "空场数据/data7",
+     "空场数据/data8",
+     "空场数据/data9",
+     "空场数据/data10"
+    ]
+   },
+   {
+    "fold": 3,
+    "cluster": "C3",
+    "held_out": [
+     "空场数据/data7",
+     "空场数据/data8"
+    ],
+    "train": [
+     "空场数据/data1",
+     "空场数据/data2",
+     "空场数据/data3",
+     "空场数据/data4",
+     "空场数据/data5",
+     "空场数据/data6",
+     "空场数据/data9",
+     "空场数据/data10"
+    ]
+   },
+   {
+    "fold": 4,
+    "cluster": "C4",
+    "held_out": [
+     "空场数据/data9",
+     "空场数据/data10"
+    ],
+    "train": [
+     "空场数据/data1",
+     "空场数据/data2",
+     "空场数据/data3",
+     "空场数据/data4",
+     "空场数据/data5",
+     "空场数据/data6",
+     "空场数据/data7",
+     "空场数据/data8"
+    ]
+   }
+  ],
+  "xcluster_supp_db": [
+   [
+    28.003335010868042,
+    28.00333501087179
+   ],
+   [
+    26.99786583400847,
+    26.997865833943298
+   ],
+   [
+    27.478222653446043,
+    27.478222653373624
+   ],
+   [
+    26.115196082750064,
+    26.11519608268416
+   ],
+   [
+    26.985193867788904,
+    26.985193867800135
+   ]
+  ],
+  "xcluster_eligibility": "eligible",
+  "retention": {
+   "case_id": "E0-S2@0.42",
+   "peak_loss_db": 0.016551085305782472,
+   "range_shift_mm": 0.8999999999966257,
+   "pass": true
+  },
+  "phase": {
+   "contract": "E0-N0-PHASE-1",
+   "group_order": [
+    "空场数据/data1",
+    "空场数据/data2",
+    "空场数据/data3",
+    "空场数据/data4",
+    "空场数据/data5",
+    "空场数据/data6",
+    "空场数据/data7",
+    "空场数据/data8",
+    "空场数据/data9",
+    "空场数据/data10"
+   ],
+   "per_group": [
+    {
+     "group": "空场数据/data1",
+     "cluster": "C0",
+     "aligned": true,
+     "shift_ns": 0.0,
+     "rho": 0.9999999999999998,
+     "reason": null
+    },
+    {
+     "group": "空场数据/data2",
+     "cluster": "C0",
+     "aligned": true,
+     "shift_ns": 0.014750000000000001,
+     "rho": 0.9999999999999998,
+     "reason": null
+    },
+    {
+     "group": "空场数据/data3",
+     "cluster": "C1",
+     "aligned": true,
+     "shift_ns": 211.97299999999998,
+     "rho": 1.0,
+     "reason": null
+    },
+    {
+     "group": "空场数据/data4",
+     "cluster": "C1",
+     "aligned": true,
+     "shift_ns": 211.97275000000002,
+     "rho": 1.0,
+     "reason": null
+    },
+    {
+     "group": "空场数据/data5",
+     "cluster": "C2",
+     "aligned": true,
+     "shift_ns": 723.2642500000001,
+     "rho": 1.0,
+     "reason": null
+    },
+    {
+     "group": "空场数据/data6",
+     "cluster": "C2",
+     "aligned": true,
+     "shift_ns": 723.2635,
+     "rho": 1.0,
+     "reason": null
+    },
+    {
+     "group": "空场数据/data7",
+     "cluster": "C3",
+     "aligned": true,
+     "shift_ns": 340.13875,
+     "rho": 1.0,
+     "reason": null
+    },
+    {
+     "group": "空场数据/data8",
+     "cluster": "C3",
+     "aligned": true,
+     "shift_ns": 340.1375,
+     "rho": 1.0,
+     "reason": null
+    },
+    {
+     "group": "空场数据/data9",
+     "cluster": "C4",
+     "aligned": true,
+     "shift_ns": 625.3842500000001,
+     "rho": 1.0,
+     "reason": null
+    },
+    {
+     "group": "空场数据/data10",
+     "cluster": "C4",
+     "aligned": true,
+     "shift_ns": 625.38375,
+     "rho": 1.0,
+     "reason": null
+    }
+   ],
+   "d1_rank": 2,
+   "d1_min_abs_inner": 0.0
+  },
+  "judgement": {
+   "L1": "PASS",
+   "L2": "FAIL",
+   "stop_condition": "S8"
+  },
+  "arm_metrics": {
+   "C0": {
+    "air_loo_supp_db": [
+     12.157692422811044,
+     12.119528325815148,
+     9.252269149963228,
+     9.489598035479586,
+     13.721831047248367,
+     13.561756863433157,
+     14.202265011383663,
+     14.268638229332248,
+     11.863214256862758,
+     13.260635640377778
+    ],
+    "targets": {
+     "墙体数据/data1-42cm": {
+      "d_hat_m": 0.42100000000000026,
+      "supp_dw_win_db": 9.91864522980494,
+      "pslr_db": 9.338945604613283,
+      "pnr_db": 72.60580360502783
+     },
+     "金属板数据/data1-69cm": {
+      "d_hat_m": 0.6900000000000005,
+      "supp_dw_win_db": 13.03363718957159,
+      "pslr_db": 9.199626656637497,
+      "pnr_db": 71.47404509265203
+     }
+    }
+   },
+   "C1": {
+    "air_loo_supp_db": [
+     16.088629754427494,
+     16.010903259257073,
+     13.021617712524428,
+     12.919999856292828,
+     13.768083585420356,
+     13.76230496790046,
+     14.471363469173916,
+     14.509094800402703,
+     15.455814006226511,
+     15.400459553531219
+    ],
+    "targets": {
+     "墙体数据/data1-42cm": {
+      "d_hat_m": 0.42100000000000026,
+      "supp_dw_win_db": 14.827071989370111,
+      "pslr_db": 9.391754237212865,
+      "pnr_db": 76.33924906531865
+     },
+     "金属板数据/data1-69cm": {
+      "d_hat_m": 0.6900000000000005,
+      "supp_dw_win_db": 13.834896868037008,
+      "pslr_db": 9.199244984347677,
+      "pnr_db": 72.10004330911028
+     }
+    }
+   },
+   "C2": {
+    "air_loo_supp_db": [
+     30.319624958887076,
+     30.10827105697264,
+     30.326414651729706,
+     29.83307600511108,
+     30.27676169009957,
+     30.251312648513043,
+     28.395716070064104,
+     28.522324148723506,
+     29.173633618176233,
+     29.030151678632844
+    ],
+    "targets": {
+     "墙体数据/data1-42cm": {
+      "d_hat_m": 0.42100000000000026,
+      "supp_dw_win_db": 18.6968225478247,
+      "pslr_db": 9.387731583747817,
+      "pnr_db": 78.33855371650944
+     },
+     "金属板数据/data1-69cm": {
+      "d_hat_m": 0.6900000000000005,
+      "supp_dw_win_db": 32.35228178753963,
+      "pslr_db": 9.207321366809452,
+      "pnr_db": 78.23380943160431
+     }
+    }
+   }
+  },
+  "registration": {
+   "prereg_id": "A-Q1-N0-PREREG-1",
+   "prereg_sha256": "eef66e3efe895df86e83f9e1eec590a32f73beef9f17b2be08dc3abbab02d82b",
+   "implementation_sha": "9f8ab780f15dcceea148835d07609985ed4eeb36",
+   "n0_config_sha256": "86b472416f30c7fbfa26b958d577a105e049571a863981b4d8285d7dea2d9470",
+   "n0_config_path": "experiments/A/A-Q1-E0/n0/n0_config.json",
+   "input_manifest_sha256": "bb8a2446442c944f23f0d9252427f17c2f62454f20884df57b011c43aea92681",
+   "main_commit": "c7b841efe67192a73a96894fb5a0243b336a9468"
+  }
+ },
+ "n0_config": {
+  "path": "experiments/A/A-Q1-E0/n0/n0_config.json",
+  "sha256_lf": "86b472416f30c7fbfa26b958d577a105e049571a863981b4d8285d7dea2d9470",
+  "sha256_raw": "86b472416f30c7fbfa26b958d577a105e049571a863981b4d8285d7dea2d9470",
+  "bound": true
+ }
+}

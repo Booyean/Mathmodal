@@ -114,14 +114,14 @@ python solutions/A/run_n0_synthetic.py --mode two-process --out <tmp> --runs-dir
 
 ## 5. 仍未闭合（留给统筹裁定）
 
-1. `n0_config.json` 的 `accept_contract` 仍是声明性的 `E0-N0-ACCEPT-2`，
-   `anchors.prereg_sha256_lf = 721eb744…`（ACCEPT-2 字节）；而包内实际消费的是
-   ACCEPT-3（`fdd2edab…`）。两者在 N12 各自自洽，但语义上“配置声明的契约版本”
-   与“实际消费的契约版本”不一致。**改配置会改 `ec396737…` 字节并需要重打包重验收**，
-   本轮为保住已复核字节未动，建议在 B-02 裁定后单独做一次配置版本化。
+1. ~~`n0_config.json` 的 `accept_contract` 仍是声明性的 `E0-N0-ACCEPT-2`……~~
+   **已闭合（`9f8ab78`）**：`accept_contract` 对齐到 `E0-N0-ACCEPT-3`、
+   `anchors.prereg_sha256_lf` 对齐到 `fdd2edab…`，配置字节变为 `86b47241…`；入口新增
+   `prereg.accept_contract == n0_config.accept_contract` 一致性门，并按新配置重建了
+   `synthetic_two_process_accept3_cfg/`。详见
+   `coordination/A_Q1_N0_PACK_ACCEPT3_CFG.md`。
 2. 交付包 `9f34cb8` 的 `preflight.json` 仍记录临时目录路径。重跑可复现科学内容
-   （见 §3.1），但要“台账逐字节复现”需在 `c589713` 重新出包；如需，我可再出一份
-   `synthetic_two_process_accept3_inrepo/`，不覆盖现有目录。
+   （见 §3.1）；`9f34cb8` 保持原样作为历史证据，新包 `accept3_cfg` 已记录仓库内路径。
 
 **Next owner:** `@codex` 复核本提交与 §3 复现证据后裁定 B-02；`@my_deepseek` 可按
 §4 的 `--repo` 口径独立复跑 ACCEPT-3。**B-02 / E0-T / S2 均未放行。**
