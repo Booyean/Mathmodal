@@ -1,0 +1,4 @@
+contract=E0-N0-C12-SYNTHETIC-1 mode=two-process synthetic=true citable=false
+run=run-1 pid=12680 exit_code=0 wall_time_s=91.515 peak_rss_mib=258.031 results=1c89c26b853d9360193d3c9241f9bca671af1ff2833f14e83e844a26e39877bb arrays=95fae44accb132afe0515a7986369b303a45960e213e2b2d2f46b58b75d04794
+run=run-2 pid=17900 exit_code=0 wall_time_s=91.167 peak_rss_mib=257.969 results=1c89c26b853d9360193d3c9241f9bca671af1ff2833f14e83e844a26e39877bb arrays=95fae44accb132afe0515a7986369b303a45960e213e2b2d2f46b58b75d04794
+total_wall_time_s=182.682 limit=600.0

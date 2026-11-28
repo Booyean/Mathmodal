@@ -1,0 +1,671 @@
+{
+ "checker": "accept_e0n0",
+ "contract": "E0-N0-ACCEPT-2",
+ "n0_contract": "E0-N0-1",
+ "phase_contract": "E0-N0-PHASE-1",
+ "prereg_sha256": "721eb744e1e5d0ca1b0edbbc32f17c207ac419b193ed51002477d4de065c2ade",
+ "results_dir": "D:\\数模\\tmp\\n0iface-wt\\experiments\\A\\A-Q1-E0\\n0\\synthetic_two_process",
+ "verdict": "FAIL",
+ "L1": null,
+ "L2": null,
+ "reasons": [
+  "R8_L2_freeze_not_eligible"
+ ],
+ "stop_condition": "S9",
+ "failed_checks": [
+  "N9"
+ ],
+ "insufficient_checks": [],
+ "checks": [
+  {
+   "id": "N1",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "files_ok": 6,
+    "problems": [],
+    "n0_keys": [
+     "arm_metrics",
+     "arms",
+     "contract",
+     "decision_arm",
+     "eta_wall",
+     "judgement",
+     "lambda",
+     "lambda_selection",
+     "phase",
+     "rank",
+     "registration",
+     "retention",
+     "xcluster_eligibility",
+     "xcluster_fold_map",
+     "xcluster_supp_db"
+    ]
+   }
+  },
+  {
+   "id": "N2",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "folds": [
+     {
+      "fold": 0,
+      "cluster": "C0",
+      "held_out": [
+       "空场数据/data1",
+       "空场数据/data2"
+      ]
+     },
+     {
+      "fold": 1,
+      "cluster": "C1",
+      "held_out": [
+       "空场数据/data3",
+       "空场数据/data4"
+      ]
+     },
+     {
+      "fold": 2,
+      "cluster": "C2",
+      "held_out": [
+       "空场数据/data5",
+       "空场数据/data6"
+      ]
+     },
+     {
+      "fold": 3,
+      "cluster": "C3",
+      "held_out": [
+       "空场数据/data7",
+       "空场数据/data8"
+      ]
+     },
+     {
+      "fold": 4,
+      "cluster": "C4",
+      "held_out": [
+       "空场数据/data9",
+       "空场数据/data10"
+      ]
+     }
+    ],
+    "problems": []
+   }
+  },
+  {
+   "id": "N3",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "supp_db": [
+     [
+      28.003335011,
+      28.003335011
+     ],
+     [
+      26.997865834,
+      26.997865834
+     ],
+     [
+      27.478222653,
+      27.478222653
+     ],
+     [
+      26.115196083,
+      26.115196083
+     ],
+     [
+      26.985193868,
+      26.985193868
+     ]
+    ],
+    "min_db": 26.115196083,
+    "tier": "eligible",
+    "thresholds": {
+     "eligible": 10.0,
+     "hard_stop": 6.0
+    },
+    "problems": []
+   }
+  },
+  {
+   "id": "N4",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "lambda": [
+     0.001,
+     0.001
+    ],
+    "grid_index": 0,
+    "pairs": [
+     [
+      0.001,
+      0.001
+     ]
+    ],
+    "supp_db": [
+     30.319624959,
+     30.108271057,
+     30.326414652,
+     29.833076005,
+     30.27676169,
+     30.251312649,
+     28.39571607,
+     28.522324149,
+     29.173633618,
+     29.030151679
+    ],
+    "min_db": 28.39571607,
+    "median_db": 29.970673531,
+    "problems": []
+   }
+  },
+  {
+   "id": "N5",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "groups": [
+     {
+      "group": "墙体数据/data1-42cm",
+      "got": {
+       "pslr_db": 9.387731583747817,
+       "pnr_db": 78.33855371650944,
+       "abs_err_cm": 0.10000000000002784
+      },
+      "baseline": {
+       "d_hat_m": 0.4817999999999635,
+       "abs_err_cm": 6.179999999996349,
+       "supp_dw_win_db": 3.268659668481082,
+       "pslr_db": 2.664330228102982,
+       "pnr_db": 34.29380923376331
+      },
+      "checks": {
+       "pslr_not_degraded": true,
+       "pnr_not_degraded": true,
+       "abs_err_not_degraded": true
+      }
+     },
+     {
+      "group": "金属板数据/data1-69cm",
+      "got": {
+       "pslr_db": 9.207321366809452,
+       "pnr_db": 78.23380943160431,
+       "abs_err_cm": 4.440892098500626e-14
+      },
+      "baseline": {
+       "d_hat_m": 0.7336999999999357,
+       "abs_err_cm": 4.3699999999935795,
+       "supp_dw_win_db": 4.185473074871163,
+       "pslr_db": 4.17257974985938,
+       "pnr_db": 35.42927899434393
+      },
+      "checks": {
+       "pslr_not_degraded": true,
+       "pnr_not_degraded": true,
+       "abs_err_not_degraded": true
+      }
+     }
+    ],
+    "tolerance": {
+     "db": 0.05,
+     "cm": 0.05
+    },
+    "policy": "单侧：PSLR/PNR >= 基线-容差，abs_err <= 基线+容差",
+    "problems": []
+   }
+  },
+  {
+   "id": "N6",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "case_id": "E0-S2@0.42",
+    "peak_loss_db": 0.016551085305782472,
+    "range_shift_mm": 0.8999999999966257,
+    "pass_recomputed": true,
+    "problems": []
+   }
+  },
+  {
+   "id": "N7",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "shifts_ns": [
+     0.0,
+     0.01475,
+     211.973,
+     211.97275,
+     723.26425,
+     723.2635,
+     340.13875,
+     340.1375,
+     625.38425,
+     625.38375
+    ],
+    "coherence": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "cluster_shift_tol_ns": 0.1,
+    "problems": []
+   }
+  },
+  {
+   "id": "N8",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "declared": {
+     "n0_enabled": true,
+     "rank": 2,
+     "lambda_selection": "fixed_default",
+     "subspace_suppression": true
+    },
+    "n0": {
+     "rank": 2,
+     "lambda": [
+      0.001,
+      0.001
+     ],
+     "lambda_selection": "fixed_default",
+     "eta_wall": 0.25,
+     "arms": [
+      "C0",
+      "C1",
+      "C2"
+     ],
+     "decision_arm": "C2"
+    },
+    "problems": []
+   }
+  },
+  {
+   "id": "N9",
+   "blocking": true,
+   "status": "fail",
+   "detail": {
+    "tolerances": {
+     "db": 1e-06,
+     "m": 1e-09
+    },
+    "comparisons": [
+     {
+      "quantity": "air_loo_supp_db[0]",
+      "got": 12.157692422811044,
+      "baseline": 4.190326909421409,
+      "delta": 7.967365513389635,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "air_loo_supp_db[1]",
+      "got": 12.119528325815148,
+      "baseline": 2.9844339994900797,
+      "delta": 9.135094326325069,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "air_loo_supp_db[2]",
+      "got": 9.252269149963228,
+      "baseline": 9.886207484726471,
+      "delta": 0.6339383347632435,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "air_loo_supp_db[3]",
+      "got": 9.489598035479586,
+      "baseline": 10.203566491599005,
+      "delta": 0.7139684561194191,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "air_loo_supp_db[4]",
+      "got": 13.721831047248367,
+      "baseline": 12.881729940654502,
+      "delta": 0.840101106593865,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "air_loo_supp_db[5]",
+      "got": 13.561756863433157,
+      "baseline": 13.096603459453032,
+      "delta": 0.46515340398012484,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "air_loo_supp_db[6]",
+      "got": 14.202265011383663,
+      "baseline": 12.6489575801014,
+      "delta": 1.5533074312822635,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "air_loo_supp_db[7]",
+      "got": 14.268638229332248,
+      "baseline": 12.488048065461083,
+      "delta": 1.7805901638711656,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "air_loo_supp_db[8]",
+      "got": 11.863214256862758,
+      "baseline": 10.39839711338937,
+      "delta": 1.4648171434733879,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "air_loo_supp_db[9]",
+      "got": 13.260635640377778,
+      "baseline": 9.773415492490399,
+      "delta": 3.4872201478873794,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "墙体数据/data1-42cm.d_hat_m",
+      "got": 0.42100000000000026,
+      "baseline": 0.4817999999999635,
+      "delta": 0.06079999999996322,
+      "tol": 1e-09,
+      "ok": false
+     },
+     {
+      "quantity": "墙体数据/data1-42cm.supp_dw_win_db",
+      "got": 9.91864522980494,
+      "baseline": 3.268659668481082,
+      "delta": 6.649985561323858,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "墙体数据/data1-42cm.pslr_db",
+      "got": 9.338945604613283,
+      "baseline": 2.664330228102982,
+      "delta": 6.674615376510301,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "墙体数据/data1-42cm.pnr_db",
+      "got": 72.60580360502783,
+      "baseline": 34.29380923376331,
+      "delta": 38.31199437126452,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "金属板数据/data1-69cm.d_hat_m",
+      "got": 0.6900000000000005,
+      "baseline": 0.7336999999999357,
+      "delta": 0.043699999999935235,
+      "tol": 1e-09,
+      "ok": false
+     },
+     {
+      "quantity": "金属板数据/data1-69cm.supp_dw_win_db",
+      "got": 13.03363718957159,
+      "baseline": 4.185473074871163,
+      "delta": 8.848164114700428,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "金属板数据/data1-69cm.pslr_db",
+      "got": 9.199626656637497,
+      "baseline": 4.17257974985938,
+      "delta": 5.027046906778117,
+      "tol": 1e-06,
+      "ok": false
+     },
+     {
+      "quantity": "金属板数据/data1-69cm.pnr_db",
+      "got": 71.47404509265203,
+      "baseline": 35.42927899434393,
+      "delta": 36.0447660983081,
+      "tol": 1e-06,
+      "ok": false
+     }
+    ],
+    "problems": [
+     "C0 10 折 Supp[0] delta=7.967e+00 dB > 1e-06 dB (S9)",
+     "C0 10 折 Supp[1] delta=9.135e+00 dB > 1e-06 dB (S9)",
+     "C0 10 折 Supp[2] delta=6.339e-01 dB > 1e-06 dB (S9)",
+     "C0 10 折 Supp[3] delta=7.140e-01 dB > 1e-06 dB (S9)",
+     "C0 10 折 Supp[4] delta=8.401e-01 dB > 1e-06 dB (S9)",
+     "C0 10 折 Supp[5] delta=4.652e-01 dB > 1e-06 dB (S9)",
+     "C0 10 折 Supp[6] delta=1.553e+00 dB > 1e-06 dB (S9)",
+     "C0 10 折 Supp[7] delta=1.781e+00 dB > 1e-06 dB (S9)",
+     "C0 10 折 Supp[8] delta=1.465e+00 dB > 1e-06 dB (S9)",
+     "C0 10 折 Supp[9] delta=3.487e+00 dB > 1e-06 dB (S9)",
+     "C0 墙体数据/data1-42cm.d_hat_m delta=6.080e-02 > 1e-09 (S9)",
+     "C0 墙体数据/data1-42cm.supp_dw_win_db delta=6.650e+00 > 1e-06 (S9)",
+     "C0 墙体数据/data1-42cm.pslr_db delta=6.675e+00 > 1e-06 (S9)",
+     "C0 墙体数据/data1-42cm.pnr_db delta=3.831e+01 > 1e-06 (S9)",
+     "C0 金属板数据/data1-69cm.d_hat_m delta=4.370e-02 > 1e-09 (S9)",
+     "C0 金属板数据/data1-69cm.supp_dw_win_db delta=8.848e+00 > 1e-06 (S9)",
+     "C0 金属板数据/data1-69cm.pslr_db delta=5.027e+00 > 1e-06 (S9)",
+     "C0 金属板数据/data1-69cm.pnr_db delta=3.604e+01 > 1e-06 (S9)"
+    ],
+    "note": "c0 等价性是 S9 证据缺陷判据，不是新基线"
+   }
+  },
+  {
+   "id": "N12",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "registration": {
+     "prereg_id": "A-Q1-N0-PREREG-1",
+     "prereg_sha256": "721eb744e1e5d0ca1b0edbbc32f17c207ac419b193ed51002477d4de065c2ade",
+     "implementation_sha": "1af71fed23c16dfcc1c73ac90f57d3a65a96c444",
+     "n0_config_sha256": "ec39673787e5dd05986095bca8f7c6cb41904dc13265e40798157ad9efadd32d",
+     "n0_config_path": "experiments/A/A-Q1-E0/n0/n0_config.json",
+     "input_manifest_sha256": "bb8a2446442c944f23f0d9252427f17c2f62454f20884df57b011c43aea92681",
+     "main_commit": "c7b841efe67192a73a96894fb5a0243b336a9468"
+    },
+    "observed": {
+     "implementation_sha": "1af71fed23c16dfcc1c73ac90f57d3a65a96c444",
+     "n0_config_sha256": "ec39673787e5dd05986095bca8f7c6cb41904dc13265e40798157ad9efadd32d",
+     "prereg_sha256": "721eb744e1e5d0ca1b0edbbc32f17c207ac419b193ed51002477d4de065c2ade",
+     "input_manifest_sha256": "bb8a2446442c944f23f0d9252427f17c2f62454f20884df57b011c43aea92681",
+     "main_commit": "c7b841efe67192a73a96894fb5a0243b336a9468",
+     "git": {
+      "head_sha": "1af71fed23c16dfcc1c73ac90f57d3a65a96c444",
+      "parent_sha": null,
+      "origin_main_sha": "c7b841efe67192a73a96894fb5a0243b336a9468",
+      "working_tree_clean": true,
+      "branch": "synthetic-fixture",
+      "dirty": false,
+      "commit": "c7b841efe67192a73a96894fb5a0243b336a9468"
+     }
+    },
+    "problems": []
+   }
+  },
+  {
+   "id": "N14",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "groups": 12,
+    "inputs": 96,
+    "inputs_total_bytes": 88073632,
+    "metrics_sha256_recomputed": "c758f2250d4be9d87d7913ae04113cac1569cf76dd13cc95d953fb71444364f9",
+    "ledger": {
+     "rows": 13,
+     "eol_normalized": [],
+     "policy": "raw 或 LF 归一化命中；逐文件记录"
+    },
+    "problems": []
+   }
+  },
+  {
+   "id": "N13",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "runs": [
+     {
+      "run_id": "run-1",
+      "pid": 12680,
+      "started_at": "2026-11-28T15:42:58.023Z",
+      "finished_at": "2026-11-28T15:44:29.537Z",
+      "results_file": "e0c_results.json",
+      "results_sha256": "1c89c26b853d9360193d3c9241f9bca671af1ff2833f14e83e844a26e39877bb",
+      "arrays_file": "e0c_arrays.npz",
+      "arrays_sha256": "95fae44accb132afe0515a7986369b303a45960e213e2b2d2f46b58b75d04794",
+      "wall_time_s": 91.515,
+      "exit_code": 0,
+      "peak_rss_mib": 258.031,
+      "results_eol_normalized": false,
+      "arrays_eol_normalized": false
+     },
+     {
+      "run_id": "run-2",
+      "pid": 17900,
+      "started_at": "2026-11-28T15:44:31.916Z",
+      "finished_at": "2026-11-28T15:46:03.083Z",
+      "results_file": "repeat/e0c_results.json",
+      "results_sha256": "1c89c26b853d9360193d3c9241f9bca671af1ff2833f14e83e844a26e39877bb",
+      "arrays_file": "repeat/e0c_arrays.npz",
+      "arrays_sha256": "95fae44accb132afe0515a7986369b303a45960e213e2b2d2f46b58b75d04794",
+      "wall_time_s": 91.167,
+      "exit_code": 0,
+      "peak_rss_mib": 257.969,
+      "results_eol_normalized": false,
+      "arrays_eol_normalized": false
+     }
+    ],
+    "eol_normalized": [],
+    "budget": {
+     "total_wall_time_s": 182.68200000000002,
+     "peak_rss_mib": [
+      258.031,
+      257.969
+     ],
+     "limits": {
+      "wall": 600.0,
+      "rss": 4096.0
+     }
+    },
+    "metrics_max_abs_delta": 0.0,
+    "worker_meta": [
+     {
+      "path": "worker_meta.json",
+      "pid": 12680,
+      "exit_code": 0
+     },
+     {
+      "path": "repeat\\worker_meta.json",
+      "pid": 17900,
+      "exit_code": 0
+     }
+    ],
+    "preflight": {
+     "path": "preflight.json",
+     "ok": true,
+     "passed": 32,
+     "total": 32
+    },
+    "dryrun": {
+     "path": "dryrun.json",
+     "ok": true,
+     "passed": 11,
+     "total": 11
+    },
+    "problems": []
+   }
+  },
+  {
+   "id": "N10",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "recomputed": {
+     "L1": "PASS",
+     "L2": "FAIL",
+     "reasons": [
+      "R8_L2_freeze_not_eligible"
+     ],
+     "gate": [
+      {
+       "group": "墙体数据/data1-42cm",
+       "pslr_db": 9.387731583747817,
+       "pnr_db": 78.33855371650944,
+       "abs_err_cm": 0.10000000000002784,
+       "checks": {
+        "pslr_ge": true,
+        "pnr_ge": true,
+        "abs_err_le": true,
+        "no_gray_zone": true
+       }
+      },
+      {
+       "group": "金属板数据/data1-69cm",
+       "pslr_db": 9.207321366809452,
+       "pnr_db": 78.23380943160431,
+       "abs_err_cm": 4.440892098500626e-14,
+       "checks": {
+        "pslr_ge": true,
+        "pnr_ge": true,
+        "abs_err_le": true,
+        "no_gray_zone": true
+       }
+      }
+     ],
+     "freeze": {
+      "status": "not_eligible_for_freeze",
+      "eligible": false,
+      "written": false,
+      "frozen_file": false
+     }
+    },
+    "declared": {
+     "L1": "PASS",
+     "L2": "FAIL",
+     "stop_condition": "S8"
+    },
+    "problems": []
+   }
+  },
+  {
+   "id": "N11",
+   "blocking": true,
+   "status": "pass",
+   "detail": {
+    "L1": true,
+    "L2": false,
+    "freeze": {
+     "status": "not_eligible_for_freeze",
+     "eligible": false,
+     "written": false,
+     "frozen_file": false
+    },
+    "problems": []
+   }
+  }
+ ],
+ "p1_min_db": 26.11519608268416,
+ "p2_min_db": 28.39571607006412,
+ "p2_median_db": 29.970673531041868
+}

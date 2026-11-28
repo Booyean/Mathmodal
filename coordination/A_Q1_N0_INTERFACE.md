@@ -148,6 +148,20 @@ python <accept_e0n0.py> --results-dir tmp/n0_pkg --prereg <e0_n0_prereg.json> --
 python solutions/A/test_a_e0_n0_package.py -v
 ```
 
+### 5.1 两进程证据入口（`E0-N0-C12-SYNTHETIC-1`）
+
+`solutions/A/run_n0_synthetic.py`（`f541764`；台账自指修复 `1af71fe`）把上面的 1–3 步串成
+`worker → combine → two-process`：顺序拉起两个独立进程，真实 PID/退出码/时间窗/峰值 RSS
+写入 `worker_meta.json`，`e0c_repeat.json` 的 11 个字段全部从实际落盘字节重算。
+合成实测：PID `12680`/`17900`、exit `0`/`0`、`91.515`/`91.167 s`、`258.03`/`257.97 MiB`，
+`results_sha256` 与 `arrays_sha256` 两次逐字节一致；探针 **READY 721/721**；验收器
+`N1–N8、N10–N14` 全 PASS（含 `N13`），仅 `N9` FAIL → `S9`（合成值对真实基线，预期）。
+详见 `coordination/A_Q1_N0_TWO_PROCESS.md`；包在
+`experiments/A/A-Q1-E0/n0/synthetic_two_process/`。
+
+> 该入口把 `.npz` 改为固定 zip 时间戳写出（`a_e0_c.save_npz_deterministic` 同口径），
+> 否则两次序列化的 `arrays_sha256` 会因墙钟变化而不同，`N13` 无法通过。
+
 ## 6. 裁定状态（2026-11-28 更新）
 
 1. **`method_scope`**：已定稿为 `M0-DW-Subspace/rank-2/in-window-2coef`（逐字，无后缀）；打包器强制逐字匹配，合成夹具的 `"(synthetic fixture)"` 后缀已移除。见 `coordination/A_Q1_N0_PHASE_EVIDENCE.md` §5-8。

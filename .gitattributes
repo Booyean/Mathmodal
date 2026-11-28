@@ -15,3 +15,13 @@
 experiments/A/A-Q2Q3-SYN/results/*.json text eol=lf
 experiments/A/A-Q2Q3-SYN/results/SHA256SUMS.txt text eol=lf
 experiments/A/A-Q2Q3-SYN/results/*.npz binary
+
+# N0 合成双进程证据包（C12）：JSON/日志/台账按 LF 检出，NPZ 按二进制保护。
+/experiments/A/A-Q1-E0/n0/synthetic_two_process/*.json text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process/**/*.json text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process/*.log text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process/**/*.log text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process/SHA256SUMS.txt text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process/*.npz binary
+/experiments/A/A-Q1-E0/n0/synthetic_two_process/**/*.npz binary
+

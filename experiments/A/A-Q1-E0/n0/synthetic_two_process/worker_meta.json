@@ -1,0 +1,35 @@
+{
+ "contract": "E0-C-WORKER-META-1",
+ "run_id": "run-1",
+ "run_index": 1,
+ "pid": 12680,
+ "command": "python solutions/A/run_n0_synthetic.py --mode worker --run-index 1 --out tmp/n0_two_runs/run1",
+ "started_at": "2026-11-28T15:42:58.023Z",
+ "finished_at": "2026-11-28T15:44:29.537Z",
+ "exit_code": 0,
+ "error": null,
+ "wall_time_s": 91.515,
+ "peak_rss_mib": 258.031,
+ "synthetic": true,
+ "citable": false,
+ "seed": 20261128,
+ "generated_at": "2026-11-28T12:48:38Z",
+ "solve_skipped": false,
+ "phase_evidence_reused": false,
+ "real_dat_files_opened": 0,
+ "frozen_artifacts_unchanged": true,
+ "n0_frozen_written": false,
+ "preflight": {
+  "passed": 32,
+  "total": 32
+ },
+ "dryrun": {
+  "passed": 11,
+  "total": 11
+ },
+ "environment": {
+  "python": "3.13.5",
+  "numpy": "2.1.3",
+  "platform": "Windows-11-10.0.26200-SP0"
+ }
+}

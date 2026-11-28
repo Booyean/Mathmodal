@@ -1,0 +1,4343 @@
+{
+ "mode": "results-dir",
+ "target": "D:\\数模\\tmp\\n0iface-wt\\experiments\\A\\A-Q1-E0\\n0\\synthetic_two_process",
+ "contract": "E0-N0-PRODUCER-CONTRACT-1",
+ "verdict": "READY",
+ "counts": {
+  "ok": 721,
+  "missing": 0,
+  "mismatch": 0,
+  "total": 721
+ },
+ "missing": [],
+ "mismatch": [],
+ "items": [
+  {
+   "id": "file.e0c_results.json",
+   "path": "e0c_results.json",
+   "status": "ok",
+   "detail": "存在"
+  },
+  {
+   "id": "file.e0c_arrays.npz",
+   "path": "e0c_arrays.npz",
+   "status": "ok",
+   "detail": "存在"
+  },
+  {
+   "id": "file.e0c_air_loo.json",
+   "path": "e0c_air_loo.json",
+   "status": "ok",
+   "detail": "存在"
+  },
+  {
+   "id": "file.e0c_repeat.json",
+   "path": "e0c_repeat.json",
+   "status": "ok",
+   "detail": "存在"
+  },
+  {
+   "id": "file.run.log",
+   "path": "run.log",
+   "status": "ok",
+   "detail": "存在"
+  },
+  {
+   "id": "file.SHA256SUMS.txt",
+   "path": "SHA256SUMS.txt",
+   "status": "ok",
+   "detail": "存在"
+  },
+  {
+   "id": "file.worker_meta.json",
+   "path": "worker_meta.json",
+   "status": "ok",
+   "detail": "存在"
+  },
+  {
+   "id": "file.repeat/worker_meta.json",
+   "path": "repeat/worker_meta.json",
+   "status": "ok",
+   "detail": "存在"
+  },
+  {
+   "id": "file.repeat/e0c_results.json",
+   "path": "repeat/e0c_results.json",
+   "status": "ok",
+   "detail": "存在"
+  },
+  {
+   "id": "file.preflight.json|preflight.log",
+   "path": "preflight.json|preflight.log",
+   "status": "ok",
+   "detail": "命中 preflight.json"
+  },
+  {
+   "id": "file.dryrun.log|dryrun.json",
+   "path": "dryrun.log|dryrun.json",
+   "status": "ok",
+   "detail": "命中 dryrun.json"
+  },
+  {
+   "id": "identity.experiment_id",
+   "path": "experiment_id",
+   "status": "ok",
+   "detail": "应为 'A-Q1-N0'，实为 'A-Q1-N0'"
+  },
+  {
+   "id": "identity.phase",
+   "path": "phase",
+   "status": "ok",
+   "detail": "应为 'N0'，实为 'N0'"
+  },
+  {
+   "id": "identity.method_scope",
+   "path": "method_scope",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'M0-DW-Subspace/rank-2/in-window-2coef'"
+  },
+  {
+   "id": "anchors.implementation_sha",
+   "path": "implementation_sha",
+   "status": "ok",
+   "detail": "应为 40 位小写 hex，实为 '1af71fed23c16dfcc1c73ac90f57d3a65a96c444'"
+  },
+  {
+   "id": "anchors.main_commit",
+   "path": "main_commit",
+   "status": "ok",
+   "detail": "应为 40 位小写 hex，实为 'c7b841efe67192a73a96894fb5a0243b336a9468'"
+  },
+  {
+   "id": "anchors.n0_config_sha256",
+   "path": "n0_config_sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'ec39673787e5dd05986095bca8f7c6cb41904dc13265e40798157ad9efadd32d'"
+  },
+  {
+   "id": "anchors.git",
+   "path": "git.dirty",
+   "status": "ok",
+   "detail": "应为布尔，实为 False"
+  },
+  {
+   "id": "anchors.git",
+   "path": "git.commit",
+   "status": "ok",
+   "detail": "应为 40 位小写 hex，实为 'c7b841efe67192a73a96894fb5a0243b336a9468'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[0].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_0.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[0].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[0].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '984281dd7c721ca686cd631bb878e611d872d8fb68b0f6517d922e0023aa7e42'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[1].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_1.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[1].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[1].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'ce3590b69e23c1badeeb8a363c35f9f6b9f3ab8480d472c481859251746a0940'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[2].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_2.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[2].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[2].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'b34240a1d2616fb87d82b6941727021bbbb81a3e36b2796becac0aa89fa2fe1e'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[3].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_3.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[3].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[3].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '9478b059614ce95d316777d4b32701690716060b62b1463d503874999ae76d11'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[4].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_4.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[4].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[4].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '81db6f99258653187e60619880cd04b96e73c2f0cb898ba26bc7b1183d189e8b'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[5].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_5.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[5].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[5].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '364a32910dc325b77639977e2b71cc9697346a6e781152f9a236c3f5715a0fa5'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[6].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_6.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[6].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[6].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '875e53ce994200e10193443bf2787e992041529f5bd599189ae76cd7428a884f'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[7].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data1/2026-11-12-15-40-36_16000_7.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[7].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[7].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '65b0b86585c7f306e7802a730804c454d704b1439f25bab747e27c2dea2791a7'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[8].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_0.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[8].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1280140"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[8].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '7e1131b696403849d3a878f3e1f770b8533d16bca9a3b7c3a5c19cc122a31f1b'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[9].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_1.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[9].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1280140"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[9].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'dc0be35585ded00ccec0bf54a427c74c8724ee282711eee703d6a9be7fd95cdb'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[10].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_2.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[10].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1280140"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[10].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '2771fbdb08ed42a534c792729d172a43570e7d765df4aaa65ed7943243f13a37'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[11].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_3.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[11].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1280140"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[11].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'ea992dbfbdc13e2c59ce9cb57337a6f67dfc46113a3474371070a4ce4d9053dc'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[12].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_4.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[12].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1280140"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[12].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'da687a31fdb0c7ce0c756acbbbf17f69f022c3fc50ce8d4af4535e172cb6817a'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[13].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_5.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[13].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1280140"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[13].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '99f0e32feeaeb6e2734de33c2c5e3351ca7ddac74b407e2168c901d9c9cd6f08'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[14].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_6.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[14].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1280140"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[14].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'c102b7916dec447c2153f7778a722fdf67ab102ce09812dcf60013c534173e28'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[15].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data2/2026-11-12-15-41-01_16000_7.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[15].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1280140"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[15].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '6f7355213b9282c546be1a6895f318dd98b9fd7ae2e8c5395c0d1fa37544f6e7'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[16].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_0.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[16].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[16].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '94cea670c2288e227a0aae902f17479dd126d810086bd7b429de21be7536fab1'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[17].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_1.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[17].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[17].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '7c7bc4a2ed86a3c99a1f937710725eefa0bcc683010a21e41247d81385270cc3'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[18].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_2.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[18].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[18].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '45bb58979ee3f6cbe9e8dab72febdfaa2a5dd173eba5bd0e750d8bc69081cd95'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[19].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_3.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[19].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[19].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '633f2575b23f6814508e26630a0467f2526c80c3b63f91a08d0ccb6aae3ec816'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[20].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_4.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[20].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[20].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '2a242c4192e60eee5b6a7ad747533c43610958d16763376b022baaf7bcaf06e1'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[21].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_5.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[21].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[21].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '588e9bfd128942f4b4933b7a50c5b28c18e5e7b088efe1de25c65b172f3adbcb'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[22].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_6.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[22].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[22].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '5d347beb3de3b9962deb44f422d8966b692742f59b896d65e69d9ad47e5da28e'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[23].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data3/2026-11-12-15-44-00_16000_7.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[23].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[23].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '15fde5c7b245f153a34e930455612481aafd214d0cb96950bd5c857f5bd0a0a0'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[24].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_0.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[24].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[24].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'd3c9085025d52308d3dbf6f739e535c88f8f86ee93bea864c1dfd824346a73cd'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[25].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_1.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[25].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[25].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'ee4d05bd66113c4ab2dbb0622f44dac4811be3533482fe7ea74cfc84633c13c1'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[26].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_2.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[26].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[26].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '778fbb912c681267c7723f8d3d21babb99610530bbe6c399ff99fbde90dad6b1'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[27].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_3.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[27].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[27].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '71ae17cd9b1efa1bb595ff8b39425011e71bd2f9e34880d4f579a0d8c0b47ed3'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[28].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_4.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[28].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[28].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '0f790bf3f1b177d4522868e02f113ad185def7b1600c47fdd05493e5a2ded5d8'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[29].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_5.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[29].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[29].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '208adc107379c86b1b6798a112460f187c1223abaabd31506e89ed68671a1b7b'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[30].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_6.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[30].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[30].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '80e6fec5e32efe0e46518d4480c375e56da7b60b6e2d93bfc181f66e00399c7c'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[31].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data4/2026-11-12-15-44-07_16000_7.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[31].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[31].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '166e1ffdce0ba0e269994cff32412cf26d3c5ad3227261718ca47e8938fa8b3c'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[32].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_0.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[32].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[32].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '57e063c5737fde7812cb6d69a87a40d7102e067fc5cbb3e56fb3582873b4224e'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[33].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_1.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[33].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[33].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '004ed847ffa1407821cd0b6402bbd988bf82a9ab75d29401f07adfa2ceddfc9e'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[34].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_2.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[34].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[34].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '5dc0029cd27b5bcc290859630bee3d2c94d4f5708890b70c8d39753ba132c567'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[35].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_3.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[35].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[35].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '7a84d705b4d0da0ecf2f64fe343cc0b98d4290e991e452c0b1bfd917ee3d6994'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[36].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_4.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[36].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[36].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '4076d9c853ac1f6e696c3f6e97772f7dc29c916c29d37f4b55fafba5e8b1c0f4'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[37].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_5.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[37].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[37].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'eb6656548b4efb6db3a88a27e7639557f603cfbc473de46ab3857928eef9a7c1'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[38].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_6.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[38].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[38].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '3cba4fa3b8a4fa42aeccb0ac6495bbfb929a3a87289495374f9b8c4244cc38ac'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[39].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data5/2026-11-12-15-46-55_16000_7.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[39].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[39].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'd37b60922a8c07142239e59131cfcca09e50b9316fcf06ea30fac7a4560fb657'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[40].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_0.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[40].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[40].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'e2d8d8122e1c35697f0bd9676a9fa3f3be917c51513277ea780c134e40854d37'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[41].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_1.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[41].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[41].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '41c64414b6a946aeb4c6c86f49037d1da520c67fec9f1bc0e13b8e83124ee1fb'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[42].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_2.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[42].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[42].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'c1cbdb998740845b2be67899f39499015a401a7f8315c4692cc985ec5b2b4248'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[43].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_3.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[43].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[43].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '2f8d4ec96c7753d30298fe1cfbda9383c27785dbc1ce469682c2959958bcbb0f'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[44].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_4.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[44].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[44].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '5e280cc5194c2e3bc519f88a878020909895132d0be7ae968e7265aa8413948c'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[45].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_5.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[45].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[45].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '42724543c6eab8a0a466278880cd5321d69e10eedcf9defbf84d5adf5f03d89d'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[46].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_6.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[46].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[46].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'ab531dcc25f6e54dc6be552f75e8160ade41d689aeed1d1256b2993f86bad765'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[47].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data6/2026-11-12-15-47-03_16000_7.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[47].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[47].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'd6d538b59f965e310a9c29f4e591bc3e549f931314d877d7661fc64daa40d19f'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[48].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_0.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[48].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[48].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'e3fd4f429c39ace38a247a0b73e40cd0d108b7be8706d7d874003466bc6b60de'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[49].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_1.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[49].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[49].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'c453f3d73bb07a957cd99eb5e78755ebb78e6b1ee9ea3fb4f1c861c388d1a377'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[50].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_2.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[50].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[50].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'c7f36593a3967080f088cf9e32a6bef4e40e1482028ab75bc4d92ca57bed3fa3'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[51].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_3.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[51].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[51].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'fee7de84165b80f5cea892b09fda981112f2e39b3d4e521877e6af82b9bbdb72'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[52].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_4.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[52].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[52].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '46e284be163f74aea687b6c452d368c011f4bae150fa6610cc1a4d599c30953e'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[53].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_5.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[53].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[53].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '58efb9d0345e38a589da50e3d244ab83f5a2db0688ac912b65ca96345b29d46c'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[54].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_6.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[54].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[54].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'ec0ec05b53fe80b8a56a9d81c8361e430f9f85bc7946f4e15261fa1b8b65cea0'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[55].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data7/2026-11-12-15-49-03_16000_7.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[55].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 512056"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[55].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '464bbdc5ef8fe42886c52b319fa70077c6a8ab53830836bef8723ea226fc795d'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[56].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_0.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[56].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[56].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '1fe61e13540431f87af3dae0b980d4ee48ca8e4b3d8bddd74beeea286ffe6c85'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[57].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_1.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[57].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[57].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '9f69aae1fe379180d630931fb4a70e27b8ddf5f4d0362db9facce49995493373'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[58].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_2.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[58].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[58].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'baceeaa18d975d0cec5ef7aacc7e88ccfbc38348fd0bb63dff9d2481003808e9'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[59].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_3.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[59].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[59].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'a8088c53efd0aca37fc5416f67aacae985d978562f669daf4b9fd19daed174de'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[60].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_4.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[60].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[60].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'c8c833339acb4423edde7ff30a3ccb59991c45e015dbb0c696ee888926b43efd'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[61].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_5.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[61].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[61].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '4d9583158eb679b22502b9fe4ed97cd8e597439a3612d052bf61923bc4c04cee'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[62].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_6.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[62].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[62].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'c4d8ee6f3fe1583b0abb69911bbe56f6708b4502f119f8895bb8ac74b938b0b5'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[63].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data8/2026-11-12-15-49-11_16000_7.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[63].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[63].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'e470a2ca4dbae5703ca068a3dd19aca7e9edddd7523ed95651a3ba9f08f39d68'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[64].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_0.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[64].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[64].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '29bcb42e9ddfa7e82fce97541c1abe9d323065c1bd2e94ed48752ee80fb7ab4f'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[65].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_1.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[65].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[65].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '885fb168479de639728e49213705469143e67391dddd4b0e9b47a5ba8cbaf807'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[66].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_2.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[66].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[66].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '1418185a5409f7166d624dfadd37858dc55236d9ab55841b32a9470e8d7aa39e'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[67].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_3.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[67].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[67].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'a88f522edd4892a9d9c02787d70ab741471483af64c02af19fe56fa24e998e28'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[68].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_4.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[68].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[68].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '75b8805430bdd9351e3dcee2b34fab18886301e46af0192a6530a57d52f104b7'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[69].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_5.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[69].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[69].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '3e2931ac7fa398590edf909e38b1f727434b7a8b582135716b72de7d3438cc48'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[70].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_6.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[70].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[70].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'abecfdf55855e35f152c16e57e2cfb3f8801856869f5b8fd89b917b89ac8255d'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[71].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data9/2026-11-12-15-51-20_16000_7.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[71].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1024112"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[71].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '597e8496d77fdbc8c8c2ba3c730c76d456e99a1ae6993f87dffbd819af421cd3'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[72].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_0.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[72].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1536168"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[72].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'b6fb88a756a7f5a71209c97d1a8bcb435e6eaf7e75e1d6da00ac2dcf7a9ec383'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[73].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_1.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[73].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1536168"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[73].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'baf89bbd86b827d9c62bab86a22bc5747e8307419b8abda8246bc797f7fa8697'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[74].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_2.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[74].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1536168"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[74].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '5fb08a209e768cf0cb38963ba6998a980d44d62485cc6f81143766a56e4f19ab'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[75].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_3.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[75].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1536168"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[75].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'b22f9a68f7dd6a3d33dc6a29b4b79c96df3522bf7f4b42d81a2ef3e70b468457'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[76].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_4.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[76].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1536168"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[76].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'b87afd2f794a86362c0d4aebe2bfd332005aeea2e4cfe45b3540210a05bd34d4'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[77].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_5.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[77].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1536168"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[77].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '8e2e7678061dc98ca07fda7eac52e54196691bd3d241241dcede23a39c331828'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[78].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_6.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[78].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1536168"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[78].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '1f6301b4c11ada38913fc4f8657fa88f6621cae25320360208fbe15d9a10c740'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[79].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/空场数据/data10/2026-11-12-15-51-30_16000_7.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[79].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 1536168"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[79].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'a808b806818577d9c3abef01ad64c10ffc545e324762231f3eb591d1ff975d1f'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[80].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_0.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[80].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[80].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'cbf7d342801faa31b9511fc3ce692eca381e08b00bfc2a6700e2d285ff19443e'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[81].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_1.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[81].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[81].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'd5d7cc54e4b1de58cdfda4f38ca4941027c791659540a6836357c80caf31988a'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[82].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_2.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[82].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[82].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'be269323969a060c3d4098c843697c261d1cb21d8d60e153ab1f3f20ca19002d'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[83].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_3.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[83].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[83].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '46868664f723cb874468ac06acb37010176ad17ea443ec93bb06270c76c0f46f'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[84].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_4.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[84].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[84].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '32fa2c1818516907865813a854ebd96fd7c8a0dd1928790700928400392638a2'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[85].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_5.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[85].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[85].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '79f5a00e3593be6e66d45f63d97a3881beba9d2ef68462f2d488e721a8805027'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[86].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_6.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[86].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[86].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'ea96e81ec346a3b22b1d653c6a6b9f0025fc4ccd1c60317d02b6fef8cc548603'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[87].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/墙体数据/data1-42cm/2026-11-12-20-50-32_16000_7.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[87].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[87].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '563032455fba1a87a7bece52ce68df8bb708515f62579167f724b2b2cb8a76ed'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[88].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_0.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[88].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[88].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '551c0a0bf41f066aee0b3919caacd12231ef0bf0ca80b55afc96bcae5b71a46d'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[89].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_1.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[89].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[89].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'dae06953e0ea91646387a9a61c3fc3ab50ab6e1aea81407f723d84eab337eaa2'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[90].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_2.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[90].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[90].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'c839ae842e333b8e10ed88b2e584ffe06acbf81c30f65d29d4fc23a87e905f20'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[91].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_3.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[91].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[91].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '7838658f40d38dacf191bd5e6f9f0a044e961df2f1bd6045e4ac4f114376ca41'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[92].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_4.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[92].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[92].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'bafda30268b2b7490db61e88726df1d1c615e5e42820c07fb2d3051e1d0667c2'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[93].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_5.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[93].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[93].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '26e38d655a26d15c47499c857c52b10e356d33a06bd5a93f09142465d5f75eb0'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[94].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_6.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[94].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[94].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '00e624caa1eacee210d4c17758a3eb4a14845da6713215f28a99b67df3d07b18'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[95].rel_path",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '附件/附件2-测距数据/金属板数据/data1-69cm/2026-11-12-16-53-26_16000_7.dat'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[95].size_bytes",
+   "status": "ok",
+   "detail": "应为整数，实为 768084"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs[95].sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '440057d72790c7ca1c5e75c45ff9110324a8e94583467969cb9c95b7a6c3d4e2'"
+  },
+  {
+   "id": "inputs",
+   "path": "inputs",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "groups",
+   "path": "groups[0].group_key",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data1'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[0].target_type",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'air'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[0].d_hat_m",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[0].abs_err_cm",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[0].supp_dw_win_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[0].pslr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[0].pnr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[0].valid_rx",
+   "status": "ok",
+   "detail": "应为整数，实为 63"
+  },
+  {
+   "id": "groups",
+   "path": "groups[0].finite",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "groups",
+   "path": "groups[1].group_key",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data2'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[1].target_type",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'air'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[1].d_hat_m",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[1].abs_err_cm",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[1].supp_dw_win_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[1].pslr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[1].pnr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[1].valid_rx",
+   "status": "ok",
+   "detail": "应为整数，实为 63"
+  },
+  {
+   "id": "groups",
+   "path": "groups[1].finite",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "groups",
+   "path": "groups[2].group_key",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data3'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[2].target_type",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'air'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[2].d_hat_m",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[2].abs_err_cm",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[2].supp_dw_win_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[2].pslr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[2].pnr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[2].valid_rx",
+   "status": "ok",
+   "detail": "应为整数，实为 63"
+  },
+  {
+   "id": "groups",
+   "path": "groups[2].finite",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "groups",
+   "path": "groups[3].group_key",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data4'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[3].target_type",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'air'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[3].d_hat_m",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[3].abs_err_cm",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[3].supp_dw_win_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[3].pslr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[3].pnr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[3].valid_rx",
+   "status": "ok",
+   "detail": "应为整数，实为 63"
+  },
+  {
+   "id": "groups",
+   "path": "groups[3].finite",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "groups",
+   "path": "groups[4].group_key",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data5'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[4].target_type",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'air'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[4].d_hat_m",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[4].abs_err_cm",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[4].supp_dw_win_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[4].pslr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[4].pnr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[4].valid_rx",
+   "status": "ok",
+   "detail": "应为整数，实为 63"
+  },
+  {
+   "id": "groups",
+   "path": "groups[4].finite",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "groups",
+   "path": "groups[5].group_key",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data6'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[5].target_type",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'air'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[5].d_hat_m",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[5].abs_err_cm",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[5].supp_dw_win_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[5].pslr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[5].pnr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[5].valid_rx",
+   "status": "ok",
+   "detail": "应为整数，实为 63"
+  },
+  {
+   "id": "groups",
+   "path": "groups[5].finite",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "groups",
+   "path": "groups[6].group_key",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data7'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[6].target_type",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'air'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[6].d_hat_m",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[6].abs_err_cm",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[6].supp_dw_win_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[6].pslr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[6].pnr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[6].valid_rx",
+   "status": "ok",
+   "detail": "应为整数，实为 63"
+  },
+  {
+   "id": "groups",
+   "path": "groups[6].finite",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "groups",
+   "path": "groups[7].group_key",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data8'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[7].target_type",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'air'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[7].d_hat_m",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[7].abs_err_cm",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[7].supp_dw_win_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[7].pslr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[7].pnr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[7].valid_rx",
+   "status": "ok",
+   "detail": "应为整数，实为 63"
+  },
+  {
+   "id": "groups",
+   "path": "groups[7].finite",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "groups",
+   "path": "groups[8].group_key",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data9'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[8].target_type",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'air'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[8].d_hat_m",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[8].abs_err_cm",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[8].supp_dw_win_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[8].pslr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[8].pnr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[8].valid_rx",
+   "status": "ok",
+   "detail": "应为整数，实为 63"
+  },
+  {
+   "id": "groups",
+   "path": "groups[8].finite",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "groups",
+   "path": "groups[9].group_key",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data10'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[9].target_type",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'air'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[9].d_hat_m",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[9].abs_err_cm",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[9].supp_dw_win_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[9].pslr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[9].pnr_db",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "groups",
+   "path": "groups[9].valid_rx",
+   "status": "ok",
+   "detail": "应为整数，实为 63"
+  },
+  {
+   "id": "groups",
+   "path": "groups[9].finite",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "groups",
+   "path": "groups[10].group_key",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '墙体数据/data1-42cm'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[10].target_type",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'target'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[10].d_hat_m",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.42100000000000026"
+  },
+  {
+   "id": "groups",
+   "path": "groups[10].abs_err_cm",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.10000000000002784"
+  },
+  {
+   "id": "groups",
+   "path": "groups[10].supp_dw_win_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 18.6968225478247"
+  },
+  {
+   "id": "groups",
+   "path": "groups[10].pslr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 9.387731583747817"
+  },
+  {
+   "id": "groups",
+   "path": "groups[10].pnr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 78.33855371650944"
+  },
+  {
+   "id": "groups",
+   "path": "groups[10].valid_rx",
+   "status": "ok",
+   "detail": "应为整数，实为 63"
+  },
+  {
+   "id": "groups",
+   "path": "groups[10].finite",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "groups",
+   "path": "groups[11].group_key",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '金属板数据/data1-69cm'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[11].target_type",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'target'"
+  },
+  {
+   "id": "groups",
+   "path": "groups[11].d_hat_m",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.6900000000000005"
+  },
+  {
+   "id": "groups",
+   "path": "groups[11].abs_err_cm",
+   "status": "ok",
+   "detail": "应为有限数值，实为 4.440892098500626e-14"
+  },
+  {
+   "id": "groups",
+   "path": "groups[11].supp_dw_win_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 32.35228178753963"
+  },
+  {
+   "id": "groups",
+   "path": "groups[11].pslr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 9.207321366809452"
+  },
+  {
+   "id": "groups",
+   "path": "groups[11].pnr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 78.23380943160431"
+  },
+  {
+   "id": "groups",
+   "path": "groups[11].valid_rx",
+   "status": "ok",
+   "detail": "应为整数，实为 63"
+  },
+  {
+   "id": "groups",
+   "path": "groups[11].finite",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "groups",
+   "path": "groups",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "methods",
+   "path": "methods.n0_enabled",
+   "status": "ok",
+   "detail": "应为 True，实为 True"
+  },
+  {
+   "id": "methods",
+   "path": "methods.rank",
+   "status": "ok",
+   "detail": "应为 2，实为 2"
+  },
+  {
+   "id": "methods",
+   "path": "methods.lambda_selection",
+   "status": "ok",
+   "detail": "应为 'fixed_default'，实为 'fixed_default'"
+  },
+  {
+   "id": "methods",
+   "path": "methods.subspace_suppression",
+   "status": "ok",
+   "detail": "应为 True，实为 True"
+  },
+  {
+   "id": "d_true_usage",
+   "path": "d_true_usage",
+   "status": "ok",
+   "detail": "应为 'evaluation_only'，实为 'evaluation_only'"
+  },
+  {
+   "id": "freeze",
+   "path": "freeze.status",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'not_eligible_for_freeze'"
+  },
+  {
+   "id": "freeze",
+   "path": "freeze.eligible",
+   "status": "ok",
+   "detail": "应为布尔，实为 False"
+  },
+  {
+   "id": "freeze",
+   "path": "freeze.written",
+   "status": "ok",
+   "detail": "应为布尔，实为 False"
+  },
+  {
+   "id": "metrics_sha256",
+   "path": "metrics_sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'c758f2250d4be9d87d7913ae04113cac1569cf76dd13cc95d953fb71444364f9'"
+  },
+  {
+   "id": "n0.contract",
+   "path": "n0.contract",
+   "status": "ok",
+   "detail": "应为 'E0-N0-1'，实为 'E0-N0-1'"
+  },
+  {
+   "id": "n0.arms",
+   "path": "n0.arms[0]",
+   "status": "ok",
+   "detail": "应为 ['C0', 'C1', 'C2'] 之一，实为 'C0'"
+  },
+  {
+   "id": "n0.arms",
+   "path": "n0.arms[1]",
+   "status": "ok",
+   "detail": "应为 ['C0', 'C1', 'C2'] 之一，实为 'C1'"
+  },
+  {
+   "id": "n0.arms",
+   "path": "n0.arms[2]",
+   "status": "ok",
+   "detail": "应为 ['C0', 'C1', 'C2'] 之一，实为 'C2'"
+  },
+  {
+   "id": "n0.arms",
+   "path": "n0.arms",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.decision_arm",
+   "path": "n0.decision_arm",
+   "status": "ok",
+   "detail": "应为 'C2'，实为 'C2'"
+  },
+  {
+   "id": "n0.rank",
+   "path": "n0.rank",
+   "status": "ok",
+   "detail": "应为 2，实为 2"
+  },
+  {
+   "id": "n0.lambda",
+   "path": "n0.lambda",
+   "status": "ok",
+   "detail": "应为 [0.001, 0.001]，实为 [0.001, 0.001]"
+  },
+  {
+   "id": "n0.lambda_selection",
+   "path": "n0.lambda_selection",
+   "status": "ok",
+   "detail": "应为 'fixed_default'，实为 'fixed_default'"
+  },
+  {
+   "id": "n0.eta_wall",
+   "path": "n0.eta_wall",
+   "status": "ok",
+   "detail": "应为 0.25，实为 0.25"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].fold",
+   "status": "ok",
+   "detail": "应为整数，实为 0"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C0'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].held_out[0]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data1'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].held_out[1]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data2'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].held_out",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].train[0]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data3'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].train[1]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data4'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].train[2]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data5'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].train[3]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data6'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].train[4]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data7'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].train[5]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data8'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].train[6]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data9'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].train[7]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data10'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[0].train",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].fold",
+   "status": "ok",
+   "detail": "应为整数，实为 1"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C1'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].held_out[0]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data3'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].held_out[1]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data4'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].held_out",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].train[0]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data1'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].train[1]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data2'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].train[2]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data5'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].train[3]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data6'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].train[4]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data7'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].train[5]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data8'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].train[6]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data9'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].train[7]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data10'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[1].train",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].fold",
+   "status": "ok",
+   "detail": "应为整数，实为 2"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C2'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].held_out[0]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data5'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].held_out[1]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data6'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].held_out",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].train[0]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data1'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].train[1]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data2'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].train[2]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data3'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].train[3]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data4'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].train[4]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data7'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].train[5]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data8'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].train[6]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data9'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].train[7]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data10'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[2].train",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].fold",
+   "status": "ok",
+   "detail": "应为整数，实为 3"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C3'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].held_out[0]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data7'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].held_out[1]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data8'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].held_out",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].train[0]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data1'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].train[1]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data2'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].train[2]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data3'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].train[3]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data4'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].train[4]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data5'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].train[5]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data6'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].train[6]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data9'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].train[7]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data10'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[3].train",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].fold",
+   "status": "ok",
+   "detail": "应为整数，实为 4"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C4'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].held_out[0]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data9'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].held_out[1]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data10'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].held_out",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].train[0]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data1'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].train[1]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data2'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].train[2]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data3'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].train[3]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data4'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].train[4]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data5'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].train[5]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data6'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].train[6]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data7'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].train[7]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data8'"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map[4].train",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_fold_map",
+   "path": "n0.xcluster_fold_map",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[0][0]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 28.003335010868042"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[0][1]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 28.00333501087179"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[0]",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[1][0]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 26.99786583400847"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[1][1]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 26.997865833943298"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[1]",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[2][0]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 27.478222653446043"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[2][1]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 27.478222653373624"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[2]",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[3][0]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 26.115196082750064"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[3][1]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 26.11519608268416"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[3]",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[4][0]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 26.985193867788904"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[4][1]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 26.985193867800135"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db[4]",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_supp_db",
+   "path": "n0.xcluster_supp_db",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.xcluster_eligibility",
+   "path": "n0.xcluster_eligibility",
+   "status": "ok",
+   "detail": "应为 ['eligible', 'below_eligible', 'hard_stop'] 之一，实为 'eligible'"
+  },
+  {
+   "id": "n0.retention",
+   "path": "n0.retention.case_id",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'E0-S2@0.42'"
+  },
+  {
+   "id": "n0.retention",
+   "path": "n0.retention.peak_loss_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.016551085305782472"
+  },
+  {
+   "id": "n0.retention",
+   "path": "n0.retention.range_shift_mm",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.8999999999966257"
+  },
+  {
+   "id": "n0.retention",
+   "path": "n0.retention.pass",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.contract",
+   "status": "ok",
+   "detail": "应为 'E0-N0-PHASE-1'，实为 'E0-N0-PHASE-1'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.group_order[0]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data1'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.group_order[1]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data2'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.group_order[2]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data3'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.group_order[3]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data4'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.group_order[4]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data5'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.group_order[5]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data6'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.group_order[6]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data7'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.group_order[7]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data8'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.group_order[8]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data9'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.group_order[9]",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data10'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.group_order",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[0].group",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data1'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[0].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C0'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[0].aligned",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[0].shift_ns",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.0"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[0].reason",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[1].group",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data2'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[1].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C0'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[1].aligned",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[1].shift_ns",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.014750000000000001"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[1].reason",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[2].group",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data3'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[2].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C1'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[2].aligned",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[2].shift_ns",
+   "status": "ok",
+   "detail": "应为有限数值，实为 211.97299999999998"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[2].reason",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[3].group",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data4'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[3].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C1'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[3].aligned",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[3].shift_ns",
+   "status": "ok",
+   "detail": "应为有限数值，实为 211.97275000000002"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[3].reason",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[4].group",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data5'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[4].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C2'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[4].aligned",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[4].shift_ns",
+   "status": "ok",
+   "detail": "应为有限数值，实为 723.2642500000001"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[4].reason",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[5].group",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data6'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[5].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C2'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[5].aligned",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[5].shift_ns",
+   "status": "ok",
+   "detail": "应为有限数值，实为 723.2635"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[5].reason",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[6].group",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data7'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[6].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C3'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[6].aligned",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[6].shift_ns",
+   "status": "ok",
+   "detail": "应为有限数值，实为 340.13875"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[6].reason",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[7].group",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data8'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[7].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C3'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[7].aligned",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[7].shift_ns",
+   "status": "ok",
+   "detail": "应为有限数值，实为 340.1375"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[7].reason",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[8].group",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data9'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[8].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C4'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[8].aligned",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[8].shift_ns",
+   "status": "ok",
+   "detail": "应为有限数值，实为 625.3842500000001"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[8].reason",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[9].group",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '空场数据/data10'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[9].cluster",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'C4'"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[9].aligned",
+   "status": "ok",
+   "detail": "应为布尔，实为 True"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[9].shift_ns",
+   "status": "ok",
+   "detail": "应为有限数值，实为 625.38375"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group[9].reason",
+   "status": "ok",
+   "detail": "null（允许）"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.per_group",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.d1_rank",
+   "status": "ok",
+   "detail": "应为整数，实为 2"
+  },
+  {
+   "id": "n0.phase",
+   "path": "n0.phase.d1_min_abs_inner",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.0"
+  },
+  {
+   "id": "n0.judgement",
+   "path": "n0.judgement.L1",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'PASS'"
+  },
+  {
+   "id": "n0.judgement",
+   "path": "n0.judgement.L2",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'FAIL'"
+  },
+  {
+   "id": "n0.judgement",
+   "path": "n0.judgement.stop_condition",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'S8'"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.air_loo_supp_db[0]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 12.157692422811044"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.air_loo_supp_db[1]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 12.119528325815148"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.air_loo_supp_db[2]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 9.252269149963228"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.air_loo_supp_db[3]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 9.489598035479586"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.air_loo_supp_db[4]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 13.721831047248367"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.air_loo_supp_db[5]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 13.561756863433157"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.air_loo_supp_db[6]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 14.202265011383663"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.air_loo_supp_db[7]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 14.268638229332248"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.air_loo_supp_db[8]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 11.863214256862758"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.air_loo_supp_db[9]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 13.260635640377778"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.air_loo_supp_db",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.targets[墙体数据/data1-42cm].d_hat_m",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.42100000000000026"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.targets[墙体数据/data1-42cm].supp_dw_win_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 9.91864522980494"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.targets[墙体数据/data1-42cm].pslr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 9.338945604613283"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.targets[墙体数据/data1-42cm].pnr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 72.60580360502783"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.targets[金属板数据/data1-69cm].d_hat_m",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.6900000000000005"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.targets[金属板数据/data1-69cm].supp_dw_win_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 13.03363718957159"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.targets[金属板数据/data1-69cm].pslr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 9.199626656637497"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C0.targets[金属板数据/data1-69cm].pnr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 71.47404509265203"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.air_loo_supp_db[0]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 16.088629754427494"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.air_loo_supp_db[1]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 16.010903259257073"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.air_loo_supp_db[2]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 13.021617712524428"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.air_loo_supp_db[3]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 12.919999856292828"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.air_loo_supp_db[4]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 13.768083585420356"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.air_loo_supp_db[5]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 13.76230496790046"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.air_loo_supp_db[6]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 14.471363469173916"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.air_loo_supp_db[7]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 14.509094800402703"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.air_loo_supp_db[8]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 15.455814006226511"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.air_loo_supp_db[9]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 15.400459553531219"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.air_loo_supp_db",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.targets[墙体数据/data1-42cm].d_hat_m",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.42100000000000026"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.targets[墙体数据/data1-42cm].supp_dw_win_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 14.827071989370111"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.targets[墙体数据/data1-42cm].pslr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 9.391754237212865"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.targets[墙体数据/data1-42cm].pnr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 76.33924906531865"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.targets[金属板数据/data1-69cm].d_hat_m",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.6900000000000005"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.targets[金属板数据/data1-69cm].supp_dw_win_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 13.834896868037008"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.targets[金属板数据/data1-69cm].pslr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 9.199244984347677"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C1.targets[金属板数据/data1-69cm].pnr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 72.10004330911028"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.air_loo_supp_db[0]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 30.319624958887076"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.air_loo_supp_db[1]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 30.10827105697264"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.air_loo_supp_db[2]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 30.326414651729706"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.air_loo_supp_db[3]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 29.83307600511108"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.air_loo_supp_db[4]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 30.27676169009957"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.air_loo_supp_db[5]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 30.251312648513043"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.air_loo_supp_db[6]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 28.395716070064104"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.air_loo_supp_db[7]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 28.522324148723506"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.air_loo_supp_db[8]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 29.173633618176233"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.air_loo_supp_db[9]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 29.030151678632844"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.air_loo_supp_db",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.targets[墙体数据/data1-42cm].d_hat_m",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.42100000000000026"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.targets[墙体数据/data1-42cm].supp_dw_win_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 18.6968225478247"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.targets[墙体数据/data1-42cm].pslr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 9.387731583747817"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.targets[墙体数据/data1-42cm].pnr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 78.33855371650944"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.targets[金属板数据/data1-69cm].d_hat_m",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.6900000000000005"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.targets[金属板数据/data1-69cm].supp_dw_win_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 32.35228178753963"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.targets[金属板数据/data1-69cm].pslr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 9.207321366809452"
+  },
+  {
+   "id": "n0.arm_metrics",
+   "path": "n0.arm_metrics.C2.targets[金属板数据/data1-69cm].pnr_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 78.23380943160431"
+  },
+  {
+   "id": "n0.registration",
+   "path": "n0.registration.prereg_id",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'A-Q1-N0-PREREG-1'"
+  },
+  {
+   "id": "n0.registration",
+   "path": "n0.registration.prereg_sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '721eb744e1e5d0ca1b0edbbc32f17c207ac419b193ed51002477d4de065c2ade'"
+  },
+  {
+   "id": "n0.registration",
+   "path": "n0.registration.implementation_sha",
+   "status": "ok",
+   "detail": "应为 40 位小写 hex，实为 '1af71fed23c16dfcc1c73ac90f57d3a65a96c444'"
+  },
+  {
+   "id": "n0.registration",
+   "path": "n0.registration.n0_config_sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'ec39673787e5dd05986095bca8f7c6cb41904dc13265e40798157ad9efadd32d'"
+  },
+  {
+   "id": "n0.registration",
+   "path": "n0.registration.input_manifest_sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 'bb8a2446442c944f23f0d9252427f17c2f62454f20884df57b011c43aea92681'"
+  },
+  {
+   "id": "n0.registration",
+   "path": "n0.registration.main_commit",
+   "status": "ok",
+   "detail": "应为 40 位小写 hex，实为 'c7b841efe67192a73a96894fb5a0243b336a9468'"
+  },
+  {
+   "id": "arrays.xcluster_cal",
+   "path": "xcluster__p_cal",
+   "status": "ok",
+   "detail": "(5, 2, 63)/f8"
+  },
+  {
+   "id": "arrays.xcluster_sup",
+   "path": "xcluster__p_sup",
+   "status": "ok",
+   "detail": "(5, 2, 63)/f8"
+  },
+  {
+   "id": "arrays.air_loo_cal",
+   "path": "air_loo__p_cal",
+   "status": "ok",
+   "detail": "(1, 10, 63)/f8"
+  },
+  {
+   "id": "arrays.air_loo_sup",
+   "path": "air_loo__p_sup",
+   "status": "ok",
+   "detail": "(1, 10, 63)/f8"
+  },
+  {
+   "id": "arrays.phase_shifts",
+   "path": "phase__shifts_ns",
+   "status": "ok",
+   "detail": "(10,)/f8"
+  },
+  {
+   "id": "arrays.phase_coherence",
+   "path": "phase__coherence",
+   "status": "ok",
+   "detail": "(10,)/f8"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].lambdas[0]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.001"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].lambdas[1]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.001"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].lambdas",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].folds[0].supp_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 30.319624958887076"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].folds[1].supp_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 30.10827105697264"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].folds[2].supp_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 30.326414651729706"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].folds[3].supp_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 29.83307600511108"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].folds[4].supp_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 30.27676169009957"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].folds[5].supp_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 30.251312648513043"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].folds[6].supp_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 28.395716070064104"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].folds[7].supp_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 28.522324148723506"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].folds[8].supp_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 29.173633618176233"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].folds[9].supp_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 29.030151678632844"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid[0].folds",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "air_loo.air_loo.grid",
+   "path": "grid",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "air_loo.air_loo.selected",
+   "path": "selected[0]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.001"
+  },
+  {
+   "id": "air_loo.air_loo.selected",
+   "path": "selected[1]",
+   "status": "ok",
+   "detail": "应为有限数值，实为 0.001"
+  },
+  {
+   "id": "air_loo.air_loo.selected",
+   "path": "selected",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "air_loo.air_loo.switched",
+   "path": "switched",
+   "status": "ok",
+   "detail": "应为布尔，实为 False"
+  },
+  {
+   "id": "air_loo.air_loo.min_supp_db",
+   "path": "min_supp_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 28.395716070064104"
+  },
+  {
+   "id": "air_loo.air_loo.median_supp_db",
+   "path": "median_supp_db",
+   "status": "ok",
+   "detail": "应为有限数值，实为 29.97067353104186"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[0].run_id",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'run-1'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[0].pid",
+   "status": "ok",
+   "detail": "应为整数，实为 12680"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[0].started_at",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '2026-11-28T15:42:58.023Z'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[0].finished_at",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '2026-11-28T15:44:29.537Z'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[0].results_file",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'e0c_results.json'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[0].results_sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '1c89c26b853d9360193d3c9241f9bca671af1ff2833f14e83e844a26e39877bb'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[0].arrays_file",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'e0c_arrays.npz'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[0].arrays_sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '95fae44accb132afe0515a7986369b303a45960e213e2b2d2f46b58b75d04794'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[0].wall_time_s",
+   "status": "ok",
+   "detail": "应为有限数值，实为 91.515"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[0].exit_code",
+   "status": "ok",
+   "detail": "应为整数，实为 0"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[0].peak_rss_mib",
+   "status": "ok",
+   "detail": "应为有限数值，实为 258.031"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[1].run_id",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'run-2'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[1].pid",
+   "status": "ok",
+   "detail": "应为整数，实为 17900"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[1].started_at",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '2026-11-28T15:44:31.916Z'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[1].finished_at",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '2026-11-28T15:46:03.083Z'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[1].results_file",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'repeat/e0c_results.json'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[1].results_sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '1c89c26b853d9360193d3c9241f9bca671af1ff2833f14e83e844a26e39877bb'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[1].arrays_file",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'repeat/e0c_arrays.npz'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[1].arrays_sha256",
+   "status": "ok",
+   "detail": "应为 64 位小写 hex，实为 '95fae44accb132afe0515a7986369b303a45960e213e2b2d2f46b58b75d04794'"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[1].wall_time_s",
+   "status": "ok",
+   "detail": "应为有限数值，实为 91.167"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[1].exit_code",
+   "status": "ok",
+   "detail": "应为整数，实为 0"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs[1].peak_rss_mib",
+   "status": "ok",
+   "detail": "应为有限数值，实为 257.969"
+  },
+  {
+   "id": "repeat.runs",
+   "path": "runs",
+   "status": "ok",
+   "detail": "长度/元素符合"
+  },
+  {
+   "id": "repeat.worker_meta.json",
+   "path": "worker_meta.json.run_id",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'run-1'"
+  },
+  {
+   "id": "repeat.worker_meta.json",
+   "path": "worker_meta.json.pid",
+   "status": "ok",
+   "detail": "应为整数，实为 12680"
+  },
+  {
+   "id": "repeat.worker_meta.json",
+   "path": "worker_meta.json.started_at",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '2026-11-28T15:42:58.023Z'"
+  },
+  {
+   "id": "repeat.worker_meta.json",
+   "path": "worker_meta.json.finished_at",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '2026-11-28T15:44:29.537Z'"
+  },
+  {
+   "id": "repeat.worker_meta.json",
+   "path": "worker_meta.json.exit_code",
+   "status": "ok",
+   "detail": "应为整数，实为 0"
+  },
+  {
+   "id": "repeat.worker_meta.json",
+   "path": "worker_meta.json.peak_rss_mib",
+   "status": "ok",
+   "detail": "应为有限数值，实为 258.031"
+  },
+  {
+   "id": "repeat.repeat/worker_meta.json",
+   "path": "repeat/worker_meta.json.run_id",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 'run-2'"
+  },
+  {
+   "id": "repeat.repeat/worker_meta.json",
+   "path": "repeat/worker_meta.json.pid",
+   "status": "ok",
+   "detail": "应为整数，实为 17900"
+  },
+  {
+   "id": "repeat.repeat/worker_meta.json",
+   "path": "repeat/worker_meta.json.started_at",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '2026-11-28T15:44:31.916Z'"
+  },
+  {
+   "id": "repeat.repeat/worker_meta.json",
+   "path": "repeat/worker_meta.json.finished_at",
+   "status": "ok",
+   "detail": "应为非空字符串，实为 '2026-11-28T15:46:03.083Z'"
+  },
+  {
+   "id": "repeat.repeat/worker_meta.json",
+   "path": "repeat/worker_meta.json.exit_code",
+   "status": "ok",
+   "detail": "应为整数，实为 0"
+  },
+  {
+   "id": "repeat.repeat/worker_meta.json",
+   "path": "repeat/worker_meta.json.peak_rss_mib",
+   "status": "ok",
+   "detail": "应为有限数值，实为 257.969"
+  }
+ ],
+ "note": "结构预检；READY 不等于验收通过，数值判定见 accept_e0n0.py"
+}

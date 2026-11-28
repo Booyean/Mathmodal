@@ -1,0 +1,263 @@
+{
+ "contract": "E0-N0-PHASE-EVIDENCE-1",
+ "phase_contract": "E0-N0-PHASE-1",
+ "synthetic": true,
+ "citable": false,
+ "air_groups": [
+  "空场数据/data1",
+  "空场数据/data2",
+  "空场数据/data3",
+  "空场数据/data4",
+  "空场数据/data5",
+  "空场数据/data6",
+  "空场数据/data7",
+  "空场数据/data8",
+  "空场数据/data9",
+  "空场数据/data10"
+ ],
+ "clusters": [
+  {
+   "name": "C0",
+   "held_out": [
+    "空场数据/data1",
+    "空场数据/data2"
+   ]
+  },
+  {
+   "name": "C1",
+   "held_out": [
+    "空场数据/data3",
+    "空场数据/data4"
+   ]
+  },
+  {
+   "name": "C2",
+   "held_out": [
+    "空场数据/data5",
+    "空场数据/data6"
+   ]
+  },
+  {
+   "name": "C3",
+   "held_out": [
+    "空场数据/data7",
+    "空场数据/data8"
+   ]
+  },
+  {
+   "name": "C4",
+   "held_out": [
+    "空场数据/data9",
+    "空场数据/data10"
+   ]
+  }
+ ],
+ "ref_pos": 27,
+ "rho_min": 0.001,
+ "rho_range": [
+  0.0,
+  1.0
+ ],
+ "shifts_ns": [
+  0.0,
+  0.014750000000000001,
+  211.97299999999998,
+  211.97275000000002,
+  723.2642500000001,
+  723.2635,
+  340.13875,
+  340.1375,
+  625.3842500000001,
+  625.38375
+ ],
+ "coherence": [
+  {
+   "group": "空场数据/data1",
+   "cluster": "C0",
+   "anchor_group": "空场数据/data2",
+   "rho": 0.9999999999999998,
+   "ref_pos": 27,
+   "n_freq": 1401
+  },
+  {
+   "group": "空场数据/data2",
+   "cluster": "C0",
+   "anchor_group": "空场数据/data1",
+   "rho": 0.9999999999999998,
+   "ref_pos": 27,
+   "n_freq": 1401
+  },
+  {
+   "group": "空场数据/data3",
+   "cluster": "C1",
+   "anchor_group": "空场数据/data4",
+   "rho": 1.0,
+   "ref_pos": 27,
+   "n_freq": 1401
+  },
+  {
+   "group": "空场数据/data4",
+   "cluster": "C1",
+   "anchor_group": "空场数据/data3",
+   "rho": 1.0,
+   "ref_pos": 27,
+   "n_freq": 1401
+  },
+  {
+   "group": "空场数据/data5",
+   "cluster": "C2",
+   "anchor_group": "空场数据/data6",
+   "rho": 1.0,
+   "ref_pos": 27,
+   "n_freq": 1401
+  },
+  {
+   "group": "空场数据/data6",
+   "cluster": "C2",
+   "anchor_group": "空场数据/data5",
+   "rho": 1.0,
+   "ref_pos": 27,
+   "n_freq": 1401
+  },
+  {
+   "group": "空场数据/data7",
+   "cluster": "C3",
+   "anchor_group": "空场数据/data8",
+   "rho": 1.0,
+   "ref_pos": 27,
+   "n_freq": 1401
+  },
+  {
+   "group": "空场数据/data8",
+   "cluster": "C3",
+   "anchor_group": "空场数据/data7",
+   "rho": 1.0,
+   "ref_pos": 27,
+   "n_freq": 1401
+  },
+  {
+   "group": "空场数据/data9",
+   "cluster": "C4",
+   "anchor_group": "空场数据/data10",
+   "rho": 1.0,
+   "ref_pos": 27,
+   "n_freq": 1401
+  },
+  {
+   "group": "空场数据/data10",
+   "cluster": "C4",
+   "anchor_group": "空场数据/data9",
+   "rho": 1.0,
+   "ref_pos": 27,
+   "n_freq": 1401
+  }
+ ],
+ "coherence_values": [
+  0.9999999999999998,
+  0.9999999999999998,
+  1.0,
+  1.0,
+  1.0,
+  1.0,
+  1.0,
+  1.0,
+  1.0,
+  1.0
+ ],
+ "d1": {
+  "basis": "full_pool",
+  "d1_rank": 2,
+  "sigma2_over_sigma1_median": 0.11031353724479691,
+  "near_parallel": false,
+  "d1_min_abs_inner": 0.0,
+  "d1_max_abs_inner": 2.1798966801998783e-16,
+  "d1_median_abs_inner": 6.310650388774585e-17,
+  "n_freq_non_degenerate": 1401,
+  "n_freq_degenerate": 0,
+  "ortho_tol": 1e-06,
+  "scope": "full_pool",
+  "folds": [
+   {
+    "basis": "p1_fold_0",
+    "d1_rank": 2,
+    "sigma2_over_sigma1_median": 0.12272424979373595,
+    "near_parallel": false,
+    "d1_min_abs_inner": 0.0,
+    "d1_max_abs_inner": 2.0552207147236392e-16,
+    "d1_median_abs_inner": 6.140236468907226e-17,
+    "n_freq_non_degenerate": 1401,
+    "n_freq_degenerate": 0,
+    "ortho_tol": 1e-06
+   },
+   {
+    "basis": "p1_fold_1",
+    "d1_rank": 2,
+    "sigma2_over_sigma1_median": 0.12140155450271264,
+    "near_parallel": false,
+    "d1_min_abs_inner": 0.0,
+    "d1_max_abs_inner": 2.259676216117962e-16,
+    "d1_median_abs_inner": 5.738561522713155e-17,
+    "n_freq_non_degenerate": 1401,
+    "n_freq_degenerate": 0,
+    "ortho_tol": 1e-06
+   },
+   {
+    "basis": "p1_fold_2",
+    "d1_rank": 2,
+    "sigma2_over_sigma1_median": 0.12725572026002907,
+    "near_parallel": false,
+    "d1_min_abs_inner": 0.0,
+    "d1_max_abs_inner": 4.0460063774792956e-16,
+    "d1_median_abs_inner": 7.351032322656023e-17,
+    "n_freq_non_degenerate": 1401,
+    "n_freq_degenerate": 0,
+    "ortho_tol": 1e-06
+   },
+   {
+    "basis": "p1_fold_3",
+    "d1_rank": 2,
+    "sigma2_over_sigma1_median": 0.11351380384871876,
+    "near_parallel": false,
+    "d1_min_abs_inner": 0.0,
+    "d1_max_abs_inner": 2.1564914217672253e-16,
+    "d1_median_abs_inner": 5.322796385434767e-17,
+    "n_freq_non_degenerate": 1401,
+    "n_freq_degenerate": 0,
+    "ortho_tol": 1e-06
+   },
+   {
+    "basis": "p1_fold_4",
+    "d1_rank": 2,
+    "sigma2_over_sigma1_median": 0.11293471825768703,
+    "near_parallel": false,
+    "d1_min_abs_inner": 0.0,
+    "d1_max_abs_inner": 2.920230599826354e-16,
+    "d1_median_abs_inner": 6.912811947538218e-17,
+    "n_freq_non_degenerate": 1401,
+    "n_freq_degenerate": 0,
+    "ortho_tol": 1e-06
+   }
+  ]
+ },
+ "definition": {
+  "coherence": "rho_g = |sum_f conj(z_g(f))*z_h(f)| / (||z_g||*||z_h||), z_g = x_g(ref_pos, f) after calibration+shift; h = other group of the same prereg cluster",
+  "d1_min_abs_inner": "min_f |<T(f),D1(f)>| / (||T(f)||*||D1(f)||), full-pool rank-2 basis, degenerate bins excluded"
+ },
+ "may_enter_paper_numbers": false,
+ "seed": 20261128,
+ "cluster_shift_tol_ns": 0.1,
+ "shift_max_dev_ns": 0.0,
+ "within_cluster_dev_ns": [
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "n_freq": 1401,
+ "band_hz": {
+  "first": 3700000000.0,
+  "last": 2300000000.0,
+  "step": -1000000.0
+ }
+}
