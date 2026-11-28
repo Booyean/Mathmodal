@@ -182,12 +182,12 @@ def add_styled_paragraph(
     return p
 
 
-def add_reserved_box(doc: Document, spec: ReservedSlotSpec, font_size_pt: float, line_spacing: float) -> None:
+def add_reserved_box(doc: Document, spec: ReservedSlotSpec, font_size_pt: float, line_spacing: float, box_width_cm: float = 16.0) -> None:
     tbl = doc.add_table(rows=1, cols=1)
     tbl.autofit = False
-    tbl.columns[0].width = Cm(15.6)
+    tbl.columns[0].width = Cm(box_width_cm)
     cell = tbl.cell(0, 0)
-    cell.width = Cm(15.6)
+    cell.width = Cm(box_width_cm)
     set_cell_border_and_height(cell, height_cm=spec.height_cm, fill_hex="F5F7FA")
     p = cell.paragraphs[0]
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -214,16 +214,20 @@ def build_docx(
     include_reserved_boxes: bool,
     font_size_pt: float = 12.0,
     line_spacing: float = 1.25,
+    margin_tb_cm: float = 2.2,
+    margin_lr_cm: float = 2.5,
+    compact_refs: bool = False,
 ) -> None:
     """Render manuscript markdown into an A4 competition-layout Word document."""
     doc = Document()
     for sec in doc.sections:
         sec.page_width = Cm(21.0)
         sec.page_height = Cm(29.7)
-        sec.top_margin = Cm(2.2)
-        sec.bottom_margin = Cm(2.2)
-        sec.left_margin = Cm(2.5)
-        sec.right_margin = Cm(2.5)
+        sec.top_margin = Cm(margin_tb_cm)
+        sec.bottom_margin = Cm(margin_tb_cm)
+        sec.left_margin = Cm(margin_lr_cm)
+        sec.right_margin = Cm(margin_lr_cm)
+    box_width_cm = round(21.0 - 2.0 * margin_lr_cm, 2)
 
     lines = manuscript_md.splitlines()
     i = 0
@@ -231,6 +235,7 @@ def build_docx(
     in_code_block = False
     code_lines: list[str] = []
     in_body_ch1_8 = False
+    in_refs_ch9 = False
 
     while i < len(lines):
         line = lines[i]
@@ -251,7 +256,7 @@ def build_docx(
                 if any("flowchart" in cl for cl in code_lines):
                     if include_reserved_boxes and "Fig 0-1" not in seen_slots:
                         seen_slots.add("Fig 0-1")
-                        add_reserved_box(doc, RESERVED_SLOTS["Fig 0-1"], font_size_pt, line_spacing)
+                        add_reserved_box(doc, RESERVED_SLOTS["Fig 0-1"], font_size_pt, line_spacing, box_width_cm)
                     else:
                         add_styled_paragraph(
                             doc,
@@ -359,8 +364,13 @@ def build_docx(
             heading_txt = stripped[3:].strip()
             if heading_txt.startswith("一、问题重述"):
                 in_body_ch1_8 = True
-            elif heading_txt.startswith("九、参考文献") or heading_txt.startswith("十、AI 使用报告"):
+                in_refs_ch9 = False
+            elif heading_txt.startswith("九、参考文献"):
                 in_body_ch1_8 = False
+                in_refs_ch9 = True
+            elif heading_txt.startswith("十、AI 使用报告"):
+                in_body_ch1_8 = False
+                in_refs_ch9 = False
             # Page breaks before 目录, 一、问题重述, and 十、AI 使用报告与附录清单
             if heading_txt.startswith("目录") or heading_txt.startswith("一、问题重述") or heading_txt.startswith("十、AI 使用报告"):
                 doc.add_page_break()
@@ -405,15 +415,21 @@ def build_docx(
             )
         else:
             indent = 0.6 if line.startswith("  ") else 0.0
-            # Keep TOC bullet entries compact so TOC fits on a single page (0.5-0.8 page budget)
+            # Keep TOC bullet entries compact and Chapter 9 references tight when compact_refs=True
             is_toc_entry = ("……" in stripped or stripped.startswith("- **") or (line.startswith("  - ") and any(k in stripped for k in ("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10."))))
+            if is_toc_entry:
+                eff_pt, eff_sp, eff_after = 10.0, 1.05, 0.8
+            elif in_refs_ch9 and compact_refs:
+                eff_pt, eff_sp, eff_after = 9.0, 1.05, 1.0
+            else:
+                eff_pt, eff_sp, eff_after = font_size_pt, line_spacing, 3.0
             add_styled_paragraph(
                 doc,
                 stripped,
-                font_size_pt=10.5 if is_toc_entry else font_size_pt,
-                line_spacing=1.08 if is_toc_entry else line_spacing,
+                font_size_pt=eff_pt,
+                line_spacing=eff_sp,
                 left_indent_cm=indent,
-                space_after_pt=1.0 if is_toc_entry else 3.0,
+                space_after_pt=eff_after,
             )
 
         # Only inject reserved physical figure/table boxes at real body slot announcements inside Ch.1-Ch.8
@@ -421,7 +437,7 @@ def build_docx(
             for slot_id, spec in RESERVED_SLOTS.items():
                 if slot_id != "Fig 0-1" and slot_id in stripped and slot_id not in seen_slots and "[待补" in stripped:
                     seen_slots.add(slot_id)
-                    add_reserved_box(doc, spec, font_size_pt, line_spacing)
+                    add_reserved_box(doc, spec, font_size_pt, line_spacing, box_width_cm)
 
         i += 1
 
@@ -442,7 +458,7 @@ def word_to_pdf(docx_path: Path, pdf_path: Path) -> None:
         word.Quit()
 
 
-def analyze_pdf_pages(pdf_path: Path) -> dict:
+def analyze_pdf_pages(pdf_path: Path, margin_tb_cm: float = 2.2) -> dict:
     """Extract total pages and exact sequential page ranges for each chapter/section."""
     doc = pymupdf.open(str(pdf_path))
     markers = [
@@ -495,8 +511,9 @@ def analyze_pdf_pages(pdf_path: Path) -> dict:
         if blocks:
             max_y = max(b[3] for b in blocks)
             page_h = doc[counted_pages - 1].rect.height
-            usable_h = page_h - 124.8
-            last_counted_fill = max(0.0, min(1.0, (max_y - 62.4) / usable_h))
+            m_pt = margin_tb_cm * 72.0 / 2.54
+            usable_h = page_h - 2.0 * m_pt
+            last_counted_fill = max(0.0, min(1.0, (max_y - m_pt) / usable_h))
 
     return {
         "total_pdf_pages": total_pages,
@@ -519,19 +536,30 @@ def main() -> None:
         (PAPER_DIR / "manuscript_pretypeset.md").write_text(manuscript_md, encoding="utf-8")
 
     configs = [
-        ("static_baseline_12pt", False, 12.0, 1.25),
-        ("reserved_full_12pt", True, 12.0, 1.25),
-        ("reserved_compact_10_5pt", True, 10.5, 1.15),
+        ("static_baseline_12pt", False, 12.0, 1.25, 2.2, 2.5, False),
+        ("reserved_full_12pt", True, 12.0, 1.25, 2.2, 2.5, False),
+        ("static_compact_10_5pt", False, 10.5, 1.12, 2.0, 2.2, True),
+        ("reserved_compact_10_5pt", True, 10.5, 1.12, 2.0, 2.2, True),
     ]
     results = {}
-    for label, with_boxes, font_pt, spacing in configs:
+    for label, with_boxes, font_pt, spacing, tb_cm, lr_cm, comp_refs in configs:
         docx_p = args.work_dir / f"{label}.docx"
         pdf_p = args.work_dir / f"{label}.pdf"
-        build_docx(manuscript_md, docx_p, include_reserved_boxes=with_boxes, font_size_pt=font_pt, line_spacing=spacing)
+        build_docx(
+            manuscript_md,
+            docx_p,
+            include_reserved_boxes=with_boxes,
+            font_size_pt=font_pt,
+            line_spacing=spacing,
+            margin_tb_cm=tb_cm,
+            margin_lr_cm=lr_cm,
+            compact_refs=comp_refs,
+        )
         word_to_pdf(docx_p, pdf_p)
-        results[label] = analyze_pdf_pages(pdf_p)
+        results[label] = analyze_pdf_pages(pdf_p, margin_tb_cm=tb_cm)
         results[label]["font_pt"] = font_pt
         results[label]["line_spacing"] = spacing
+        results[label]["margins_cm"] = f"TB={tb_cm}, LR={lr_cm}"
         results[label]["include_reserved_boxes"] = with_boxes
 
     print(json.dumps(results, ensure_ascii=False, indent=2))
