@@ -148,13 +148,13 @@ python <accept_e0n0.py> --results-dir tmp/n0_pkg --prereg <e0_n0_prereg.json> --
 python solutions/A/test_a_e0_n0_package.py -v
 ```
 
-## 6. 仍需统筹/建模方裁定
+## 6. 裁定状态（2026-11-28 更新）
 
-1. **`method_scope` 取值**：建议 `M0-DW-Subspace/rank-2/in-window-2coef`，长度与措辞待定；`ACCEPT-3` 的 identity 守卫依赖它。
-2. **`phase__coherence` 的 ρ 定义**：目前只有“`aligned == (ρ ≥ 0.001)`”一条约束，`0.001` 低到 `aligned` 事实上恒真。建议冻结为“各组参考通道相对本簇锚点的复相干模”，并在 N0 运行前写死；否则该数组没有可复算语义。
-3. **`d1_min_abs_inner` 的持久化来源**：原型只有 `near_zero.ortho_residual_rel` 的 median/max，验收器只查“有限非负”，`0.0` 也能过。建议绑定 `|⟨D_1,T⟩|` 的最小绝对值。
-4. **`n0_config.json` 尚未存在**：`n0_config_sha256` 目前无物可绑，需在 B-02 前新建并登记。
-5. **探针 `READY` 是否作为 B-02 受理前置**：建议“结构不齐不受理实测”，避免跑完才发现读不了。
+1. **`method_scope`**：已定稿为 `M0-DW-Subspace/rank-2/in-window-2coef`（逐字，无后缀）；打包器强制逐字匹配，合成夹具的 `"(synthetic fixture)"` 后缀已移除。见 `coordination/A_Q1_N0_PHASE_EVIDENCE.md` §5-8。
+2. **`phase__coherence` 的 ρ**：已冻结为“同预登记簇另一组、参考通道 `rx63[27]`、全 1.4 GHz 频带上的宽带复相干模”，范围 `[0,1]`；`aligned := (ρ ≥ 0.001)`。见 `coordination/A_Q1_N0_PHASE_EVIDENCE.md` §3。
+3. **`d1_min_abs_inner`**：已冻结为全池秩 2 基上 `min_f |⟨T(f),D1(f)⟩|/(‖T(f)‖‖D1(f)‖)`，范围 `[0,1]`；正确 Gram-Schmidt 下为 `0`–`1e-16`，是正交化**数值证书**；打包器强制 `rank=2 → ≤1e-6`。见同文件 §4。
+4. **`n0_config.json`**：已落 `experiments/A/A-Q1-E0/n0/n0_config.json`，LF SHA256 `ec39673787e5dd05986095bca8f7c6cb41904dc13265e40798157ad9efadd32d`；打包器用 `--n0-config` 绑定 LF/raw 双口径，并把该值写入 `n0_config_sha256` / `n0.registration.n0_config_sha256`。见同文件 §5。
+5. **探针 `READY` 是否作为 B-02 受理前置**：仍待统筹裁定；本轮合成包已再次确认 `READY 721/721`。
 
 ## 7. 边界
 

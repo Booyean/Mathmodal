@@ -7,6 +7,9 @@
 /experiments/A/A-Q1-E0/n0/synthetic/n0_synthetic_results.json text eol=lf
 /experiments/A/A-Q1-E0/n0/channel_regression/n0_channel_regression.json text eol=lf
 /experiments/A/A-Q1-E0/e0c/poststop/poststop_targets.json text eol=lf
+/experiments/A/A-Q1-E0/n0/n0_config.json text eol=lf
+/experiments/A/A-Q1-E0/n0/phase_evidence/synthetic.json text eol=lf
+/experiments/A/A-Q1-E0/n0/phase_evidence/SHA256SUMS.txt text eol=lf
 
 # Q2/Q3 合成基线（#40）：结果 JSON 与台账按 LF 检出，NPZ 按二进制保护。
 experiments/A/A-Q2Q3-SYN/results/*.json text eol=lf

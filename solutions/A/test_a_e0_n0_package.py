@@ -29,13 +29,30 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 
 import a_e0_n0_package as pkg  # noqa: E402
+import a_e0_n0_phase as phase  # noqa: E402
 
 SYNTHETIC = os.path.join(ROOT, "experiments", "A", "A-Q1-E0", "n0",
                          "synthetic", "n0_synthetic_results.json")
 ORACLE = os.path.join(ROOT, "checks", "A", "e0_c_data_oracle.json")
+CONFIG = os.path.join(ROOT, "experiments", "A", "A-Q1-E0", "n0",
+                      "n0_config.json")
 MAIN_COMMIT = "c7b841efe67192a73a96894fb5a0243b336a9468"
 N0_CONFIG_SHA = "a" * 64
 PREREG_SHA = "b" * 64
+
+_PHASE_EVIDENCE = None
+
+
+def _evidence() -> dict:
+    """相位证据只算一次（重放 N0-SYN-1 合成池；不读 `.dat`）。"""
+    global _PHASE_EVIDENCE
+    if _PHASE_EVIDENCE is None:
+        _PHASE_EVIDENCE = phase.build_synthetic_evidence()
+    return _PHASE_EVIDENCE
+
+
+def _config_sha() -> str:
+    return pkg.sha256_file_lf(CONFIG) if os.path.exists(CONFIG) else N0_CONFIG_SHA
 
 
 def _inputs() -> list:
@@ -54,7 +71,7 @@ def _raw() -> dict:
     doc = json.load(open(SYNTHETIC, encoding="utf-8"))
     raw = pkg.from_prototype_synthetic(
         doc, inputs=_inputs(), main_commit=MAIN_COMMIT,
-        n0_config_sha256=N0_CONFIG_SHA)
+        n0_config_sha256=_config_sha(), phase_evidence=_evidence())
     raw["registration"]["prereg_sha256"] = _prereg_sha()
     return raw
 
@@ -145,6 +162,45 @@ class AssembleDerivationTest(unittest.TestCase):
             b = ph["per_group"][pkg.AIR_GROUPS.index(held[1])]["shift_ns"]
             self.assertLessEqual(abs(a - b), 0.1)
 
+    def test_phase_coherence_is_recomputed_not_placeholder(self):
+        ph = self.built["results"]["n0"]["phase"]
+        array = pkg._flatten(self.built["arrays"]["phase__coherence"])
+        ev = _evidence()["coherence"]
+        for i, row in enumerate(ev):
+            self.assertEqual(ph["per_group"][i]["group"], row["group"])
+            self.assertAlmostEqual(ph["per_group"][i]["rho"], row["rho"], places=15)
+            self.assertAlmostEqual(array[i], row["rho"], places=15)
+            self.assertGreaterEqual(array[i], 0.0)
+            self.assertLessEqual(array[i], 1.0)
+            self.assertEqual(ph["per_group"][i]["aligned"], array[i] >= 0.001)
+
+    def test_d1_inner_is_orthogonality_certificate(self):
+        ph = self.built["results"]["n0"]["phase"]
+        inner = ph["d1_min_abs_inner"]
+        self.assertEqual(ph["d1_rank"], 2)
+        self.assertGreaterEqual(inner, 0.0)
+        self.assertLessEqual(inner, pkg.D1_ORTHO_TOL)
+        ev = _evidence()["d1"]
+        self.assertEqual(inner, ev["d1_min_abs_inner"])
+        self.assertLessEqual(ev["d1_max_abs_inner"], pkg.D1_ORTHO_TOL)
+
+    def test_method_scope_is_frozen_literal(self):
+        self.assertEqual(self.built["results"]["method_scope"], pkg.METHOD_SCOPE)
+        self.assertEqual(self.built["results"]["experiment_id"], "A-Q1-N0")
+        self.assertEqual(self.built["results"]["phase"], "N0")
+
+    def test_n0_config_binding_when_supplied(self):
+        self.raw["anchors"]["n0_config"] = {
+            "path": "experiments/A/A-Q1-E0/n0/n0_config.json",
+            "sha256_lf": _config_sha(),
+            "sha256_raw": _config_sha(),
+        }
+        built = pkg.assemble(self.raw)
+        self.assertTrue(built["results"]["n0_config"]["bound"])
+        self.assertEqual(built["results"]["n0_config"]["sha256_lf"],
+                         _config_sha())
+        self.assertEqual(built["results"]["n0_config_sha256"], _config_sha())
+
 
 class RetentionSignTest(unittest.TestCase):
     def _with_peak(self, peak_loss):
@@ -198,6 +254,61 @@ class RejectTest(unittest.TestCase):
         raw["groups"][0]["pslr_db"] = 1.0
         with self.assertRaises(pkg.PackageError):
             pkg.assemble(raw)
+
+    def test_coherence_out_of_range_rejected(self):
+        raw = _raw()
+        raw["phase"]["per_group"][0]["rho"] = 1.5
+        raw["arrays"]["phase__coherence"][0] = 1.5
+        raw["phase"]["per_group"][0]["aligned"] = True
+        with self.assertRaises(pkg.PackageError):
+            pkg.assemble(raw)
+
+    def test_coherence_array_json_mismatch_rejected(self):
+        raw = _raw()
+        raw["arrays"]["phase__coherence"][0] = 0.5
+        with self.assertRaises(pkg.PackageError):
+            pkg.assemble(raw)
+
+    def test_aligned_flag_inconsistent_rejected(self):
+        raw = _raw()
+        raw["phase"]["per_group"][0]["aligned"] = False
+        raw["phase"]["per_group"][0]["reason"] = None
+        with self.assertRaises(pkg.PackageError):
+            pkg.assemble(raw)
+
+    def test_d1_inner_placeholder_absent_rejected(self):
+        raw = _raw()
+        raw["phase"].pop("d1_min_abs_inner")
+        with self.assertRaises(pkg.PackageError):
+            pkg.assemble(raw)
+
+    def test_d1_inner_non_orthogonal_rejected(self):
+        raw = _raw()
+        raw["phase"]["d1_min_abs_inner"] = 0.5
+        with self.assertRaises(pkg.PackageError):
+            pkg.assemble(raw)
+
+    def test_wrong_method_scope_rejected(self):
+        raw = _raw()
+        raw["identity"]["method_scope"] = "M0-DW-Subspace/rank-2/in-window-2coef (synthetic fixture)"
+        with self.assertRaises(pkg.PackageError):
+            pkg.assemble(raw)
+
+    def test_phase_evidence_wrong_shifts_rejected(self):
+        ev = dict(_evidence())
+        ev["shifts_ns"] = [0.0] * 10
+        doc = json.load(open(SYNTHETIC, encoding="utf-8"))
+        with self.assertRaises(pkg.PackageError):
+            pkg.from_prototype_synthetic(
+                doc, inputs=_inputs(), main_commit=MAIN_COMMIT,
+                n0_config_sha256=_config_sha(), phase_evidence=ev)
+
+    def test_phase_evidence_missing_rejected(self):
+        doc = json.load(open(SYNTHETIC, encoding="utf-8"))
+        with self.assertRaises(pkg.PackageError):
+            pkg.from_prototype_synthetic(
+                doc, inputs=_inputs(), main_commit=MAIN_COMMIT,
+                n0_config_sha256=_config_sha(), phase_evidence=None)
 
 
 def _is_drive_root(path: str) -> bool:

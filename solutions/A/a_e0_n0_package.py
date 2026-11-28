@@ -44,7 +44,14 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 ARTIFACT_CONTRACT = "E0-N0-1"
 PRODUCER_CONTRACT = "E0-N0-PRODUCER-CONTRACT-1"
 PHASE_CONTRACT = "E0-N0-PHASE-1"
+PHASE_EVIDENCE_CONTRACT = "E0-N0-PHASE-EVIDENCE-1"
 PREREG_IDS = ("E0-N0-PREREG-1", "A-Q1-N0-PREREG-1")
+#: 方法范围串（`identity.method_scope`，ACCEPT-3 identity 守卫按此值拒收错包）。
+METHOD_SCOPE = "M0-DW-Subspace/rank-2/in-window-2coef"
+#: 正确 Gram-Schmidt 后归一化 |<T, D1>| 的数值上界。
+D1_ORTHO_TOL = 1e-6
+#: 相位证据的固定阈值（与 `E0-N0-PHASE-1` / 冻结 prereg 同值，只读）。
+RHO_MIN = 0.001
 
 N_CH = 63
 VALID_RX = 63
@@ -116,6 +123,13 @@ def sha256_file(path: str) -> str:
         for chunk in iter(lambda: f.read(1 << 20), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def sha256_file_lf(path: str) -> str:
+    """文本文件按 LF 归一化后的 SHA256（git blob 口径；N0 新产物统一口径）。"""
+    with open(path, "rb") as f:
+        data = f.read()
+    return sha256_bytes(data.replace(b"\r\n", b"\n"))
 
 
 def _finite(x: Any) -> bool:
@@ -301,6 +315,16 @@ def _fold_map(raw: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 
 def _phase_block(raw: Dict[str, Any], arrays: Dict[str, Any]) -> Dict[str, Any]:
+    """相位块：所有派生量都从 `raw["phase"]` 的逐组 rho 与数组重算。
+
+    冻结定义（`E0-N0-PHASE-EVIDENCE-1`，见 `coordination/A_Q1_N0_PHASE_EVIDENCE.md`）：
+
+    * `rho_g` = 第 g 组与**同预登记簇另一组**在参考通道上的宽带复相干模，范围 [0,1]；
+    * `aligned_g := (rho_g >= rho_min)`，必须与 `per_group[g].aligned` 一致；
+    * `phase__coherence` 必须逐元素等于 `rho_g`（不是独立可填的数组）；
+    * `d1_min_abs_inner` = 全池秩 2 基上 min_f |<T_f,D1_f>|/(||T_f||·||D1_f||)，
+      正确 Gram-Schmidt 下应 ≤ 1e-6（实测 0–1e-16）；缺失或 O(1) 一律拒收。
+    """
     ph = raw.get("phase")
     _require(isinstance(ph, dict), "phase 块缺失")
     shifts = _flatten(arrays["phase__shifts_ns"])
@@ -310,12 +334,22 @@ def _phase_block(raw: Dict[str, Any], arrays: Dict[str, Any]) -> Dict[str, Any]:
     _require(order == list(AIR_GROUPS), "phase.group_order 应等于 10 组空场登记顺序")
     per = ph.get("per_group") or []
     _require(len(per) == 10, "phase.per_group 必须覆盖 10 组")
-    rho_min = float(ph.get("rho_min", 0.001))
+    rho_min = float(ph.get("rho_min", RHO_MIN))
+    _require(abs(rho_min - RHO_MIN) <= 1e-15,
+             "phase.rho_min 应为冻结值 %.6g（收到 %.6g）" % (RHO_MIN, rho_min))
     out_per = []
     for i, g in enumerate(AIR_GROUPS):
         item = per[i] if i < len(per) else {}
         _require(item.get("group") in (None, g), "phase.per_group 顺序错位")
-        aligned = bool(coh[i] >= rho_min)
+        rho = float(item.get("rho"))
+        _require(_finite(rho) and 0.0 <= rho <= 1.0,
+                 "%s.rho=%r 应为 [0,1] 内有限数" % (g, item.get("rho")))
+        _require(abs(coh[i] - rho) <= 1e-12,
+                 "%s: phase__coherence=%r 与 per_group.rho=%r 不一致"
+                 % (g, coh[i], rho))
+        aligned = bool(rho >= rho_min)
+        _require(bool(item.get("aligned", aligned)) is aligned,
+                 "%s.aligned 与 rho=%.6g 的判定不一致" % (g, rho))
         reason = item.get("reason")
         _require(aligned or bool(reason), "%s 未对齐但无 reason" % g)
         out_per.append({
@@ -323,8 +357,12 @@ def _phase_block(raw: Dict[str, Any], arrays: Dict[str, Any]) -> Dict[str, Any]:
             "cluster": item.get("cluster"),
             "aligned": aligned,
             "shift_ns": float(shifts[i]),
+            "rho": rho,
             "reason": None if aligned else str(reason),
         })
+    _require([p["cluster"] for p in out_per] ==
+             [c for c, _h in CLUSTERS for _ in _h],
+             "phase.per_group.cluster 与预登记簇顺序不符")
     for cname, held in CLUSTERS:
         a = shifts[AIR_GROUPS.index(held[0])]
         b = shifts[AIR_GROUPS.index(held[1])]
@@ -333,8 +371,16 @@ def _phase_block(raw: Dict[str, Any], arrays: Dict[str, Any]) -> Dict[str, Any]:
                  "%s 内两组偏移差 %.4f ns 超容差" % (cname, diff))
     d1_rank = int(ph.get("d1_rank", 2))
     _require(d1_rank in (1, 2), "phase.d1_rank 应为 1 或 2")
-    inner = float(ph.get("d1_min_abs_inner", 0.0))
-    _require(_finite(inner) and inner >= 0.0, "phase.d1_min_abs_inner 非有限非负")
+    _require("d1_min_abs_inner" in ph, "phase.d1_min_abs_inner 缺失（不得默认 0.0）")
+    inner = float(ph["d1_min_abs_inner"])
+    _require(_finite(inner) and 0.0 <= inner <= 1.0,
+             "phase.d1_min_abs_inner=%r 应为 [0,1] 内有限数" % (ph["d1_min_abs_inner"],))
+    if d1_rank == 2:
+        _require(inner <= D1_ORTHO_TOL,
+                 "phase.d1_min_abs_inner=%.3e > %.1e：秩 2 基未正交化或未计算"
+                 % (inner, D1_ORTHO_TOL))
+    else:
+        _require(inner == 0.0, "d1_rank=1 时 d1_min_abs_inner 应为 0.0（无第二模态）")
     return {
         "contract": PHASE_CONTRACT,
         "group_order": order,
@@ -389,7 +435,8 @@ def assemble(raw: Dict[str, Any], *, prereg: Optional[Dict[str, Any]] = None,
              "identity.experiment_id 应为 'A-Q1-N0'")
     _require(ident.get("phase") == "N0", "identity.phase 应为 'N0'")
     scope = ident.get("method_scope")
-    _require(isinstance(scope, str) and scope.strip(), "method_scope 不能为空")
+    _require(scope == METHOD_SCOPE,
+             "method_scope 必须逐字等于 %r（收到 %r）" % (METHOD_SCOPE, scope))
 
     anchors = raw.get("anchors") or {}
     impl = _norm_anchor(anchors.get("implementation_sha"), "implementation_sha", 40)
@@ -551,11 +598,26 @@ def assemble(raw: Dict[str, Any], *, prereg: Optional[Dict[str, Any]] = None,
                 "prereg_sha256": prereg_sha,
                 "implementation_sha": impl,
                 "n0_config_sha256": n0cfg,
+                "n0_config_path": (raw.get("anchors") or {}).get(
+                    "n0_config", {}).get("path"),
                 "input_manifest_sha256": input_sha,
                 "main_commit": main,
             },
         },
     }
+    cfg_meta = (raw.get("anchors") or {}).get("n0_config")
+    if isinstance(cfg_meta, dict) and cfg_meta.get("sha256_lf"):
+        _require(cfg_meta["sha256_lf"] == n0cfg,
+                 "anchors.n0_config.sha256_lf 与 n0_config_sha256 不一致")
+        results["n0_config"] = {
+            "path": cfg_meta.get("path"),
+            "sha256_lf": cfg_meta["sha256_lf"],
+            "sha256_raw": cfg_meta.get("sha256_raw"),
+            "bound": True,
+        }
+    else:
+        results["n0_config"] = {"path": None, "sha256_lf": n0cfg,
+                                "sha256_raw": None, "bound": False}
     _ = prereg, total_bytes  # 预留：prereg 常量可用于额外交叉校验
     return {"results": results, "air_loo": air_loo, "arrays": arrays}
 
@@ -705,17 +767,45 @@ def selfcheck(dest: str) -> Dict[str, Any]:
 def from_prototype_synthetic(doc: Dict[str, Any], *,
                              inputs: Sequence[Dict[str, Any]],
                              main_commit: str,
-                             n0_config_sha256: str) -> Dict[str, Any]:
+                             n0_config_sha256: str,
+                             phase_evidence: Optional[Dict[str, Any]] = None,
+                             method_scope: str = METHOD_SCOPE) -> Dict[str, Any]:
     """把 `N0-SYN-1` 合成原型输出映射成 raw（SYNTHETIC ONLY）。
 
     这只覆盖 17 个“有来源”的契约项；6 个数组由声明值反构，属夹具，
     不得用于任何真实结论。
+
+    ``phase_evidence`` 必须是 `a_e0_n0_phase.build_synthetic_evidence()` 的产物
+    （契约 `E0-N0-PHASE-EVIDENCE-1`）：`phase__coherence` 与 `d1_min_abs_inner`
+    由该证据**重算/转写**，不再写 `[1.0]*10` / `0.0` 占位值。
     """
+    _require(isinstance(phase_evidence, dict), "缺少 phase_evidence（相位证据）")
+    _require(phase_evidence.get("contract") == PHASE_EVIDENCE_CONTRACT,
+             "phase_evidence.contract 应为 %r" % (PHASE_EVIDENCE_CONTRACT,))
     n0 = doc.get("n0") or {}
     fold_lock = doc.get("fold_lock") or {}
     shifts_s = [float(v) for v in fold_lock.get("shifts_s") or []]
     _require(len(shifts_s) == 10, "原型 shifts_s 应有 10 个值")
     shifts_ns = [v * 1e9 for v in shifts_s]
+    ev_shifts_ns = [float(v) for v in phase_evidence.get("shifts_ns") or []]
+    _require(len(ev_shifts_ns) == 10, "phase_evidence.shifts_ns 应有 10 个值")
+    for i, (a, b) in enumerate(zip(shifts_ns, ev_shifts_ns)):
+        _require(abs(a - b) <= 1e-9,
+                 "phase_evidence.shifts_ns[%d]=%r 与 fold_lock.shifts_s×1e9=%r 不一致"
+                 % (i, b, a))
+        shifts_ns[i] = b
+
+    coh_rows = phase_evidence.get("coherence") or []
+    _require(len(coh_rows) == 10, "phase_evidence.coherence 必须 10 组")
+    rho = [float(r["rho"]) for r in coh_rows]
+    clusters = [str(r["cluster"]) for r in coh_rows]
+    expected_clusters = [c for c, _h in CLUSTERS for _ in _h]
+    _require(clusters == expected_clusters,
+             "phase_evidence.coherence 的簇序与预登记不符：%r" % (clusters,))
+    d1 = phase_evidence.get("d1") or {}
+    d1_rank = int(d1.get("d1_rank", 2))
+    d1_inner = float(d1["d1_min_abs_inner"]) if "d1_min_abs_inner" in d1 else None
+    _require(d1_inner is not None, "phase_evidence.d1.d1_min_abs_inner 缺失")
 
     p1, p2 = doc.get("p1") or {}, doc.get("p2") or {}
     xc_supp = [[0.0, 0.0] for _ in range(5)]
@@ -768,8 +858,7 @@ def from_prototype_synthetic(doc: Dict[str, Any], *,
     item = p4[0]
     return {
         "identity": {"experiment_id": "A-Q1-N0", "phase": "N0",
-                     "method_scope": "M0-DW-Subspace/rank-2/in-window-2coef "
-                                     "(synthetic fixture)"},
+                     "method_scope": str(method_scope)},
         "anchors": {
             "implementation_sha": str((doc.get("provenance") or {}).get("implementation_sha")),
             "main_commit": main_commit,
@@ -789,7 +878,7 @@ def from_prototype_synthetic(doc: Dict[str, Any], *,
             "xcluster__p_cal": xc_cal, "xcluster__p_sup": xc_sup,
             "air_loo__p_cal": air_cal, "air_loo__p_sup": air_sup,
             "phase__shifts_ns": shifts_ns,
-            "phase__coherence": [1.0] * 10,
+            "phase__coherence": rho,
         },
         "lambdas": [list(FIXED_LAMBDA)],
         "xcluster_fold_map": None,
@@ -801,14 +890,16 @@ def from_prototype_synthetic(doc: Dict[str, Any], *,
         "phase": {
             "group_order": list(AIR_GROUPS),
             "per_group": [
-                {"group": g,
-                 "cluster": CLUSTERS[i // 2][0],
+                {"group": r["group"],
+                 "cluster": r["cluster"],
+                 "aligned": bool(rho[i] >= float(phase_evidence.get("rho_min", RHO_MIN))),
+                 "rho": rho[i],
                  "reason": None}
-                for i, g in enumerate(AIR_GROUPS)
+                for i, r in enumerate(coh_rows)
             ],
-            "d1_rank": 2,
-            "d1_min_abs_inner": 0.0,
-            "rho_min": 0.001,
+            "d1_rank": d1_rank,
+            "d1_min_abs_inner": d1_inner,
+            "rho_min": float(phase_evidence.get("rho_min", RHO_MIN)),
         },
         "judgement": {
             "L1": str((doc.get("l1") or {}).get("l1", "fail")).upper(),
@@ -827,17 +918,43 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--raw", help="raw_n0.json（生产侧原始结果）")
     ap.add_argument("--from-prototype-synthetic", help="仅夹具：N0-SYN-1 合成原型 JSON")
     ap.add_argument("--inputs-oracle", help="夹具：e0_c_data_oracle.json")
+    ap.add_argument("--phase-evidence",
+                    help="相位证据 JSON（夹具必填；契约 E0-N0-PHASE-EVIDENCE-1）")
+    ap.add_argument("--n0-config", help="n0_config.json（绑定 LF/raw 双口径 SHA256）")
     ap.add_argument("--out", required=True, help="输出目录")
     ap.add_argument("--prereg", help="e0_n0_prereg.json（用于绑定 prereg_sha256）")
     ap.add_argument("--main-commit", help="夹具：main_commit")
-    ap.add_argument("--n0-config-sha256", help="夹具：n0_config_sha256")
+    ap.add_argument("--n0-config-sha256", help="夹具：n0_config_sha256（与 --n0-config 交叉核验）")
+    ap.add_argument("--method-scope", default=METHOD_SCOPE,
+                    help="identity.method_scope（冻结值，默认 %r）" % METHOD_SCOPE)
     args = ap.parse_args(argv)
     if not args.raw and not args.from_prototype_synthetic:
         ap.error("需要 --raw 或 --from-prototype-synthetic")
+
+    n0cfg_sha = args.n0_config_sha256
+    cfg_meta: Optional[Dict[str, Any]] = None
+    if args.n0_config:
+        _require(os.path.exists(args.n0_config),
+                 "n0_config 文件不存在：%s" % args.n0_config)
+        lf = sha256_file_lf(args.n0_config)
+        rawsha = sha256_file(args.n0_config)
+        if n0cfg_sha is not None:
+            _require(n0cfg_sha == lf,
+                     "--n0-config-sha256=%r 与 n0_config 的 LF SHA256=%r 不一致"
+                     % (n0cfg_sha, lf))
+        n0cfg_sha = lf
+        cfg_meta = {"path": args.n0_config.replace("\\", "/"),
+                    "sha256_lf": lf, "sha256_raw": rawsha}
+    if n0cfg_sha is None:
+        n0cfg_sha = "0" * 64
+
     if args.raw:
         raw = json.load(open(args.raw, encoding="utf-8"))
     else:
+        if not args.phase_evidence:
+            ap.error("夹具模式必须给 --phase-evidence（不得回退到 [1.0]*10 / 0.0 占位）")
         doc = json.load(open(args.from_prototype_synthetic, encoding="utf-8"))
+        evidence = json.load(open(args.phase_evidence, encoding="utf-8"))
         oracle = json.load(open(args.inputs_oracle, encoding="utf-8"))
         inputs = [{"rel_path": row["rel_path"], "size_bytes": int(row["size_bytes"]),
                    "sha256": row["sha256"]}
@@ -845,7 +962,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         raw = from_prototype_synthetic(
             doc, inputs=inputs,
             main_commit=args.main_commit or "0" * 40,
-            n0_config_sha256=args.n0_config_sha256 or "0" * 64)
+            n0_config_sha256=n0cfg_sha,
+            phase_evidence=evidence,
+            method_scope=args.method_scope)
+    if cfg_meta is not None:
+        raw.setdefault("anchors", {})["n0_config"] = cfg_meta
+        raw["anchors"]["n0_config_sha256"] = cfg_meta["sha256_lf"]
     built = assemble(raw, prereg_path=args.prereg)
     # 最小两进程/门禁夹具（真实运行由 execute 提供）
     repeat = {"runs": [

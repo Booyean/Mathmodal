@@ -1,0 +1,190 @@
+{
+ "schema_version": 1,
+ "id": "A-Q1-N0-CONFIG-1",
+ "experiment_id": "A-Q1-N0",
+ "phase": "N0",
+ "n0_contract": "E0-N0-1",
+ "phase_contract": "E0-N0-PHASE-1",
+ "phase_evidence_contract": "E0-N0-PHASE-EVIDENCE-1",
+ "prereg_id": "A-Q1-N0-PREREG-1",
+ "accept_contract": "E0-N0-ACCEPT-2",
+ "method_scope": "M0-DW-Subspace/rank-2/in-window-2coef",
+ "status": "frozen_for_b02",
+ "date_utc": "2026-11-28",
+ "method": {
+  "name": "M0-DW-Subspace",
+  "rank": 2,
+  "rank_search": false,
+  "arms": ["C0", "C1", "C2"],
+  "arm_map": {"C0": "c0", "C1": "c1", "C2": "c2"},
+  "decision_arm": "C2",
+  "lambda": [0.001, 0.001],
+  "lambda_selection": "fixed_default",
+  "lambda_grid": false,
+  "eta_wall": 0.25,
+  "fit_window_ns": 1.0,
+  "ref_pos": 27,
+  "phase_anchor": "ref_channel",
+  "mode_form": "modulation",
+  "near_zero_mode_rel": 1e-09,
+  "min_second_mode_energy": 1e-06,
+  "gram_cond_max": 1e+12
+ },
+ "frozen_decisions": {
+  "p4_sign": {
+   "rule": "peak_loss_db := -peak_retention_db",
+   "why": "a_e0_n0.py 计算 10*log10(p_after/p_before)，负值表示损失；契约与验收器判 peak_loss_db <= 0.1。照抄 peak_retention_db 会让 P4 永远通过",
+   "pass": "peak_loss_db <= 0.1 and abs(range_shift_mm) <= 2.0"
+  },
+  "phase_unit": {
+   "source": "fold_lock.shifts_s (seconds)",
+   "array": "phase__shifts_ns",
+   "json_field": "n0.phase.per_group[].shift_ns",
+   "rule": "shift_ns := shifts_s * 1e9",
+   "equality": "array and JSON must agree to 1e-6 ns; cluster-internal |difference| <= 0.1 ns",
+   "why": "a_e0_n0.align_spectra uses exp(+1j*2*pi*f*shift_s); N7 judges cluster spread in ns"
+  },
+  "p1_expansion": {
+   "axes": "[fold][held_out_index]",
+   "fold_order": ["C0", "C1", "C2", "C3", "C4"],
+   "cluster_held_out": [
+    ["空场数据/data1", "空场数据/data2"],
+    ["空场数据/data3", "空场数据/data4"],
+    ["空场数据/data5", "空场数据/data6"],
+    ["空场数据/data7", "空场数据/data8"],
+    ["空场数据/data9", "空场数据/data10"]
+   ],
+   "rule": "xcluster_supp_db[f][b] = value of the b-th group in that cluster's prereg held_out order (not lexicographic, not group-name sort)",
+   "why": "prototype p1 values are fold-major flat [v0:2, v2:4, ...]; lexical order puts data10 before data2",
+   "array_axes": {
+    "air_p1__p_cal/p_sup": "[arm][fold][held_out_index][channel] shape (3,5,2,63)",
+    "air_p2__p_cal/p_sup": "[arm][fold][channel] shape (3,10,63)",
+    "arm_order": ["c0", "c1", "c2"],
+    "fold_order_p1": ["C0", "C1", "C2", "C3", "C4"],
+    "held_out_index": "0,1 in the cluster's prereg held_out order",
+    "fold_order_p2": ["空场数据/data1", "空场数据/data2", "空场数据/data3", "空场数据/data4", "空场数据/data5", "空场数据/data6", "空场数据/data7", "空场数据/data8", "空场数据/data9", "空场数据/data10"],
+    "channel_order": "rx63: the 63 valid channels, in the same order as the valid_rx mask",
+    "note": "these arrays are not part of the E0-N0-1 35-item contract; they are required by PREREG-CHG-2 §8 for C8' / P1 recomputation, so their axes are frozen here"
+   }
+  },
+  "arm_metrics_pool": {
+   "source": "p2 (10-fold leave-one-out, 9-group templates)",
+   "shape": [10],
+   "order": [
+    "空场数据/data1", "空场数据/data2", "空场数据/data3", "空场数据/data4",
+    "空场数据/data5", "空场数据/data6", "空场数据/data7", "空场数据/data8",
+    "空场数据/data9", "空场数据/data10"
+   ],
+   "rule": "n0.arm_metrics[*].air_loo_supp_db is the P2 ten-fold row, never the P1 five-fold row",
+   "why": "both are length 10; swapping keeps the type but changes the experiment"
+  },
+  "method_scope": {
+   "value": "M0-DW-Subspace/rank-2/in-window-2coef",
+   "exact": true,
+   "why": "ACCEPT-3 identity guard rejects packages whose method_scope is not this frozen literal"
+  }
+ },
+ "phase_evidence": {
+  "contract": "E0-N0-PHASE-EVIDENCE-1",
+  "group_order": [
+   "空场数据/data1", "空场数据/data2", "空场数据/data3", "空场数据/data4",
+   "空场数据/data5", "空场数据/data6", "空场数据/data7", "空场数据/data8",
+   "空场数据/data9", "空场数据/data10"
+  ],
+  "ref_pos": 27,
+  "band_hz": {"first": 3700000000.0, "last": 2300000000.0, "step": -1000000.0, "n_freq": 1401},
+  "rho_min": 0.001,
+  "cluster_shift_tol_ns": 0.1,
+  "coherence": {
+   "symbol": "rho_g",
+   "formula": "rho_g = |sum_f conj(z_g(f)) * z_h(f)| / (||z_g||_2 * ||z_h||_2)",
+   "inputs": "z_g(f) = x_g(ref_pos, f): calibrated spectrum of group g after applying its registered shift_s; h = the other group of g's prereg cluster",
+   "range": [0.0, 1.0],
+   "unit": "dimensionless",
+   "degenerate": "if either norm is 0, rho := 0.0",
+   "source": "solutions/A/a_e0_n0_phase.py::coherence_table on stack built by run_synthetic (calibrate_pool -> align_spectra)",
+   "aligned_rule": "aligned_g := (rho_g >= rho_min); aligned=false requires a non-empty reason"
+  },
+  "d1_min_abs_inner": {
+   "symbol": "d1_min_abs_inner",
+   "formula": "d1_min_abs_inner = min_{f non-degenerate} |<T(f), D1(f)>| / (||T(f)||_2 * ||D1(f)||_2)",
+   "inputs": "T, D1 = full-pool rank-2 basis from build_rank2_basis(stack); non-degenerate means ||D1(f)|| > 1e-12 * ||T(f)||",
+   "range": [0.0, 1.0],
+   "unit": "dimensionless",
+   "expected": "0.0 to 1e-15 for a correct Gram-Schmidt; exactly 0.0 is the expected value, not a placeholder",
+   "pass": "d1_rank == 2 implies 0.0 <= d1_min_abs_inner <= 1e-6; d1_rank == 1 implies d1_min_abs_inner == 0.0",
+   "degenerate_all": "if every bin is degenerate, d1_rank := 1 and d1_min_abs_inner := 0.0",
+   "source": "solutions/A/a_e0_n0_phase.py::d1_inner_stats on the full-pool basis"
+  },
+  "extra_diagnostics": {
+   "d1_max_abs_inner": "same quantity maximized over non-degenerate frequencies; recorded in the phase evidence JSON for audit (not in the E0-N0-1 contract)",
+   "d1_median_abs_inner": "median of the same quantity; recorded in the phase evidence JSON",
+   "sigma2_over_sigma1_median": "second/first singular-value ratio median; mode-quality diagnostic, not a gate"
+  }
+ },
+ "folds": {
+  "p1": {
+   "n_folds": 5,
+   "held_out_per_fold": 2,
+   "train_per_fold": 8,
+   "clusters": ["C0", "C1", "C2", "C3", "C4"]
+  },
+  "p2": {
+   "n_folds": 10,
+   "held_out_per_fold": 1,
+   "train_per_fold": 9,
+   "order": [
+    "空场数据/data1", "空场数据/data2", "空场数据/data3", "空场数据/data4",
+    "空场数据/data5", "空场数据/data6", "空场数据/data7", "空场数据/data8",
+    "空场数据/data9", "空场数据/data10"
+   ]
+  }
+ },
+ "gates": {
+  "reference": "checks/A/e0_n0_prereg.json",
+  "p1_min_db": 10.0,
+  "p1_hard_stop_db": 6.0,
+  "p2_min_db": 10.0,
+  "p2_median_db": 10.0,
+  "p3_db_tol": 0.05,
+  "p3_cm_tol": 0.05,
+  "p4_peak_loss_db": 0.1,
+  "p4_range_shift_mm": 2.0,
+  "l2_pslr_db": 3.0,
+  "l2_pnr_db": 6.0,
+  "l2_abs_err_cm": 5.0,
+  "gray_err_cm": 10.71,
+  "supp_db_tol": 1e-06,
+  "repeat_total_wall_time_max_s": 600.0,
+  "repeat_peak_rss_max_mib": 4096.0,
+  "note": "copied for traceability only; on conflict the frozen prereg JSON wins"
+ },
+ "data": {
+  "oracle": "checks/A/e0_c_data_oracle.json",
+  "n_files": 96,
+  "n_groups": 12,
+  "air_groups": 10,
+  "target_groups": 2,
+  "total_bytes": 88073632,
+  "valid_rx": 63,
+  "d_true_usage": "evaluation_only"
+ },
+ "outputs": {
+  "package_dir": "experiments/A/A-Q1-E0/n0/results",
+  "config_path": "experiments/A/A-Q1-E0/n0/n0_config.json",
+  "json_newline": "\n",
+  "hash_rule": "text files are SHA256 over LF-normalized bytes (git blob semantics); .npz is raw bytes",
+  "ledger": "SHA256SUMS.txt",
+  "freeze_file": "n0_frozen.json (only when L2=PASS)"
+ },
+ "anchors": {
+  "main_commit": "c7b841efe67192a73a96894fb5a0243b336a9468",
+  "prereg_path": "checks/A/e0_n0_prereg.json",
+  "prereg_sha256_lf": "721eb744e1e5d0ca1b0edbbc32f17c207ac419b193ed51002477d4de065c2ade",
+  "e0_config_path": "experiments/A/A-Q1-E0/config.json",
+  "e0_config_sha256_lf": "8fb6821fa3335ef748e16ad2f5b5b8fc818c13cbe9d3315377faf48d5e40e06a",
+  "data_oracle_sha256_lf": "f8c7572eaa0a6d54c02b3b84f033d4a91b6e0cca7585f2228918081963595f3c",
+  "implementation_sha_policy": "resolved at runtime from git HEAD and recorded in results.implementation_sha / results.n0.registration.implementation_sha; not embedded here to avoid a self-referential commit hash",
+  "n0_config_sha256_policy": "sha256_file_lf(n0_config.json), recorded in results.n0_config_sha256 and results.n0.registration.n0_config_sha256"
+ }
+}
