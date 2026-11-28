@@ -25,3 +25,14 @@ experiments/A/A-Q2Q3-SYN/results/*.npz binary
 /experiments/A/A-Q1-E0/n0/synthetic_two_process/*.npz binary
 /experiments/A/A-Q1-E0/n0/synthetic_two_process/**/*.npz binary
 
+# N0 合成双进程证据包（ACCEPT-3 重打包）：同上口径；新目录名不被上面的
+# `synthetic_two_process/` 通配覆盖，必须单独钉住 LF，否则 autocrlf 检出会让
+# 台账/`results_sha256` 的原始字节校验失败。
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3/*.json text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3/**/*.json text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3/*.log text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3/**/*.log text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3/SHA256SUMS.txt text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3/*.npz binary
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3/**/*.npz binary
+
