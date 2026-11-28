@@ -55,16 +55,23 @@
 2. **前墙穿透与介质损耗**：穿过倾斜前墙 A 照射后墙 B 的路径，经历前/后界面双程菲涅耳透射损失及厚度 $d_A$ 砖墙内的指数电磁吸收 $\exp(-2\alpha_{\text{wall}} L_A)$。
 
 ### 2.2 增益函数设计：几何扩散补偿 + 饱和指数衰减补偿（BSEC）
-同时兼顾“按回波时延”或“按等价双程成像距离 $y_{\text{eq}}(\tau) = c_0 \tau / 2$”两种表达，定义统一光滑**有界双分量增益函数** $W_{\text{comp}}(\tau)$（直接作用于 $\tau \in [0, 30\text{ ns})$ 成像时延窗内，且严格限制最大值以防晚时噪声爆炸）：
-$$W_{\text{comp}}(\tau; \beta, \alpha_{\text{gain}}) = \left(\frac{\tau_{\text{clip}}(\tau)}{\tau_0}\right)^{\beta} \cdot \exp\!\Big(\alpha_{\text{gain}}\, \big[\tau_{\text{clip}}(\tau) - \tau_0\big]_+\Big),$$
-$$\tau_{\text{clip}}(\tau) = \min\!\big(\max(\tau, \tau_0),\ \tau_{\text{sat}}\big), \qquad [u]_+ = \max(u, 0).$$
+同时兼顾“按回波时延”或“按等价双程单程成像深度 $y_{\text{eq}}(\tau) = c_0 \tau / 2$”两种表达，定义两步截断的**有界双分量增益函数** $W_{\text{comp}}(\tau)$（直接作用于压缩响应并严格施加独立幅度封顶以防噪声过度放大）：
+$$W_{\text{raw}}(\tau; \beta, \alpha_{\text{gain}}) = \left(\frac{\tau_{\text{clip}}(\tau)}{\tau_0}\right)^{\beta} \cdot \exp\!\Big(10^9\alpha_{\text{gain}}\, \big[\tau_{\text{clip}}(\tau) - \tau_0\big]_+\Big),$$
+$$W_{\text{comp}}(\tau; \beta, \alpha_{\text{gain}}, G_{\text{cap}}) = \min\!\big(G_{\text{cap}},\ W_{\text{raw}}(\tau; \beta, \alpha_{\text{gain}})\big),$$
+$$\tau_{\text{clip}}(\tau) = \min\!\big(\max(\tau, \tau_0),\ \tau_{\text{sat}}\big), \qquad [u]_+ = \max(u, 0),$$
+其中 $\tau$ 单位为秒（$\text{s}$），$10^9 \tau$ 为纳秒（$\text{ns}$）。
 
 **各参数物理含义与固定边界**：
 - **起点保护时延 $\tau_0 = 2 y_0 / c_0$**：基线取 $y_0 = 0.25\text{ m}$（$\tau_0 \approx 1.668\text{ ns}$），位于主要目标搜索起始区且避开最近直射波残余区，保证 $\tau \le \tau_0$ 内增益恒为 $1.0$（不放大残余直射波泄漏）。
-- **饱和截断时延 $\tau_{\text{sat}} = 2 y_{\text{sat}} / c_0$**：取 $y_{\text{sat}} = 2.60\text{ m}$（$\tau_{\text{sat}} \approx 17.35\text{ ns}$，略高于成像边界 $y_{\max}=2.50\text{ m}$ 的最大双程斜距对应延迟）；对于 $\tau > \tau_{\text{sat}}$（包含背景代理窗 $\mathcal{W}_{\text{bg}}=[50, 950]\text{ ns}$），增益锁定为常上限 $G_{\text{cap}} = W_{\text{comp}}(\tau_{\text{sat}})$，不随 $\tau$ 发散。
-- **几何扩散幂指数 $\beta \in \{0.0, 1.0, 1.5\}$**：$\beta = 1.0$ 严格对应平面镜面波 $1/R$ 幅度衰减的逆补偿（$y_{\text{eq}}$ 从 $0.45\text{ m}$ 到 $2.00\text{ m}$ 提供约 $+13\text{ dB}$ 能量补偿）；$\beta = 0.0$ 与 $1.5$ 用作模型对比与灵敏度校验。
-- **介质/超额衰减补偿率 $\alpha_{\text{gain}} \ge 0$（单位 $\text{ns}^{-1}$，等价距离衰减系数 $\tilde{\alpha}_y = \frac{c_0}{2}\alpha_{\text{gain}}\ \text{Np/m}$ 或 $8.686\,\tilde{\alpha}_y\ \text{dB/m}$）**：
-  - 候选小网格：$\alpha_{\text{gain}} \in \{0.0, 0.04, 0.08, 0.12, 0.16, 0.20\}\text{ ns}^{-1}$（在 $\tau_0 = 1.67\text{ ns}$ 至 $\tau_B \approx 13.34\text{ ns}$ 间提供 $0\text{ dB}$ 至 $+20.3\text{ dB}$ 额外幅度增益），硬约束总最大幅度增益上限 $G_{\text{cap}} \le 20.0$（$26\text{ dB}$ 幅度 / $52\text{ dB}$ 能量），禁止无上限放大噪声。
+- **选定饱和深度对应的平台时延 $\tau_{\text{sat}} = 2 y_{\text{sat}} / c_0$ 与硬上限 $G_{\text{cap}}$ 的区分**：
+  取法向参考饱和深度 $y_{\text{sat}} = 2.60\text{ m}$（$\tau_{\text{sat}} \approx 17.345\text{ ns}$）。注意在完整二维边界斜距处（如大扫描偏移角下斜距对应的双程时延 $\tau_{\text{oblique}} \approx 20\text{–}24\text{ ns}$），真实双程时延**可超过** $\tau_{\text{sat}}$；因此 $\tau_{\text{sat}}$ 仅表示指数/幂律随法向深度增长的饱和平台时延（在此之后先封顶未裁减值 $W_{\text{raw}}(\tau_{\text{sat}})$），再通过独立硬上限 $G_{\text{cap}}$（默认 $G_{\text{cap}} = 20.0$）保证全二维斜角像素及晚时背景窗 $[50, 950]\text{ ns}$ 增益**严格有界 $\le G_{\text{cap}}$**。当 $(\beta, \alpha_{\text{gain}})$ 较大使得 $W_{\text{raw}}(\tau_{\text{sat}}) > G_{\text{cap}}$ 时（例如 $\beta=1.0, \alpha_{\text{gain}}=0.14\text{ ns}^{-1}$ 时 $W_{\text{raw}}(\tau_{\text{sat}}) \approx 93.45 > 20.0$），硬截断 $G_{\text{cap}}$ 会提前生效并取代未截断饱和值 $W_{\text{raw}}(\tau_{\text{sat}})$。
+- **几何扩散幂指数 $\beta \in \{0.0, 1.0, 1.5\}$**：$\beta = 1.0$ 对应平面镜面反射 $1/R$ 幅度衰减的逆补偿（未计指数项时，$y_{\text{eq}}$ 从 $0.45\text{ m}$ 到 $2.00\text{ m}$ 提供约 $+12.96\text{ dB}$ 补偿）；$\beta = 0.0$ 与 $1.5$ 用作模型对比与灵敏度校验。
+- **超额衰减补偿率 $\alpha_{\text{gain}} \ge 0$（单位 $\text{ns}^{-1}$）及精确空间换算**：
+  由 $10^9 \alpha_{\text{gain}} \tau = \big(10^9\alpha_{\text{gain}}\frac{2}{c_0}\big) y_{\text{eq}}$，按等价单程深度 $y_{\text{eq}} = c_0\tau/2$ 折算的距离指数系数为：
+  $$\tilde{\alpha}_y = \frac{2 \times 10^9}{c_0}\,\alpha_{\text{gain}}\quad (\text{m}^{-1}),$$
+  对应的幅度增益斜率（按 $20\log_{10}(e)$ 换算）及平方能量剖面 $I_{\text{2D}} \propto W_{\text{comp}}^2$ 的功率增益斜率（按 $10\log_{10}(e^2) = 20\log_{10}(e)$ 换算，二者完全一致）均为：
+  $$20\log_{10}(e)\cdot \tilde{\alpha}_y \approx 8.68589\cdot \frac{2 \times 10^9}{c_0}\,\alpha_{\text{gain}} \approx 57.946\,\alpha_{\text{gain}}\quad (\text{dB/m}).$$
+  - 候选小网格：$\alpha_{\text{gain}} \in \{0.0, 0.04, 0.08, 0.12, 0.14, 0.20\}\text{ ns}^{-1}$（在未触及 $G_{\text{cap}}$ 前，$\tau_0=1.668\text{ ns}$ 至 $\tau_B=13.343\text{ ns}$ 间仅指数项 $\exp(\alpha_{\text{gain}}\Delta\tau_{\text{ns}})$ 贡献 $0\text{ dB}$ 至 $+20.28\text{ dB}$）；硬上限 $G_{\text{cap}} = 20.0$ 对应的**幅度比**与**平方能量剖面 $I_{\text{2D}}$ 的功率比**均为 **$20\log_{10}(20) = 10\log_{10}(20^2) \approx +26.02\text{ dB}$**。
 
 ### 2.3 替代方案对比与无目标真值选参准则
 - **为什么不采用无界指数 AGC（如传统 SEC）或逐时刻瞬时 AGC？**

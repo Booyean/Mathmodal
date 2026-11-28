@@ -65,8 +65,39 @@ def gain_bsec(
     tau_sat = 2.0 * y_sat_m / C0
     tau_clip = np.clip(tau_s, tau0, tau_sat)
     tau_ns_excess = np.maximum(tau_clip - tau0, 0.0) * 1.0e9
-    g = ((tau_clip / tau0) ** beta) * np.exp(alpha_gain_per_ns * tau_ns_excess)
-    return np.minimum(g, g_cap)
+    g_raw = ((tau_clip / tau0) ** beta) * np.exp(alpha_gain_per_ns * tau_ns_excess)
+    return np.minimum(g_cap, g_raw)
+
+
+def verify_gain_contract_and_units() -> None:
+    """Non-vacuous unit checks distinguishing W_raw(tau_sat) vs G_cap and ns^-1 -> m^-1 conversion."""
+    tau0 = 2.0 * 0.25 / C0
+    tau_sat = 2.0 * 2.60 / C0
+    # 1. Dimensional conversion: exp(1e9 * alpha_ns * tau_s) == exp(alpha_y_m * y_eq) for y_eq = c0*tau/2
+    alpha_ns = 0.14
+    alpha_y_per_m = (2.0e9 / C0) * alpha_ns
+    tau_test_s = 10.0e-9
+    y_eq_m = 0.5 * C0 * tau_test_s
+    lhs = math.exp((1.0e9 * alpha_ns) * tau_test_s)
+    rhs = math.exp(alpha_y_per_m * y_eq_m)
+    assert math.isclose(lhs, rhs, rel_tol=1e-12), f"Conversion mismatch: {lhs} != {rhs}"
+    db_per_m_amp = 20.0 * math.log10(math.e) * alpha_y_per_m
+    db_per_m_pwr = 10.0 * math.log10(math.e ** 2) * alpha_y_per_m
+    assert math.isclose(db_per_m_amp, db_per_m_pwr, rel_tol=1e-12)
+
+    # 2. Regime A: cap G_cap=20 NOT active at tau_sat (alpha=0.04 => W_raw(tau_sat) < 20)
+    tau_oblique = 23.6e-9  # oblique 2D corner > tau_sat (~17.345 ns)
+    g_a = gain_bsec(np.array([tau_sat, tau_oblique]), beta=1.0, alpha_gain_per_ns=0.04, g_cap=20.0)
+    w_raw_a = (tau_sat / tau0) * math.exp(0.04 * (tau_sat - tau0) * 1e9)
+    assert w_raw_a < 20.0 and math.isclose(g_a[0], w_raw_a, rel_tol=1e-12) and math.isclose(g_a[1], g_a[0], rel_tol=1e-12)
+
+    # 3. Regime B: hard cap G_cap=20 active BEFORE tau_sat (alpha=0.14 => W_raw(tau_sat) > 20)
+    w_raw_b = (tau_sat / tau0) * math.exp(0.14 * (tau_sat - tau0) * 1e9)
+    g_b = gain_bsec(np.array([0.5e-9, tau_sat, tau_oblique, 500.0e-9]), beta=1.0, alpha_gain_per_ns=0.14, g_cap=20.0)
+    assert w_raw_b > 90.0, f"Expected W_raw(tau_sat) >> G_cap=20, got {w_raw_b}"
+    assert math.isclose(g_b[0], 1.0, abs_tol=1e-12)
+    assert math.isclose(g_b[1], 20.0, abs_tol=1e-12) and math.isclose(g_b[2], 20.0, abs_tol=1e-12)
+    assert math.isclose(20.0 * math.log10(g_b[1]), 10.0 * math.log10(g_b[1] ** 2), rel_tol=1e-12)
 
 
 def aperture_weight(dx: np.ndarray, dy: np.ndarray, deg_flat: float = 35.0, deg_cut: float = 45.0) -> np.ndarray:
@@ -249,11 +280,8 @@ def main() -> None:
     assert math.isclose(coords[27, 2], 0.545, abs_tol=1e-9)
     assert math.isclose(coords[28, 0], -0.07, abs_tol=1e-9)
 
-    # 2. Verify bounded gain caps properly
-    tau_probe = np.array([0.5e-9, 13.34e-9, 20.0e-9, 500.0e-9])
-    g_probe = gain_bsec(tau_probe, beta=1.0, alpha_gain_per_ns=0.14, g_cap=20.0)
-    assert math.isclose(g_probe[0], 1.0, abs_tol=1e-9), "Direct-wave transition zone must stay unity"
-    assert g_probe[2] <= 20.0 and g_probe[3] == g_probe[2], "Late-delay gain must saturate cleanly"
+    # 2. Verify bounded gain caps properly (distinguishing W_raw(tau_sat) vs G_cap and unit conversion)
+    verify_gain_contract_and_units()
 
     # 3. Run synthetic dual-wall closed-loop simulation & compare before/after gain
     x_scan, p_rx_loc, z_mf = simulate_dual_wall_synthetic(coords, row4_rx, band, f_d, f_r, s_b)
