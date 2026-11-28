@@ -242,7 +242,7 @@ def _build_valid_d0_synthetic_corpus(
     return manifest_path, overall_sha, counts
 
 
-def _make_synthetic_q1_dir(q1_dir: Path, *, frozen: bool) -> None:
+def _make_synthetic_q1_dir(q1_dir: Path, *, frozen: bool, eligible: bool = True) -> None:
     q1_dir.mkdir(parents=True, exist_ok=True)
     band_mask, _, f_r, _ = Q23C.make_reference_band()
     band_idx = np.flatnonzero(band_mask)
@@ -259,30 +259,109 @@ def _make_synthetic_q1_dir(q1_dir: Path, *, frozen: bool) -> None:
     inv_op = np.ones((len(all_rx), len(band_idx)), dtype=np.complex128)
     xbar_air_cal = np.broadcast_to(ref_spec[None, :], (len(all_rx), len(band_idx))).copy()
 
+    arrays_path = q1_dir / "e0c_arrays.npz"
     Q23C.save_npz_deterministic(
-        q1_dir / "e0c_arrays.npz",
+        arrays_path,
         {
             "inv_op": inv_op,
             "xbar_air_cal": xbar_air_cal,
             "freq_rf_hz": f_r,
             "tau_dir_s": tau_dir,
             "r_dir_m": r_dir,
+            "lambda_grid_cal": np.array([1e-4, 1e-3, 1e-2], dtype=np.float64),
+            "lambda_grid_inv": np.array([1e-4, 1e-3, 1e-2], dtype=np.float64),
         },
     )
-    (q1_dir / "e0c_results.json").write_bytes((json.dumps({"status": "synthetic_q1"}) + "\n").encode("utf-8"))
+    arr_sha = _sha256_file(arrays_path)
+    impl_sha = "a" * 40
+    res_obj = {
+        "status": "eligible" if eligible else "hard_stop",
+        "implementation_sha": impl_sha,
+        "arrays_file": "e0c_arrays.npz",
+        "arrays_sha256": arr_sha,
+        "arrays_file_sha256": arr_sha,
+        "config_sha256": "c" * 64,
+        "plan_sha256": "p" * 64,
+        "split_sha256": "s" * 64,
+        "freeze": {
+            "eligible": bool(eligible),
+            "status": "eligible" if eligible else "hard_stop",
+            "lambda_cal": 1e-3,
+            "lambda_inv": 1e-3,
+            "eta_wall": 0.25,
+        },
+    }
+    res_path = q1_dir / "e0c_results.json"
+    res_path.write_bytes((json.dumps(res_obj, indent=2) + "\n").encode("utf-8"))
+    res_sha = _sha256_file(res_path)
+    sums = {"e0c_arrays.npz": arr_sha, "e0c_results.json": res_sha}
     if frozen:
-        (q1_dir / "e0c_frozen.json").write_bytes(
-            (
-                json.dumps(
-                    {
-                        "implementation_sha": "a" * 40,
-                        "lambdas": [1e-3, 1e-3],
-                        "eta_wall": 0.25,
-                    }
-                )
-                + "\n"
-            ).encode("utf-8")
-        )
+        frozen_obj = {
+            "implementation_sha": impl_sha,
+            "lambdas": [1e-3, 1e-3],
+            "lambda_cal": 1e-3,
+            "lambda_inv": 1e-3,
+            "eta_wall": 0.25,
+            "config_sha256": "c" * 64,
+            "config_sha256_match": True,
+            "plan_sha256": "p" * 64,
+            "plan_sha256_match": True,
+            "split_sha256": "s" * 64,
+            "split_sha256_match": True,
+            "results_file": "e0c_results.json",
+            "results_sha256": res_sha,
+            "arrays_sha256": arr_sha,
+        }
+        frz_path = q1_dir / "e0c_frozen.json"
+        frz_path.write_bytes((json.dumps(frozen_obj, indent=2) + "\n").encode("utf-8"))
+        sums["e0c_frozen.json"] = _sha256_file(frz_path)
+    (q1_dir / "SHA256SUMS.txt").write_bytes(
+        ("\n".join(f"{v}  {k}" for k, v in sorted(sums.items())) + "\n").encode("utf-8")
+    )
+
+
+def _write_approval_registry(path: Path) -> Path:
+    payload = {
+        "schema_version": 1,
+        "approvals": {
+            "CODEX-S1-D1-TEST": {
+                "approval_ref": "CODEX-S1-D1-TEST",
+                "status": "approved",
+                "approved_by": "codex",
+                "scope": "S2-d1-audit",
+                "allowed_modes": ["d1-audit"],
+                "diagnostic_only": False,
+            },
+            "CODEX-S1-EXEC-TEST": {
+                "approval_ref": "CODEX-S1-EXEC-TEST",
+                "status": "approved",
+                "approved_by": "codex",
+                "scope": "S3-A-execute",
+                "allowed_modes": ["execute"],
+                "diagnostic_only": False,
+                "allow_unfrozen_q1_diagnostic": False,
+            },
+            "CODEX-S1-DIAG-TEST": {
+                "approval_ref": "CODEX-S1-DIAG-TEST",
+                "status": "approved",
+                "approved_by": "codex",
+                "scope": "S3-B-diagnostic",
+                "allowed_modes": ["execute-diagnostic"],
+                "diagnostic_only": True,
+                "allow_unfrozen_q1_diagnostic": True,
+            },
+            "CODEX-PENDING": {
+                "approval_ref": "CODEX-PENDING",
+                "status": "pending",
+                "approved_by": "codex",
+                "scope": "S2-d1-audit",
+                "allowed_modes": ["d1-audit"],
+                "diagnostic_only": False,
+            },
+        },
+    }
+    path.write_bytes((json.dumps(payload, indent=2) + "\n").encode("utf-8"))
+    return path
 
 
 def _worker_cmd_with_synthetic_anchor(
@@ -468,29 +547,39 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             out_dir.mkdir(parents=True, exist_ok=True)
             unfrozen_q1 = tmp / "q1_unfrozen"
             frozen_q1 = tmp / "q1_frozen"
-            _make_synthetic_q1_dir(unfrozen_q1, frozen=False)
-            _make_synthetic_q1_dir(frozen_q1, frozen=True)
+            _make_synthetic_q1_dir(unfrozen_q1, frozen=False, eligible=False)
+            _make_synthetic_q1_dir(frozen_q1, frozen=True, eligible=True)
+            app_reg = _write_approval_registry(tmp / "approvals.json")
 
             # 1) Missing --approval-ref -> exit 2 for both d1-audit and execute
             for mode, extra in (("d1-audit", []), ("execute", ["--q1-dir", str(frozen_q1)])):
                 p = subprocess.run(
-                    [sys.executable, runner, "--mode", mode, "--data-root", str(data_root), "--manifest", str(manifest_path), "--out", str(out_dir), *extra],
+                    [sys.executable, runner, "--mode", mode, "--approval-record", str(app_reg), "--data-root", str(data_root), "--manifest", str(manifest_path), "--out", str(out_dir), *extra],
                     capture_output=True,
                     text=True,
                 )
                 self.assertEqual(p.returncode, 2, f"{mode} without approval-ref must exit 2: {p.stderr}")
 
-            # 2) Blank --approval-ref -> exit 2
-            p_blank = subprocess.run(
-                [sys.executable, runner, "--mode", "d1-audit", "--approval-ref", "   ", "--out", str(out_dir)],
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(p_blank.returncode, 2)
+            # 2) Blank / missing approval-record / pending status / wrong scope / diagnostic isolation -> exit 2
+            bad_cases = [
+                ["--mode", "d1-audit", "--approval-ref", "   ", "--approval-record", str(app_reg)],
+                ["--mode", "d1-audit", "--approval-ref", "CODEX-S1-D1-TEST", "--approval-record", str(tmp / "missing_app.json")],
+                ["--mode", "d1-audit", "--approval-ref", "CODEX-PENDING", "--approval-record", str(app_reg)],
+                ["--mode", "execute", "--approval-ref", "CODEX-S1-D1-TEST", "--approval-record", str(app_reg), "--q1-dir", str(frozen_q1)],
+                ["--mode", "execute", "--approval-ref", "CODEX-S1-EXEC-TEST", "--approval-record", str(app_reg), "--q1-dir", str(unfrozen_q1), "--allow-unfrozen-q1-diagnostic"],
+                ["--mode", "execute", "--approval-ref", "CODEX-S1-DIAG-TEST", "--approval-record", str(app_reg), "--q1-dir", str(frozen_q1)],
+            ]
+            for extra_args in bad_cases:
+                p_bad = subprocess.run(
+                    [sys.executable, runner, *extra_args, "--out", str(out_dir)],
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(p_bad.returncode, 2, f"Expected exit 2 for {extra_args}: {p_bad.stderr}")
 
             # 3) --repeat-runs != 2 on execute -> exit 2
             p_rep = subprocess.run(
-                [sys.executable, runner, "--mode", "execute", "--approval-ref", "CODEX-TEST", "--repeat-runs", "1", "--q1-dir", str(frozen_q1), "--out", str(out_dir)],
+                [sys.executable, runner, "--mode", "execute", "--approval-ref", "CODEX-S1-EXEC-TEST", "--approval-record", str(app_reg), "--repeat-runs", "1", "--q1-dir", str(frozen_q1), "--out", str(out_dir)],
                 capture_output=True,
                 text=True,
             )
@@ -498,7 +587,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
 
             # 4) execute without e0c_frozen.json -> exit 2
             p_unfrozen = subprocess.run(
-                [sys.executable, runner, "--mode", "execute", "--approval-ref", "CODEX-TEST", "--repeat-runs", "2", "--q1-dir", str(unfrozen_q1), "--out", str(out_dir)],
+                [sys.executable, runner, "--mode", "execute", "--approval-ref", "CODEX-S1-EXEC-TEST", "--approval-record", str(app_reg), "--repeat-runs", "2", "--q1-dir", str(unfrozen_q1), "--out", str(out_dir)],
                 capture_output=True,
                 text=True,
             )
@@ -513,19 +602,88 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             sha_q2_before = _sha256_file(sentinel_q2)
 
             p_ov1 = subprocess.run(
-                [sys.executable, runner, "--mode", "d1-audit", "--approval-ref", "CODEX-TEST", "--out", str(out_dir)],
+                [sys.executable, runner, "--mode", "d1-audit", "--approval-ref", "CODEX-S1-D1-TEST", "--approval-record", str(app_reg), "--out", str(out_dir)],
                 capture_output=True,
                 text=True,
             )
             self.assertEqual(p_ov1.returncode, 2)
             p_ov2 = subprocess.run(
-                [sys.executable, runner, "--mode", "execute", "--approval-ref", "CODEX-TEST", "--repeat-runs", "2", "--q1-dir", str(frozen_q1), "--out", str(out_dir)],
+                [sys.executable, runner, "--mode", "execute", "--approval-ref", "CODEX-S1-EXEC-TEST", "--approval-record", str(app_reg), "--repeat-runs", "2", "--q1-dir", str(frozen_q1), "--out", str(out_dir)],
                 capture_output=True,
                 text=True,
             )
             self.assertEqual(p_ov2.returncode, 2)
             self.assertEqual(_sha256_file(sentinel_d1), sha_d1_before)
             self.assertEqual(_sha256_file(sentinel_q2), sha_q2_before)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_q1_frozen_binding_and_diagnostic_approval_isolation(self) -> None:
+        tmp = _make_tmp_dir("q1bind")
+        try:
+            data_root = tmp / "A_ROOT"
+            manifest_path, overall_sha, counts = _write_dummy_dat_corpus(
+                data_root, n_wall_groups=1, n_metal_groups=1, include_orphan=True
+            )
+            app_reg = _write_approval_registry(tmp / "approvals.json")
+
+            # Valid frozen bundle passes
+            q1_ok = tmp / "q1_ok"
+            _make_synthetic_q1_dir(q1_ok, frozen=True, eligible=True)
+            ok, info = PF2.verify_q1_calibration_bundle(q1_ok, allow_unfrozen_q1_diagnostic=False)
+            self.assertTrue(ok, info)
+
+            # Separate diagnostic approval works ONLY with diagnostic mode
+            ok_diag, _ = PF2.verify_approval_authorization(
+                repo=REPO,
+                mode="execute",
+                approval_ref="CODEX-S1-DIAG-TEST",
+                approval_record_path=app_reg,
+                allow_unfrozen_q1_diagnostic=True,
+            )
+            self.assertTrue(ok_diag)
+
+            # Tamper cases on Q1 frozen <-> results <-> NPZ calibration binding
+            # Case A: e0c_results.json has freeze.eligible=False even though e0c_frozen.json exists
+            q1_inelig = tmp / "q1_inelig"
+            _make_synthetic_q1_dir(q1_inelig, frozen=True, eligible=False)
+            ok_a, _ = PF2.verify_q1_calibration_bundle(q1_inelig, allow_unfrozen_q1_diagnostic=False)
+            self.assertFalse(ok_a)
+
+            # Case B: lambda_cal mismatch between e0c_frozen.json and e0c_results.json
+            q1_lam = tmp / "q1_lam"
+            _make_synthetic_q1_dir(q1_lam, frozen=True, eligible=True)
+            frz = json.loads((q1_lam / "e0c_frozen.json").read_text(encoding="utf-8"))
+            frz["lambdas"] = [1e-2, 1e-3]
+            frz["lambda_cal"] = 1e-2
+            (q1_lam / "e0c_frozen.json").write_bytes((json.dumps(frz) + "\n").encode("utf-8"))
+            ok_b, _ = PF2.verify_q1_calibration_bundle(q1_lam, allow_unfrozen_q1_diagnostic=False)
+            self.assertFalse(ok_b)
+
+            # Case C: e0c_arrays.npz replaced/tampered after freeze -> arrays_sha256 mismatch
+            q1_arr = tmp / "q1_arr"
+            _make_synthetic_q1_dir(q1_arr, frozen=True, eligible=True)
+            with np.load(q1_arr / "e0c_arrays.npz", allow_pickle=False) as src:
+                arrs = {k: src[k].copy() for k in src.files}
+            arrs["inv_op"] = arrs["inv_op"] * 2.0
+            Q23C.save_npz_deterministic(q1_arr / "e0c_arrays.npz", arrs)
+            ok_c, _ = PF2.verify_q1_calibration_bundle(q1_arr, allow_unfrozen_q1_diagnostic=False)
+            self.assertFalse(ok_c)
+
+            # Case D: preflight rejects when q1_frozen_sha256 doesn't match approval record binding
+            res_pre = PF2.run_preflight(
+                repo=REPO,
+                data_root=data_root,
+                manifest_path=manifest_path,
+                mode="execute",
+                q1_dir=q1_arr,
+                approval_ref="CODEX-S1-EXEC-TEST",
+                approval_record_path=app_reg,
+                expected_manifest_overall_sha256=overall_sha,
+                expected_counts=counts,
+            )
+            self.assertFalse(res_pre["preconditions_pass"])
+            self.assertIn("q1.dependency", res_pre["summary"]["blocking_ids"])
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
@@ -536,6 +694,7 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             manifest_path, overall_sha, counts = _build_valid_d0_synthetic_corpus(
                 data_root, n_wall=3, n_metal=8, inject_group8_neg32768=True, plant_echoes=False
             )
+            app_reg = _write_approval_registry(tmp / "approvals.json")
             out_dir = tmp / "d1_audit_out"
             base_argv = [
                 "--repo",
@@ -546,6 +705,8 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
                 str(manifest_path),
                 "--approval-ref",
                 "CODEX-S1-D1-TEST",
+                "--approval-record",
+                str(app_reg),
             ]
             manifest = RUN.run_two_independent_runs(
                 worker_mode="d1-audit-worker",
@@ -605,6 +766,22 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             _assert_rejected(lambda m: m["runs"][1].update({"results_file": m["runs"][0]["results_file"]}))
             _assert_rejected(lambda m: m["runs"][1].update({"digest_sha256": "0" * 64}))
             _assert_rejected(lambda m: m["runs"][1].update({"results_sha256": "f" * 64}))
+
+            # Negative test proving digest_sha256 is recomputed from actual on-disk artifact (fake digest rejected)
+            run2_path = out_dir / runs[1]["results_file"]
+            orig_run2_bytes = run2_path.read_bytes()
+            tampered_run2 = json.loads(orig_run2_bytes.decode("utf-8"))
+            tampered_run2["groups"][0]["p_common"] = 99
+            run2_path.write_bytes((json.dumps(tampered_run2, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
+            fake_rep = copy.deepcopy(manifest)
+            fake_rep["runs"][1]["results_sha256"] = _sha256_file(run2_path)
+            rep_path.write_bytes((json.dumps(fake_rep, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
+            try:
+                with self.assertRaises(RUN.Q2Q3Stop):
+                    RUN.verify_repeat_manifest(out_dir)
+            finally:
+                run2_path.write_bytes(orig_run2_bytes)
+                rep_path.write_text(orig_rep, encoding="utf-8")
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
@@ -616,7 +793,8 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
                 data_root, n_wall=3, n_metal=3, inject_group8_neg32768=False, plant_echoes=True
             )
             q1_dir = tmp / "q1_frozen"
-            _make_synthetic_q1_dir(q1_dir, frozen=True)
+            _make_synthetic_q1_dir(q1_dir, frozen=True, eligible=True)
+            app_reg = _write_approval_registry(tmp / "approvals.json")
             out_dir = tmp / "exec_out"
             base_argv = [
                 "--repo",
@@ -629,6 +807,8 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
                 str(q1_dir),
                 "--approval-ref",
                 "CODEX-S1-EXEC-TEST",
+                "--approval-record",
+                str(app_reg),
             ]
             # Use coarse solver grid inside synthetic test so dual subprocess run finishes in a few seconds
             coarse_override = (
@@ -660,9 +840,68 @@ class TestQ2Q3S1Toolchain(unittest.TestCase):
             self.assertEqual(q2_res["real_dat_files_read"], 24)
             self.assertEqual(q3m_res["real_dat_files_read"], 25)
             self.assertEqual(q3m_res["anomaly_isolation"]["orphan_skipped"]["count"], 1)
+            self.assertEqual(q2_res["q1_arrays_sha256"], _sha256_file(q1_dir / "e0c_arrays.npz"))
+            self.assertEqual(q2_res["q1_implementation_sha"], "a" * 40)
             for line in (out_dir / "SHA256SUMS.txt").read_text(encoding="utf-8").splitlines():
                 dig, fn = line.split(None, 1)
                 self.assertEqual(_sha256_file(out_dir / fn.strip()), dig)
+
+            # Negative recomputation check: tamper run-2 q2_results.json without changing q2q3_summary digest
+            r2_q2_path = out_dir / "repeat_runs" / "run-2" / "q2_results.json"
+            orig_r2_q2 = r2_q2_path.read_bytes()
+            bad_q2 = json.loads(orig_r2_q2.decode("utf-8"))
+            bad_q2["row_consistency"]["max_row_diff_cm"] += 1.0
+            r2_q2_path.write_bytes((json.dumps(bad_q2, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
+            try:
+                with self.assertRaises(RUN.Q2Q3Stop):
+                    RUN.verify_repeat_manifest(out_dir)
+            finally:
+                r2_q2_path.write_bytes(orig_r2_q2)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_gitattributes_lf_checkout_on_windows_autocrlf_true(self) -> None:
+        tmp = _make_tmp_dir("git_lf")
+        try:
+            subprocess.run(["git", "init", str(tmp)], check=True, capture_output=True, text=True)
+            subprocess.run(["git", "-C", str(tmp), "config", "core.autocrlf", "true"], check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(tmp), "config", "user.email", "test@example.com"], check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(tmp), "config", "user.name", "Test"], check=True, capture_output=True)
+            shutil.copy2(REPO / ".gitattributes", tmp / ".gitattributes")
+
+            targets = [
+                tmp / "experiments/A/A-Q2Q3-EMP/results/q2_results.json",
+                tmp / "experiments/A/A-Q2Q3-EMP/results/run.log",
+                tmp / "experiments/A/A-Q2Q3-EMP/d1_audit/q2q3_d1_audit.json",
+                tmp / "experiments/A/A-Q2Q3-EMP/results/repeat_runs/run-2/q2_results.json",
+            ]
+            for p in targets:
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_bytes(b'{\n  "line": "lf_locked"\n}\n')
+
+            sums_res = tmp / "experiments/A/A-Q2Q3-EMP/results/SHA256SUMS.txt"
+            sums_res.write_bytes(
+                f"{_sha256_file(targets[0])}  q2_results.json\n{_sha256_file(targets[1])}  run.log\n".encode("utf-8")
+            )
+            sums_d1 = tmp / "experiments/A/A-Q2Q3-EMP/d1_audit/SHA256SUMS.txt"
+            sums_d1.write_bytes(f"{_sha256_file(targets[2])}  q2q3_d1_audit.json\n".encode("utf-8"))
+
+            subprocess.run(["git", "-C", str(tmp), "add", "."], check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(tmp), "commit", "-m", "test lf"], check=True, capture_output=True)
+
+            # Force a clean checkout from index under core.autocrlf=true
+            for p in [*targets, sums_res, sums_d1]:
+                p.unlink()
+            subprocess.run(["git", "-C", str(tmp), "checkout", "--", "."], check=True, capture_output=True)
+
+            for p in [*targets, sums_res, sums_d1]:
+                raw = p.read_bytes()
+                self.assertNotIn(b"\r\n", raw, f"CRLF leaked on clean checkout: {p}")
+
+            for sums_file in (sums_res, sums_d1):
+                for line in sums_file.read_text(encoding="utf-8").splitlines():
+                    dig, fn = line.split(None, 1)
+                    self.assertEqual(_sha256_file(sums_file.parent / fn.strip()), dig)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 

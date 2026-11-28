@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import platform
 import re
@@ -25,6 +26,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
+
+import numpy as np
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[1]
@@ -210,6 +213,410 @@ def check_code_and_contracts(repo: Path, ck: PF.Checker) -> bool:
     return runner_present
 
 
+DEFAULT_APPROVAL_RECORD_REL = Path("coordination/A_Q2Q3_APPROVALS.json")
+
+
+def _resolve_inside_dir(base_dir: Path, rel: str) -> Optional[Path]:
+    base_res = base_dir.resolve()
+    cand = (base_res / str(rel)).resolve()
+    try:
+        cand.relative_to(base_res)
+    except ValueError:
+        return None
+    return cand
+
+
+def verify_approval_authorization(
+    *,
+    repo: Path,
+    mode: str,
+    approval_ref: Optional[str],
+    approval_record_path: Optional[Path] = None,
+    allow_unfrozen_q1_diagnostic: bool = False,
+    q1_frozen_sha256: Optional[str] = None,
+    q1_arrays_sha256: Optional[str] = None,
+) -> Tuple[bool, Dict[str, Any]]:
+    """Verify approval status, approver, and mode/diagnostic scope from an explicit approval JSON record."""
+    if not approval_ref or not str(approval_ref).strip():
+        return False, {"reason": "缺少非空 --approval-ref", "approval_ref": approval_ref}
+    ref = str(approval_ref).strip()
+
+    rec_path = approval_record_path if approval_record_path is not None else (repo / DEFAULT_APPROVAL_RECORD_REL)
+    if not rec_path.is_file():
+        return False, {
+            "reason": f"缺少审批登记文件：{rec_path}（需由统筹签发带状态与范围的审批记录）",
+            "approval_ref": ref,
+            "approval_record": str(rec_path),
+        }
+    try:
+        raw = PF.load_json(rec_path)
+    except Exception as exc:
+        return False, {
+            "reason": f"审批登记文件不可解析：{exc}",
+            "approval_ref": ref,
+            "approval_record": str(rec_path),
+        }
+
+    record: Optional[Dict[str, Any]] = None
+    if isinstance(raw, dict):
+        if "approval_ref" in raw and str(raw.get("approval_ref")) == ref:
+            record = raw
+        elif isinstance(raw.get("approvals"), dict) and ref in raw["approvals"]:
+            cand = raw["approvals"][ref]
+            if isinstance(cand, dict):
+                record = cand
+        elif ref in raw and isinstance(raw[ref], dict):
+            record = raw[ref]
+
+    if record is None or str(record.get("approval_ref", "")) != ref:
+        return False, {
+            "reason": f"审批记录 {rec_path} 中未匹配到 approval_ref={ref!r}",
+            "approval_ref": ref,
+            "approval_record": str(rec_path),
+        }
+
+    status = str(record.get("status", "")).strip()
+    if status != "approved":
+        return False, {
+            "reason": f"审批状态 status={status!r} != 'approved'，拒绝执行",
+            "approval_ref": ref,
+            "status": status,
+        }
+
+    approved_by = str(record.get("approved_by", "")).strip()
+    if not approved_by:
+        return False, {"reason": "审批记录缺少非空 approved_by", "approval_ref": ref}
+
+    allowed_modes = record.get("allowed_modes")
+    if not isinstance(allowed_modes, list) or not allowed_modes:
+        return False, {"reason": "审批记录缺少 allowed_modes 范围列表", "approval_ref": ref}
+
+    diag_only = bool(record.get("diagnostic_only", False))
+    diag_flag_allowed = bool(record.get("allow_unfrozen_q1_diagnostic", False))
+
+    if mode in ("d1-audit", "d1-audit-worker"):
+        if "d1-audit" not in allowed_modes or diag_only:
+            return False, {
+                "reason": f"审批范围 {allowed_modes!r} (diagnostic_only={diag_only}) 未授权 d1-audit",
+                "approval_ref": ref,
+                "allowed_modes": allowed_modes,
+            }
+    elif mode in ("execute", "execute-worker"):
+        if allow_unfrozen_q1_diagnostic:
+            if "execute-diagnostic" not in allowed_modes or not diag_only or not diag_flag_allowed:
+                return False, {
+                    "reason": (
+                        "诊断试跑（--allow-unfrozen-q1-diagnostic）必须使用单独批准"
+                        "（allowed_modes 含 'execute-diagnostic' 且 diagnostic_only=true, allow_unfrozen_q1_diagnostic=true）"
+                    ),
+                    "approval_ref": ref,
+                    "allowed_modes": allowed_modes,
+                    "diagnostic_only": diag_only,
+                }
+        else:
+            if "execute" not in allowed_modes or diag_only or diag_flag_allowed:
+                return False, {
+                    "reason": f"审批范围 {allowed_modes!r} (diagnostic_only={diag_only}) 未授权正式 execute",
+                    "approval_ref": ref,
+                    "allowed_modes": allowed_modes,
+                    "diagnostic_only": diag_only,
+                }
+
+    bound_frozen_sha = record.get("q1_frozen_sha256")
+    if bound_frozen_sha is not None and q1_frozen_sha256 is not None and str(bound_frozen_sha) != str(q1_frozen_sha256):
+        return False, {
+            "reason": f"审批绑定 q1_frozen_sha256={bound_frozen_sha} 与当前 {q1_frozen_sha256} 不一致",
+            "approval_ref": ref,
+        }
+
+    bound_arrays_sha = record.get("q1_arrays_sha256")
+    if bound_arrays_sha is not None and q1_arrays_sha256 is not None and str(bound_arrays_sha) != str(q1_arrays_sha256):
+        return False, {
+            "reason": f"审批绑定 q1_arrays_sha256={bound_arrays_sha} 与当前 {q1_arrays_sha256} 不一致",
+            "approval_ref": ref,
+        }
+
+    return True, {
+        "approval_ref": ref,
+        "approval_record": str(rec_path),
+        "approval_record_sha256": PF.sha256_file_lf(rec_path),
+        "status": status,
+        "approved_by": approved_by,
+        "scope": record.get("scope"),
+        "allowed_modes": list(allowed_modes),
+        "diagnostic_only": diag_only,
+    }
+
+
+def verify_q1_calibration_bundle(
+    q1_dir: Optional[Path],
+    *,
+    allow_unfrozen_q1_diagnostic: bool = False,
+) -> Tuple[bool, Dict[str, Any]]:
+    """Strictly verify Q1 freeze registration, results ledger, and loaded calibration arrays."""
+    if q1_dir is None:
+        return False, {"required": True, "q1_dir": None, "frozen": False, "status": "missing_q1_dir", "reason": "execute 模式必须提供 --q1-dir"}
+    if not q1_dir.is_dir():
+        return False, {"required": True, "q1_dir": str(q1_dir), "frozen": False, "status": "missing_q1_dir", "reason": f"Q1 目录不存在：{q1_dir}"}
+
+    arrays_path = q1_dir / "e0c_arrays.npz"
+    results_path = q1_dir / "e0c_results.json"
+    frozen_path = q1_dir / "e0c_frozen.json"
+    if not arrays_path.is_file():
+        return False, {"required": True, "q1_dir": str(q1_dir), "frozen": False, "status": "missing_q1_arrays", "reason": f"缺少 {arrays_path}"}
+    if not results_path.is_file():
+        return False, {"required": True, "q1_dir": str(q1_dir), "frozen": False, "status": "missing_q1_results", "reason": f"缺少 {results_path}"}
+
+    arrays_file_sha = PF.sha256_file(arrays_path)
+    results_file_sha = PF.sha256_file(results_path)
+    results_file_sha_lf = PF.sha256_file_lf(results_path)
+
+    try:
+        res_obj = PF.load_json(results_path)
+    except Exception as exc:
+        return False, {"required": True, "q1_dir": str(q1_dir), "frozen": False, "status": "invalid_q1_results", "reason": f"e0c_results.json 解析失败：{exc}"}
+
+    # Verify SHA256SUMS.txt inside q1_dir when present
+    sums_path = q1_dir / "SHA256SUMS.txt"
+    if sums_path.is_file():
+        ledger: Dict[str, str] = {}
+        for line in sums_path.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split(None, 1)
+            if len(parts) == 2:
+                ledger[parts[1].strip()] = parts[0].strip().lower()
+        for fname, actual_sha in (("e0c_arrays.npz", arrays_file_sha), ("e0c_results.json", results_file_sha)):
+            if fname in ledger and ledger[fname] != actual_sha:
+                return False, {
+                    "required": True,
+                    "q1_dir": str(q1_dir),
+                    "frozen": False,
+                    "status": "q1_ledger_mismatch",
+                    "reason": f"Q1 SHA256SUMS.txt 中 {fname} 摘要不匹配",
+                }
+        if frozen_path.is_file() and "e0c_frozen.json" in ledger:
+            if ledger["e0c_frozen.json"] != PF.sha256_file(frozen_path):
+                return False, {
+                    "required": True,
+                    "q1_dir": str(q1_dir),
+                    "frozen": False,
+                    "status": "q1_ledger_mismatch",
+                    "reason": "Q1 SHA256SUMS.txt 中 e0c_frozen.json 摘要不匹配",
+                }
+
+    declared_arr_sha = res_obj.get("arrays_file_sha256") or res_obj.get("arrays_sha256")
+    if declared_arr_sha and str(declared_arr_sha).lower() != arrays_file_sha:
+        return False, {
+            "required": True,
+            "q1_dir": str(q1_dir),
+            "frozen": False,
+            "status": "q1_arrays_sha_mismatch",
+            "reason": f"e0c_results.json 声明数组 SHA256 ({declared_arr_sha}) != 实盘 e0c_arrays.npz ({arrays_file_sha})",
+        }
+
+    # Verify actual NPZ calibration arrays are finite and shape-consistent
+    try:
+        with np.load(arrays_path, allow_pickle=False) as q1_npz:
+            req_keys = ("inv_op", "xbar_air_cal", "freq_rf_hz", "tau_dir_s", "r_dir_m")
+            for k in req_keys:
+                if k not in q1_npz.files:
+                    return False, {
+                        "required": True,
+                        "q1_dir": str(q1_dir),
+                        "frozen": False,
+                        "status": "missing_q1_calibration_key",
+                        "reason": f"e0c_arrays.npz 缺少校准数组 {k!r}",
+                    }
+            inv_op = np.asarray(q1_npz["inv_op"])
+            xbar = np.asarray(q1_npz["xbar_air_cal"])
+            f_r = np.asarray(q1_npz["freq_rf_hz"])
+            tau_dir = np.asarray(q1_npz["tau_dir_s"])
+            r_dir = np.asarray(q1_npz["r_dir_m"])
+            if inv_op.ndim != 2 or inv_op.shape[0] != 63 or xbar.shape != inv_op.shape:
+                return False, {
+                    "required": True,
+                    "q1_dir": str(q1_dir),
+                    "frozen": False,
+                    "status": "invalid_q1_calibration_shape",
+                    "reason": f"inv_op={inv_op.shape}, xbar_air_cal={xbar.shape} 不符合 63 路契约",
+                }
+            nb = inv_op.shape[1]
+            if f_r.shape != (nb,) or tau_dir.shape != (63,) or r_dir.shape != (63,):
+                return False, {
+                    "required": True,
+                    "q1_dir": str(q1_dir),
+                    "frozen": False,
+                    "status": "invalid_q1_calibration_shape",
+                    "reason": "freq_rf_hz / tau_dir_s / r_dir_m 维度与 inv_op 不对齐",
+                }
+            for arr_name, arr_val in (("inv_op", inv_op), ("xbar_air_cal", xbar), ("freq_rf_hz", f_r), ("tau_dir_s", tau_dir), ("r_dir_m", r_dir)):
+                if not np.all(np.isfinite(arr_val)):
+                    return False, {
+                        "required": True,
+                        "q1_dir": str(q1_dir),
+                        "frozen": False,
+                        "status": "nonfinite_q1_calibration",
+                        "reason": f"e0c_arrays.npz 中 {arr_name} 含非有限值",
+                    }
+            grid_cal = np.asarray(q1_npz["lambda_grid_cal"], dtype=np.float64) if "lambda_grid_cal" in q1_npz.files else None
+            grid_inv = np.asarray(q1_npz["lambda_grid_inv"], dtype=np.float64) if "lambda_grid_inv" in q1_npz.files else None
+    except Exception as exc:
+        return False, {
+            "required": True,
+            "q1_dir": str(q1_dir),
+            "frozen": False,
+            "status": "invalid_q1_npz",
+            "reason": f"读取 e0c_arrays.npz 失败：{exc}",
+        }
+
+    if not frozen_path.is_file():
+        if allow_unfrozen_q1_diagnostic:
+            return True, {
+                "required": True,
+                "q1_dir": str(q1_dir),
+                "frozen": False,
+                "diagnostic_mode": True,
+                "arrays_sha256": arrays_file_sha,
+                "results_sha256": results_file_sha,
+                "results_sha256_lf": results_file_sha_lf,
+                "implementation_sha": res_obj.get("implementation_sha"),
+                "status": "unfrozen_q1_diagnostic_only",
+            }
+        return False, {
+            "required": True,
+            "q1_dir": str(q1_dir),
+            "frozen": False,
+            "status": "q1_not_frozen",
+            "reason": "Q1 尚未冻结（缺少 e0c_frozen.json），正式 Q2/Q3 execute 被阻塞",
+        }
+
+    # Formal frozen Q1 validation: bind frozen JSON -> results JSON -> NPZ calibration arrays
+    try:
+        frozen_obj = PF.load_json(frozen_path)
+    except Exception as exc:
+        return False, {"required": True, "q1_dir": str(q1_dir), "frozen": False, "status": "invalid_frozen_json", "reason": f"e0c_frozen.json 不可解析：{exc}"}
+
+    impl_sha = str(frozen_obj.get("implementation_sha", ""))
+    lambdas = frozen_obj.get("lambdas")
+    if len(impl_sha) != 40 or not isinstance(lambdas, list) or len(lambdas) != 2:
+        return False, {
+            "required": True,
+            "q1_dir": str(q1_dir),
+            "frozen": False,
+            "status": "invalid_frozen_json",
+            "reason": "e0c_frozen.json 缺少 40 位 implementation_sha 或 2 元 lambdas",
+        }
+    lam_cal, lam_inv = float(lambdas[0]), float(lambdas[1])
+    if "lambda_cal" in frozen_obj and not math.isclose(float(frozen_obj["lambda_cal"]), lam_cal, rel_tol=1e-12):
+        return False, {"required": True, "q1_dir": str(q1_dir), "frozen": False, "status": "invalid_frozen_json", "reason": "lambda_cal 与 lambdas[0] 不一致"}
+    if "lambda_inv" in frozen_obj and not math.isclose(float(frozen_obj["lambda_inv"]), lam_inv, rel_tol=1e-12):
+        return False, {"required": True, "q1_dir": str(q1_dir), "frozen": False, "status": "invalid_frozen_json", "reason": "lambda_inv 与 lambdas[1] 不一致"}
+
+    for match_key in ("config_sha256_match", "plan_sha256_match", "split_sha256_match"):
+        if match_key in frozen_obj and not bool(frozen_obj[match_key]):
+            return False, {
+                "required": True,
+                "q1_dir": str(q1_dir),
+                "frozen": False,
+                "status": "q1_anchor_mismatch",
+                "reason": f"e0c_frozen.json 中 {match_key} 为 False",
+            }
+
+    res_rel = str(frozen_obj.get("results_file", "e0c_results.json"))
+    resolved_res = _resolve_inside_dir(q1_dir, res_rel)
+    if resolved_res is None or resolved_res != results_path.resolve():
+        return False, {
+            "required": True,
+            "q1_dir": str(q1_dir),
+            "frozen": False,
+            "status": "q1_binding_mismatch",
+            "reason": f"e0c_frozen.json.results_file={res_rel!r} 未绑定到同目录 e0c_results.json",
+        }
+
+    if frozen_obj.get("results_sha256") and str(frozen_obj["results_sha256"]).lower() != results_file_sha:
+        return False, {
+            "required": True,
+            "q1_dir": str(q1_dir),
+            "frozen": False,
+            "status": "q1_binding_mismatch",
+            "reason": "e0c_frozen.json.results_sha256 与 e0c_results.json 不匹配",
+        }
+
+    if frozen_obj.get("arrays_sha256") and str(frozen_obj["arrays_sha256"]).lower() != arrays_file_sha:
+        return False, {
+            "required": True,
+            "q1_dir": str(q1_dir),
+            "frozen": False,
+            "status": "q1_binding_mismatch",
+            "reason": "e0c_frozen.json.arrays_sha256 与 e0c_arrays.npz 不匹配",
+        }
+
+    freeze_block = res_obj.get("freeze") or {}
+    if not bool(freeze_block.get("eligible")) or str(freeze_block.get("status")) != "eligible":
+        return False, {
+            "required": True,
+            "q1_dir": str(q1_dir),
+            "frozen": False,
+            "status": "q1_results_not_eligible",
+            "reason": f"e0c_results.json freeze 状态未通过（eligible={freeze_block.get('eligible')}, status={freeze_block.get('status')}）",
+        }
+
+    if str(res_obj.get("implementation_sha", "")) != impl_sha:
+        return False, {
+            "required": True,
+            "q1_dir": str(q1_dir),
+            "frozen": False,
+            "status": "q1_binding_mismatch",
+            "reason": "e0c_frozen.json 与 e0c_results.json 的 implementation_sha 不一致",
+        }
+
+    if freeze_block.get("lambda_cal") is not None and not math.isclose(float(freeze_block["lambda_cal"]), lam_cal, rel_tol=1e-12):
+        return False, {"required": True, "q1_dir": str(q1_dir), "frozen": False, "status": "q1_binding_mismatch", "reason": "freeze.lambda_cal 与冻结记录不一致"}
+    if freeze_block.get("lambda_inv") is not None and not math.isclose(float(freeze_block["lambda_inv"]), lam_inv, rel_tol=1e-12):
+        return False, {"required": True, "q1_dir": str(q1_dir), "frozen": False, "status": "q1_binding_mismatch", "reason": "freeze.lambda_inv 与冻结记录不一致"}
+
+    for sha_key in ("config_sha256", "plan_sha256", "split_sha256"):
+        if frozen_obj.get(sha_key) and res_obj.get(sha_key) and str(frozen_obj[sha_key]) != str(res_obj[sha_key]):
+            return False, {
+                "required": True,
+                "q1_dir": str(q1_dir),
+                "frozen": False,
+                "status": "q1_binding_mismatch",
+                "reason": f"e0c_frozen.json 与 e0c_results.json 的 {sha_key} 不一致",
+            }
+
+    if grid_cal is not None and grid_inv is not None:
+        in_grid = any(
+            math.isclose(float(gc), lam_cal, rel_tol=1e-12) and math.isclose(float(gi), lam_inv, rel_tol=1e-12)
+            for gc, gi in zip(grid_cal.tolist(), grid_inv.tolist())
+        )
+        if not in_grid:
+            return False, {
+                "required": True,
+                "q1_dir": str(q1_dir),
+                "frozen": False,
+                "status": "q1_lambda_not_in_grid",
+                "reason": f"冻结超参 ({lam_cal}, {lam_inv}) 不在 e0c_arrays.npz 的 LOO 候选网格内",
+            }
+
+    return True, {
+        "required": True,
+        "q1_dir": str(q1_dir),
+        "frozen": True,
+        "implementation_sha": impl_sha,
+        "lambda_cal": lam_cal,
+        "lambda_inv": lam_inv,
+        "arrays_sha256": arrays_file_sha,
+        "results_sha256": results_file_sha,
+        "results_sha256_lf": results_file_sha_lf,
+        "frozen_sha256": PF.sha256_file(frozen_path),
+        "frozen_sha256_lf": PF.sha256_file_lf(frozen_path),
+        "status": "frozen_ready",
+    }
+
+
 def check_q1_dependency(
     mode: str,
     q1_dir: Optional[Path],
@@ -232,72 +639,16 @@ def check_q1_dependency(
         )
         return info
 
-    if q1_dir is None:
-        info = {"required": True, "q1_dir": None, "frozen": False, "status": "missing_q1_dir"}
-        ck.add("q1.dependency", "q1", False, "execute 模式必须提供 --q1-dir", **info)
-        return info
-
-    arrays_path = q1_dir / "e0c_arrays.npz"
-    results_path = q1_dir / "e0c_results.json"
-    frozen_path = q1_dir / "e0c_frozen.json"
-    has_arrays = arrays_path.is_file()
-    has_frozen = frozen_path.is_file()
-
-    if not has_arrays:
-        info = {"required": True, "q1_dir": str(q1_dir), "frozen": has_frozen, "status": "missing_q1_arrays"}
-        ck.add("q1.dependency", "q1", False, f"Q1 目录缺少 e0c_arrays.npz: {q1_dir}", **info)
-        return info
-
-    if has_frozen:
-        try:
-            frozen_obj = PF.load_json(frozen_path)
-            frozen_valid = bool(frozen_obj.get("implementation_sha")) and "lambdas" in frozen_obj
-        except Exception:
-            frozen_valid = False
-        info = {
-            "required": True,
-            "q1_dir": str(q1_dir),
-            "frozen": frozen_valid,
-            "arrays_sha256": PF.sha256_file(arrays_path),
-            "frozen_sha256": PF.sha256_file_lf(frozen_path) if frozen_valid else None,
-            "status": "frozen_ready" if frozen_valid else "invalid_frozen_json",
-        }
-        ck.add(
-            "q1.dependency",
-            "q1",
-            frozen_valid,
-            "已检测到有效 Q1 冻结校准产物 e0c_frozen.json" if frozen_valid else "e0c_frozen.json 格式无效",
-            **info,
-        )
-        return info
-
-    if allow_unfrozen_q1_diagnostic and results_path.is_file():
-        info = {
-            "required": True,
-            "q1_dir": str(q1_dir),
-            "frozen": False,
-            "diagnostic_mode": True,
-            "arrays_sha256": PF.sha256_file(arrays_path),
-            "results_sha256": PF.sha256_file_lf(results_path),
-            "status": "unfrozen_q1_diagnostic_only",
-        }
-        ck.add(
-            "q1.dependency",
-            "q1",
-            True,
-            "已显式声明 --allow-unfrozen-q1-diagnostic：挂载未冻结 Q1 基线仅作诊断（citable=false）",
-            **info,
-        )
-        return info
-
-    info = {"required": True, "q1_dir": str(q1_dir), "frozen": False, "status": "q1_not_frozen"}
-    ck.add(
-        "q1.dependency",
-        "q1",
-        False,
-        "Q1 尚未冻结（缺少 e0c_frozen.json），正式 Q2/Q3 execute 被阻塞",
-        **info,
-    )
+    ok, info = verify_q1_calibration_bundle(q1_dir, allow_unfrozen_q1_diagnostic=allow_unfrozen_q1_diagnostic)
+    detail = info.get("reason")
+    if not detail:
+        if info.get("status") == "frozen_ready":
+            detail = "已验证 Q1 冻结登记、结果台账与加载校准数组 SHA256/形状完整绑定"
+        elif info.get("status") == "unfrozen_q1_diagnostic_only":
+            detail = "已显式声明 --allow-unfrozen-q1-diagnostic：挂载已验证摘要的未冻结 Q1 基线仅作诊断"
+        else:
+            detail = str(info.get("status"))
+    ck.add("q1.dependency", "q1", ok, detail, **info)
     return info
 
 
@@ -568,6 +919,8 @@ def run_preflight(
     mode: str = "d1-audit",
     q1_dir: Optional[Path] = None,
     allow_unfrozen_q1_diagnostic: bool = False,
+    approval_ref: Optional[str] = None,
+    approval_record_path: Optional[Path] = None,
     check_hashes: bool = True,
     expected_manifest_overall_sha256: Optional[str] = None,
     expected_counts: Optional[Dict[str, int]] = None,
@@ -581,10 +934,32 @@ def run_preflight(
     data_root = (data_root or (repo / A_ROOT_DEFAULT)).resolve()
     manifest_path = (manifest_path or (repo / "recon/manifests/a_dat_manifest.csv")).resolve()
     q1_resolved = q1_dir.resolve() if q1_dir is not None else None
+    rec_resolved = approval_record_path.resolve() if approval_record_path is not None else None
 
     ck = PF.Checker()
     runner_present = check_code_and_contracts(repo, ck)
     q1_info = check_q1_dependency(mode, q1_resolved, allow_unfrozen_q1_diagnostic, ck)
+
+    approval_info: Dict[str, Any] = {"checked": False}
+    if approval_ref is not None or rec_resolved is not None:
+        ok_app, info_app = verify_approval_authorization(
+            repo=repo,
+            mode=mode,
+            approval_ref=approval_ref,
+            approval_record_path=rec_resolved,
+            allow_unfrozen_q1_diagnostic=allow_unfrozen_q1_diagnostic,
+            q1_frozen_sha256=q1_info.get("frozen_sha256"),
+            q1_arrays_sha256=q1_info.get("arrays_sha256"),
+        )
+        approval_info = {"checked": True, **info_app}
+        ck.add(
+            "approval.authorization",
+            "approval",
+            ok_app,
+            info_app.get("reason") or f"审批 {info_app.get('approval_ref')} 状态与范围核验通过",
+            **info_app,
+        )
+
     data_info = check_attachment3_data(
         repo,
         data_root,
@@ -618,6 +993,7 @@ def run_preflight(
         "packets_parsed": 0,
         "real_dat_packets_parsed": 0,
         "q1": q1_info,
+        "approval": approval_info,
         "data": data_info,
         "checks": ck.checks,
         "summary": {
@@ -649,6 +1025,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         action="store_true",
         help="execute 模式下允许挂载未冻结 Q1 基线仅作诊断",
     )
+    parser.add_argument("--approval-ref", default=None, help="审批编号（提供时同步核验审批状态与范围）")
+    parser.add_argument("--approval-record", default=None, help="审批登记 JSON 文件路径")
     parser.add_argument("--no-hash", action="store_true", help="跳过 SHA256 校验（不作为放行证据）")
     parser.add_argument("--out", default=None, help="输出预检 JSON 路径")
     args = parser.parse_args(argv)
@@ -666,6 +1044,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             mode=args.mode,
             q1_dir=Path(args.q1_dir) if args.q1_dir else None,
             allow_unfrozen_q1_diagnostic=bool(args.allow_unfrozen_q1_diagnostic),
+            approval_ref=args.approval_ref,
+            approval_record_path=Path(args.approval_record) if args.approval_record else None,
             check_hashes=not bool(args.no_hash),
         )
     except Exception as exc:

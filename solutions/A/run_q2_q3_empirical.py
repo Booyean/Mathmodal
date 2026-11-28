@@ -179,8 +179,10 @@ def existing_protected_artifacts(out_dir: Path) -> List[str]:
 
 
 def validate_cli_guards(
+    repo: Path,
     mode: str,
     approval_ref: Optional[str],
+    approval_record_path: Optional[Path],
     repeat_runs: int,
     out_dir: Path,
     overwrite: bool,
@@ -188,9 +190,27 @@ def validate_cli_guards(
     allow_unfrozen_q1_diagnostic: bool,
 ) -> Optional[str]:
     """Return error message (exit code 2) if any execution guard fails, else None."""
+    q1_info: Dict[str, Any] = {}
+    if mode in ("execute", "execute-worker"):
+        q1_ok, q1_info = PF2.verify_q1_calibration_bundle(
+            q1_dir,
+            allow_unfrozen_q1_diagnostic=allow_unfrozen_q1_diagnostic,
+        )
+        if not q1_ok:
+            return str(q1_info.get("reason") or q1_info.get("status") or "Q1 校准校验未通过")
+
     if mode in ("d1-audit", "d1-audit-worker", "execute", "execute-worker"):
-        if not approval_ref or not str(approval_ref).strip():
-            return f"--mode {mode} 必须提供非空 --approval-ref（统筹放行编号/链接）"
+        app_ok, app_info = PF2.verify_approval_authorization(
+            repo=repo,
+            mode=mode,
+            approval_ref=approval_ref,
+            approval_record_path=approval_record_path,
+            allow_unfrozen_q1_diagnostic=allow_unfrozen_q1_diagnostic,
+            q1_frozen_sha256=q1_info.get("frozen_sha256"),
+            q1_arrays_sha256=q1_info.get("arrays_sha256"),
+        )
+        if not app_ok:
+            return str(app_info.get("reason") or "审批状态或范围校验未通过")
 
     if mode == "execute":
         if int(repeat_runs) != 2:
@@ -205,19 +225,6 @@ def validate_cli_guards(
             if existing:
                 return f"目标目录 {out_dir} 已存在交付产物 {existing}；未传入 --overwrite，拒绝覆盖"
 
-    if mode in ("execute", "execute-worker"):
-        if q1_dir is None:
-            return f"--mode {mode} 必须提供 --q1-dir（Q1 校准产物目录）"
-        if not q1_dir.is_dir():
-            return f"Q1 目录不存在：{q1_dir}"
-        if not (q1_dir / "e0c_arrays.npz").is_file():
-            return f"Q1 目录缺少 e0c_arrays.npz：{q1_dir}"
-        has_frozen = (q1_dir / "e0c_frozen.json").is_file()
-        if not has_frozen and not allow_unfrozen_q1_diagnostic:
-            return (
-                f"Q1 尚未冻结（缺少 {q1_dir / 'e0c_frozen.json'}）；"
-                "正式 execute 被阻塞（诊断试跑须显式传入 --allow-unfrozen-q1-diagnostic）"
-            )
     return None
 
 
@@ -395,6 +402,39 @@ def _build_empirical_anomaly_isolation(
     return out
 
 
+def _compute_d1_audit_digest(
+    *,
+    records: Sequence[Dict[str, Any]],
+    orphan_files: Sequence[Dict[str, Any]],
+    manifest_entries_count: int,
+    max_protocol_parseable_files: int,
+) -> str:
+    return Q23C.canonical_json_sha256(
+        {
+            "records": list(records),
+            "orphan_files": list(orphan_files),
+            "manifest_entries_count": int(manifest_entries_count),
+            "max_protocol_parseable_files": int(max_protocol_parseable_files),
+        }
+    )
+
+
+def _compute_execute_digest(
+    q2_res: Dict[str, Any],
+    q3w_res: Dict[str, Any],
+    q3m_res: Dict[str, Any],
+) -> str:
+    return Q23C.canonical_json_sha256(
+        {
+            "q2_alpha": q2_res["gain_selection"]["selected_alpha_per_ns"],
+            "q2_max_row_diff_cm": q2_res["row_consistency"]["max_row_diff_cm"],
+            "q3_wall_reconcile_max_cm": q3w_res["q2_q3_reconciliation"]["air_segment_max_diff_cm"],
+            "q3_metal_objects_count": len(q3m_res["metal_objects"]),
+            "q3_metal_shadow_unocc_global_med": float(q3m_res["shadow_unocc_global_med"]),
+        }
+    )
+
+
 def run_check(
     repo: Path,
     data_root: Path,
@@ -403,6 +443,8 @@ def run_check(
     allow_unfrozen_q1_diagnostic: bool,
     out_dir: Path,
     *,
+    approval_ref: Optional[str] = None,
+    approval_record_path: Optional[Path] = None,
     expected_manifest_overall_sha256: Optional[str] = None,
     expected_counts: Optional[Dict[str, int]] = None,
 ) -> Dict[str, Any]:
@@ -414,6 +456,8 @@ def run_check(
         mode=mode,
         q1_dir=q1_dir,
         allow_unfrozen_q1_diagnostic=allow_unfrozen_q1_diagnostic,
+        approval_ref=approval_ref,
+        approval_record_path=approval_record_path,
         check_hashes=True,
         expected_manifest_overall_sha256=expected_manifest_overall_sha256,
         expected_counts=expected_counts,
@@ -448,6 +492,7 @@ def run_d1_audit_worker(
     manifest_path: Path,
     out_dir: Path,
     approval_ref: str,
+    approval_record_path: Optional[Path] = None,
     implementation_sha: Optional[str],
     parent_commit: Optional[str],
     main_commit: Optional[str],
@@ -465,6 +510,8 @@ def run_d1_audit_worker(
         manifest_path=manifest_path,
         mode="d1-audit",
         q1_dir=None,
+        approval_ref=approval_ref,
+        approval_record_path=approval_record_path,
         check_hashes=True,
         expected_manifest_overall_sha256=expected_manifest_overall_sha256,
         expected_counts=expected_counts,
@@ -487,13 +534,12 @@ def run_d1_audit_worker(
         total_dat_read=total_dat_read,
     )
 
-    digest_payload = {
-        "records": records,
-        "orphan_files": orphan_files,
-        "manifest_entries_count": pre["data"]["manifest_entries_count"],
-        "max_protocol_parseable_files": pre["data"]["max_protocol_parseable_files"],
-    }
-    digest_sha256 = Q23C.canonical_json_sha256(digest_payload)
+    digest_sha256 = _compute_d1_audit_digest(
+        records=records,
+        orphan_files=orphan_files,
+        manifest_entries_count=pre["data"]["manifest_entries_count"],
+        max_protocol_parseable_files=pre["data"]["max_protocol_parseable_files"],
+    )
 
     elapsed = round(time.perf_counter() - t0, 4)
     finished_at = _now_iso()
@@ -642,6 +688,7 @@ def _empirical_metadata(
     parent_commit: Optional[str],
     main_commit: Optional[str],
     q1_dir: Path,
+    q1_info: Dict[str, Any],
     q1_frozen: bool,
     diagnostic_mode: bool,
     command: str,
@@ -660,10 +707,18 @@ def _empirical_metadata(
         "real_dat_files_read": int(real_dat_count),
         "q1_dir": str(q1_dir),
         "q1_frozen": bool(q1_frozen),
+        "q1_frozen_sha256": q1_info.get("frozen_sha256"),
+        "q1_results_sha256": q1_info.get("results_sha256"),
+        "q1_arrays_sha256": q1_info.get("arrays_sha256"),
+        "q1_implementation_sha": q1_info.get("implementation_sha"),
     }
 
     q1_cfg_path = str(q1_dir / ("e0c_frozen.json" if q1_frozen else "e0c_results.json"))
-    q1_cfg_sha = PF.sha256_file_lf(Path(q1_cfg_path)) if Path(q1_cfg_path).is_file() else "missing"
+    q1_cfg_sha = (
+        q1_info.get("frozen_sha256_lf")
+        if q1_frozen
+        else q1_info.get("results_sha256_lf")
+    ) or (PF.sha256_file_lf(Path(q1_cfg_path)) if Path(q1_cfg_path).is_file() else "missing")
     status = "hard_stop" if diagnostic_mode else "empirical_pending_acceptance"
 
     return {
@@ -677,6 +732,8 @@ def _empirical_metadata(
         "main_commit": main_commit or "c7b841e",
         "q1_frozen_config_path": q1_cfg_path,
         "q1_frozen_config_sha256": q1_cfg_sha,
+        "q1_arrays_sha256": q1_info.get("arrays_sha256"),
+        "q1_implementation_sha": q1_info.get("implementation_sha"),
         "d0_contract_version": D0.CONTRACT_VERSION,
         "d1_contract_version": D1.CONTRACT_VERSION,
         "groups_used": groups_used,
@@ -698,6 +755,7 @@ def run_execute_worker(
     allow_unfrozen_q1_diagnostic: bool,
     out_dir: Path,
     approval_ref: str,
+    approval_record_path: Optional[Path] = None,
     implementation_sha: Optional[str],
     parent_commit: Optional[str],
     main_commit: Optional[str],
@@ -718,6 +776,8 @@ def run_execute_worker(
         mode="execute",
         q1_dir=q1_dir,
         allow_unfrozen_q1_diagnostic=allow_unfrozen_q1_diagnostic,
+        approval_ref=approval_ref,
+        approval_record_path=approval_record_path,
         check_hashes=True,
         expected_manifest_overall_sha256=expected_manifest_overall_sha256,
         expected_counts=expected_counts,
@@ -725,9 +785,15 @@ def run_execute_worker(
     if not pre["preconditions_pass"]:
         raise Q2Q3Stop("execute 预检失败，拒绝解析 .dat：" + ", ".join(pre["summary"]["blocking_ids"]))
 
-    q1_frozen = bool(pre["q1"].get("frozen"))
+    q1_info = dict(pre["q1"])
+    q1_frozen = bool(q1_info.get("frozen"))
     diagnostic_mode = bool(not q1_frozen and allow_unfrozen_q1_diagnostic)
     impl_sha = implementation_sha or Q23C.git_head_full()
+
+    # Re-verify loaded arrays file SHA matches verified Q1 bundle immediately before reading
+    actual_q1_arr_sha = PF.sha256_file(q1_dir / "e0c_arrays.npz")
+    if actual_q1_arr_sha != q1_info.get("arrays_sha256"):
+        raise Q2Q3Stop("加载前检测到 e0c_arrays.npz 摘要漂移，拒绝执行")
 
     with np.load(q1_dir / "e0c_arrays.npz", allow_pickle=False) as q1_npz:
         inv_op = np.asarray(q1_npz["inv_op"], dtype=np.complex128)
@@ -806,6 +872,7 @@ def run_execute_worker(
             parent_commit=parent_commit,
             main_commit=main_commit,
             q1_dir=q1_dir,
+            q1_info=q1_info,
             q1_frozen=q1_frozen,
             diagnostic_mode=diagnostic_mode,
             command=command,
@@ -827,6 +894,7 @@ def run_execute_worker(
 
     elapsed = round(time.perf_counter() - t0, 4)
     finished_at = _now_iso()
+    digest_sha256 = _compute_execute_digest(q2_res, q3w_res, q3m_res)
     summary_payload = {
         "contract_version": CONTRACT_VERSION,
         "phase": "Q2Q3-Execute",
@@ -834,6 +902,8 @@ def run_execute_worker(
         "approval_ref": approval_ref,
         "real_dat_files_read": total_dat_count,
         "q1_frozen": q1_frozen,
+        "q1_frozen_sha256": q1_info.get("frozen_sha256"),
+        "q1_arrays_sha256": q1_info.get("arrays_sha256"),
         "diagnostic_mode": diagnostic_mode,
         "status": q2_res["status"],
         "q2_selected_alpha_per_ns": q2_res["gain_selection"]["selected_alpha_per_ns"],
@@ -848,16 +918,8 @@ def run_execute_worker(
         },
         "inputs_count": len(inputs),
         "orphan_files_count": len(orphan_files),
+        "digest_sha256": digest_sha256,
     }
-    digest_sha256 = Q23C.canonical_json_sha256(
-        {
-            "q2_alpha": summary_payload["q2_selected_alpha_per_ns"],
-            "q2_max_row_diff_cm": summary_payload["q2_max_row_diff_cm"],
-            "q3_wall_reconcile_max_cm": summary_payload["q3_wall_reconcile_max_cm"],
-            "q3_metal_objects_count": summary_payload["q3_metal_objects_count"],
-        }
-    )
-    summary_payload["digest_sha256"] = digest_sha256
 
     (out_dir / "run.log").write_bytes(
         (
@@ -885,8 +947,32 @@ def run_execute_worker(
     return summary_payload, worker_meta
 
 
+def _verify_execute_run_dir(run_dir: Path, summary_obj: Dict[str, Any]) -> Tuple[str, Dict[str, Dict[str, np.ndarray]]]:
+    """Recompute arrays_sha256 and execute digest from actual on-disk Q2/Q3 JSON+NPZ artifacts."""
+    loaded_res: Dict[str, Dict[str, Any]] = {}
+    loaded_arr: Dict[str, Dict[str, np.ndarray]] = {}
+    for prefix in ("q2", "q3_wall", "q3_metal"):
+        rpath = run_dir / f"{prefix}_results.json"
+        npath = run_dir / f"{prefix}_arrays.npz"
+        if not rpath.is_file() or not npath.is_file():
+            raise Q2Q3Stop(f"{run_dir} 缺少 {prefix}_results.json 或 {prefix}_arrays.npz")
+        robj = json.loads(rpath.read_text(encoding="utf-8"))
+        with np.load(npath, allow_pickle=False) as npz:
+            arrs = {k: npz[k] for k in npz.files}
+        re_arr_sha = Q23C.arrays_dict_sha256(arrs)
+        if str(robj.get("arrays_sha256")) != re_arr_sha:
+            raise Q2Q3Stop(f"{run_dir}/{prefix}_results.json 的 arrays_sha256 与实际 NPZ 不符")
+        loaded_res[prefix] = robj
+        loaded_arr[prefix] = arrs
+
+    re_digest = _compute_execute_digest(loaded_res["q2"], loaded_res["q3_wall"], loaded_res["q3_metal"])
+    if str(summary_obj.get("digest_sha256")) != re_digest:
+        raise Q2Q3Stop(f"{run_dir}/q2q3_summary.json 的 digest_sha256 与实际 Q2/Q3 产物重算不符")
+    return re_digest, loaded_arr
+
+
 def verify_repeat_manifest(out_dir: Path) -> Dict[str, Any]:
-    """Verify dual-process ``q2q3_repeat.json`` invariants (distinct PID, ordered non-overlapping windows, equal digests)."""
+    """Verify dual-process ``q2q3_repeat.json`` by recomputing digests and comparing actual artifacts."""
     out_dir = Path(out_dir)
     manifest_path = out_dir / "q2q3_repeat.json"
     if not manifest_path.is_file():
@@ -903,6 +989,8 @@ def verify_repeat_manifest(out_dir: Path) -> Dict[str, Any]:
         raise Q2Q3Stop("两次独立运行证据不完整：" + "; ".join(problems))
 
     windows: List[Tuple[datetime, datetime]] = []
+    loaded_targets: List[Path] = []
+    loaded_payloads: List[Dict[str, Any]] = []
     for idx, rec in enumerate(runs):
         missing = [f for f in REPEAT_REQUIRED_FIELDS if f not in rec]
         if missing:
@@ -914,6 +1002,9 @@ def verify_repeat_manifest(out_dir: Path) -> Dict[str, Any]:
             problems.append(f"runs[{idx}].results_file 不存在：{rel}")
         elif _file_sha256(target) != str(rec["results_sha256"]):
             problems.append(f"runs[{idx}].results_sha256 与文件不符")
+        else:
+            loaded_targets.append(target)
+            loaded_payloads.append(json.loads(target.read_text(encoding="utf-8")))
 
         if not isinstance(rec.get("pid"), int) or int(rec["pid"]) <= 0:
             problems.append(f"runs[{idx}].pid 非法")
@@ -935,10 +1026,47 @@ def verify_repeat_manifest(out_dir: Path) -> Dict[str, Any]:
             problems.append(f"两次运行的 {field} 相同 → 非独立进程")
 
     if str(runs[0].get("digest_sha256")) != str(runs[1].get("digest_sha256")):
-        problems.append("两次独立运行结果摘要 digest_sha256 不一致")
+        problems.append("两次独立运行记录的 digest_sha256 不一致")
 
     if problems:
         raise Q2Q3Stop("两次独立运行证据校验失败：" + "; ".join(problems))
+
+    # Recompute digests from actual on-disk artifacts of BOTH runs (never trust declared digest alone)
+    worker_mode = str(manifest.get("worker_mode", ""))
+    if len(loaded_payloads) == 2:
+        p0, p1 = loaded_payloads
+        if worker_mode == "d1-audit-worker" or p0.get("phase") == "D1-Audit":
+            re0 = _compute_d1_audit_digest(
+                records=p0.get("groups", []),
+                orphan_files=p0.get("orphan_files", []),
+                manifest_entries_count=int((p0.get("accounting") or {}).get("manifest_entries_count", -1)),
+                max_protocol_parseable_files=int((p0.get("accounting") or {}).get("max_protocol_parseable_files", -1)),
+            )
+            re1 = _compute_d1_audit_digest(
+                records=p1.get("groups", []),
+                orphan_files=p1.get("orphan_files", []),
+                manifest_entries_count=int((p1.get("accounting") or {}).get("manifest_entries_count", -1)),
+                max_protocol_parseable_files=int((p1.get("accounting") or {}).get("max_protocol_parseable_files", -1)),
+            )
+            if re0 != str(p0.get("digest_sha256")) or re0 != str(runs[0]["digest_sha256"]):
+                raise Q2Q3Stop("run-1 实际 D1 审计产物重算 digest_sha256 不一致")
+            if re1 != str(p1.get("digest_sha256")) or re1 != str(runs[1]["digest_sha256"]):
+                raise Q2Q3Stop("run-2 实际 D1 审计产物重算 digest_sha256 不一致")
+            if re0 != re1 or p0.get("groups") != p1.get("groups") or p0.get("accounting") != p1.get("accounting"):
+                raise Q2Q3Stop("两次独立 D1 审计实际产物内容不一致")
+        elif worker_mode == "execute-worker" or p0.get("phase") == "Q2Q3-Execute":
+            re0, arrs0 = _verify_execute_run_dir(loaded_targets[0].parent, p0)
+            re1, arrs1 = _verify_execute_run_dir(loaded_targets[1].parent, p1)
+            if re0 != str(runs[0]["digest_sha256"]) or re1 != str(runs[1]["digest_sha256"]):
+                raise Q2Q3Stop("实际 Q2/Q3 产物重算 digest_sha256 与 repeat 清单不符")
+            if re0 != re1:
+                raise Q2Q3Stop("两次独立执行实际重算 digest_sha256 不一致")
+            for prefix in ("q2", "q3_wall", "q3_metal"):
+                for k in arrs0[prefix]:
+                    v0, v1 = arrs0[prefix][k], arrs1[prefix][k]
+                    if v0.dtype.kind in ("f", "c") and not np.allclose(v0, v1, rtol=1e-9, atol=1e-12):
+                        raise Q2Q3Stop(f"两次独立执行 {prefix}_arrays.npz::{k} 数值超差 (rtol=1e-9)")
+
     return manifest
 
 
@@ -1050,6 +1178,8 @@ def _build_worker_base_argv(args: argparse.Namespace, repo: Path, data_root: Pat
         "--approval-ref",
         str(args.approval_ref),
     ]
+    if args.approval_record:
+        argv += ["--approval-record", str(Path(args.approval_record).resolve())]
     if args.q1_dir:
         argv += ["--q1-dir", str(Path(args.q1_dir).resolve())]
     if args.allow_unfrozen_q1_diagnostic:
@@ -1081,12 +1211,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         help="执行模式（默认 check）",
     )
     parser.add_argument("--approval-ref", default=None, help="统筹放行编号（d1-audit/execute 必填）")
+    parser.add_argument("--approval-record", default=None, help="统筹审批登记 JSON 文件路径")
     parser.add_argument("--repeat-runs", type=int, default=2, help="独立重跑进程数（execute 必须为 2）")
     parser.add_argument("--overwrite", action="store_true", help="允许覆盖已有结果目录")
     parser.add_argument(
         "--allow-unfrozen-q1-diagnostic",
         action="store_true",
-        help="execute 允许挂载未冻结 Q1 基线仅作诊断（citable=false）",
+        help="execute 允许挂载未冻结 Q1 基线仅作诊断（citable=false，需单独诊断审批）",
     )
     parser.add_argument("--implementation-sha", default=None, help="40 位实现提交 SHA")
     parser.add_argument("--parent-commit", default=None, help="父提交 SHA")
@@ -1102,6 +1233,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     data_root = Path(args.data_root).resolve() if args.data_root else (repo / PF2.A_ROOT_DEFAULT)
     manifest_path = Path(args.manifest).resolve() if args.manifest else (repo / "recon/manifests/a_dat_manifest.csv")
     q1_dir = Path(args.q1_dir).resolve() if args.q1_dir else None
+    approval_record_path = Path(args.approval_record).resolve() if args.approval_record else None
 
     if args.out:
         out_dir = Path(args.out)
@@ -1115,8 +1247,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         out_dir = DEFAULT_EXEC_OUT
 
     guard_err = validate_cli_guards(
+        repo=repo,
         mode=args.mode,
         approval_ref=args.approval_ref,
+        approval_record_path=approval_record_path,
         repeat_runs=args.repeat_runs,
         out_dir=out_dir,
         overwrite=bool(args.overwrite),
@@ -1134,6 +1268,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             manifest_path=manifest_path,
             q1_dir=q1_dir,
             allow_unfrozen_q1_diagnostic=bool(args.allow_unfrozen_q1_diagnostic),
+            approval_ref=args.approval_ref,
+            approval_record_path=approval_record_path,
             out_dir=out_dir,
         )
         print(
@@ -1158,6 +1294,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 manifest_path=manifest_path,
                 out_dir=out_dir,
                 approval_ref=str(args.approval_ref),
+                approval_record_path=approval_record_path,
                 implementation_sha=args.implementation_sha,
                 parent_commit=args.parent_commit,
                 main_commit=args.main_commit,
@@ -1174,6 +1311,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     manifest_path=manifest_path,
                     out_dir=out_dir,
                     approval_ref=str(args.approval_ref),
+                    approval_record_path=approval_record_path,
                     implementation_sha=args.implementation_sha,
                     parent_commit=args.parent_commit,
                     main_commit=args.main_commit,
@@ -1200,6 +1338,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 allow_unfrozen_q1_diagnostic=bool(args.allow_unfrozen_q1_diagnostic),
                 out_dir=out_dir,
                 approval_ref=str(args.approval_ref),
+                approval_record_path=approval_record_path,
                 implementation_sha=args.implementation_sha,
                 parent_commit=args.parent_commit,
                 main_commit=args.main_commit,
