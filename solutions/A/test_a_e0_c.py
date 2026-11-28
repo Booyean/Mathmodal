@@ -27,6 +27,7 @@
 
 from __future__ import annotations
 
+import argparse
 import copy
 import hashlib
 import json
@@ -257,7 +258,7 @@ def test_dat_io(ctx: Dict[str, Any]) -> None:
 
 
 # --------------------------------------------------------------------------
-# 3) 编排链：桩掉 preflight，跑完整 run_execute + assemble_results
+# 3) 编排链：两个独立进程（测试 worker 桩 preflight）
 # --------------------------------------------------------------------------
 def test_run_execute_synthetic(ctx: Dict[str, Any]) -> Dict[str, Any]:
     tmp = work_tmp()
@@ -266,169 +267,190 @@ def test_run_execute_synthetic(ctx: Dict[str, Any]) -> Dict[str, Any]:
         setup = ctx["setup"]
         gen = ctx["gen"]
         build_synthetic_root(root, setup, gen)
-        cfg = ctx["cfg"]
-
         out_dir = tmp / "out"
-        stub = {
-            "contract_version": A.PF.CONTRACT_VERSION,
-            "preconditions_pass": True,
-            "execution_ready": True,
-            "summary": {"passed": 32, "total": 32, "failed_ids": [], "blocking_ids": []},
-            "open_items": [],
-            "data": {"path_guard": {"guarded_files": 96, "rejections": []}, "signal_files_hashed": 96},
-        }
-        saved = A.PF.run_preflight
-        A.PF.run_preflight = lambda *a, **k: stub
         log: List[str] = []
-        try:
-            repeated = A.run_execute_repeated(
-                REPO, root, REPO / "recon/manifests/a_dat_manifest.csv", cfg, setup,
-                "TEST-APPROVAL-REF", None, log, out_dir, n_runs=2,
-            )
-        finally:
-            A.PF.run_preflight = saved
-        result_ctx = repeated["ctx"]
-        repeat_run = repeated["repeat_run"]
-
-        check("exec.opened_96", result_ctx["data"]["opened_files"] == 96,
-              str(result_ctx["data"]["opened_files"]))
-        check("exec.two_cases", len(result_ctx["cases"]) == 2, str(len(result_ctx["cases"])))
-        check(
-            "exec.errors_lt_1cm",
-            all(c["abs_err_cm"] <= 1.0 for c in result_ctx["cases"]),
-            str([round(c["abs_err_cm"], 4) for c in result_ctx["cases"]]),
-        )
-        check("exec.air_loo_eligible", result_ctx["air_loo_eligibility"] == "eligible",
-              str(result_ctx["air_loo_eligibility"]))
-        check("exec.freeze_eligible", result_ctx["freeze"]["eligible"] is True,
-              result_ctx["freeze"]["status"])
-        check("exec.no_hard_stops", result_ctx["hard_stops"] == [], str(result_ctx["hard_stops"]))
-        check("exec.arrays_keys",
-              {"wall__z_before", "metal__z_after", "wall__P_after",
-               "air_loo__p_cal"} <= set(result_ctx["arrays"]))
-
-        result = A.assemble_results(
-            result_ctx,
-            cfg,
-            A.CONFIG_PATH,
-            REPO,
-            "TEST-APPROVAL-REF",
-            DUMMY_IMPL,
-            DUMMY_PARENT,
-            DUMMY_MAIN,
-            "test-branch",
-            "python solutions/A/a_e0_c.py --mode execute",
-            repeated["elapsed"],
-            repeated["peak"],
-            out_dir,
-        )
-        check("exec.groups_12", len(result["groups"]) == 12, str(len(result["groups"])))
-        check("exec.inputs_96", len(result["inputs"]) == 96, str(len(result["inputs"])))
-        check("exec.inputs_rel_prefix",
-              all(r["rel_path"].startswith("附件/附件2-测距数据/") for r in result["inputs"]))
-        check("exec.air_loo_folds_10", len(result["air_loo_folds"]) == 10)
-        check("exec.array_map_groups",
-              set(result["array_map"]["group_prefix"]) == {"墙体数据/data1-42cm", "金属板数据/data1-69cm"})
-        check("exec.methods_fixed_alpha", result["methods"]["alpha_mode"] == "fixed_1.0"
-              and result["methods"]["n0_improvements_enabled"] is False)
-        check("exec.single_process", result["resource"]["single_process"] is True)
-        check("exec.ancestor_anchors",
-              result["config_sha256_match"] and result["plan_sha256_match"]
-              and result["split_sha256_match"] and result["e0_s_results_sha256_match"])
-        check("exec.metrics_digest_64", len(result["metrics_sha256"]) == 64)
-        result["resource"]["repeat_runs"] = repeated["n_runs"]
-        result["resource"]["per_run_wall_time_s"] = [
-            r["wall_time_s"] for r in repeated["runs"]
+        worker = [
+            sys.executable,
+            str(Path(__file__).resolve()),
+            "--worker",
+            "--root",
+            str(root),
         ]
-
-        sums = A.write_outputs(
-            out_dir, result, repeated["arrays"], list(log), c0=setup.c0,
-            repeat_run=repeat_run,
+        combined = A.run_two_independent_runs(
+            worker, out_dir, log, "python solutions/A/a_e0_c.py --mode execute"
         )
+        raw = json.loads((out_dir / "e0c_results.json").read_text(encoding="utf-8"))
+        run2 = json.loads(
+            (out_dir / "repeat_runs/run-2/e0c_results.json").read_text(encoding="utf-8")
+        )
+        man = json.loads((out_dir / "e0c_repeat.json").read_text(encoding="utf-8"))
+
         check("exec.out_files", all((out_dir / n).is_file() for n in (
             "e0c_results.json", "e0c_arrays.npz", "e0c_air_loo.json",
-            "e0c_frozen.json", "run.log", "SHA256SUMS.txt")))
-        for name, digest in sums.items():
-            check("exec.sum_%s" % name, sha256_file(out_dir / name) == digest)
-        lines = (out_dir / "SHA256SUMS.txt").read_text(encoding="utf-8").strip().splitlines()
-        check("exec.sums_cover_json", any("e0c_results.json" in ln for ln in lines))
-        check("exec.sums_cover_arrays", any("e0c_arrays.npz" in ln for ln in lines))
-        raw = json.loads((out_dir / "e0c_results.json").read_text(encoding="utf-8"))
-        rr = raw["repeat_run"]
-        check("exec.repeat_runs_2",
-              rr["n_runs"] == 2 and len(rr["runs"]) == 2,
-              "n_runs=%r" % rr.get("n_runs"))
-        check("exec.repeat_run_ids_distinct",
-              len({r["run_id"] for r in rr["runs"]}) == 2)
-        check("exec.repeat_run_evidence_files",
-              all((out_dir / r["npz_path"]).is_file()
-                  and (out_dir / r["manifest_path"]).is_file()
-                  and (out_dir / r["log_path"]).is_file()
-                  for r in rr["runs"]))
-        check("exec.repeat_run_npz_hash",
-              all(sha256_file(out_dir / r["npz_path"]) == r["arrays_sha256"]
-                  for r in rr["runs"]))
-        check("exec.repeat_run_bound",
-              rr["arrays_sha256"] == raw["arrays_sha256"] == sha256_file(out_dir / "e0c_arrays.npz")
-              and rr["metrics_sha256"] == raw["metrics_sha256"])
-        check("exec.repeat_run_identical",
-              rr["arrays_identical"] is True and rr["metrics_identical"] is True
-              and rr["outcomes_identical"] is True and rr["independent"] is True
-              and rr["problems"] == [])
-        check("exec.repeat_evidence_in_sums",
-              all(r["npz_path"] in raw["files_sha256"] for r in rr["runs"]))
-        check("exec.repeat_evidence_distinct_npz",
-              rr["runs"][0]["npz_path"] != rr["runs"][1]["npz_path"]
-              and sha256_file(out_dir / rr["runs"][0]["npz_path"])
-              == sha256_file(out_dir / rr["runs"][1]["npz_path"]))
-
-        # C12 反例：把第二次运行伪造成第一次的重复（旧“两次序列化”口径）
-        fake = copy.deepcopy(rr)
-        fake["runs"][1] = copy.deepcopy(fake["runs"][0])
-        fake["runs"][1]["run_index"] = 2
-        try:
-            A.verify_repeat_evidence(out_dir, fake)
-            dup_rejected = False
-        except A.E0CStop:
-            dup_rejected = True
-        check("exec.repeat_duplicate_record_rejected", dup_rejected)
-
-        # C12 反例：第二次运行复用第一次的 npz 证据路径
-        fake2 = copy.deepcopy(rr)
-        fake2["runs"][1]["npz_path"] = fake2["runs"][0]["npz_path"]
-        try:
-            A.verify_repeat_evidence(out_dir, fake2)
-            reuse_rejected = False
-        except A.E0CStop:
-            reuse_rejected = True
-        check("exec.repeat_reused_evidence_rejected", reuse_rejected)
-
-        # C12 反例：有数组但不给 repeat_run（序列化两次也不够）
-        try:
-            A.write_outputs(tmp / "no_repeat", result, repeated["arrays"], list(log),
-                            c0=setup.c0)
-            no_rr_rejected = False
-        except A.E0CStop:
-            no_rr_rejected = True
-        check("exec.repeat_missing_rejected", no_rr_rejected)
-
-        check("exec.freeze_written", raw["freeze"]["written"] is True
-              and raw["freeze"]["status"] == "eligible")
+            "e0c_frozen.json", "run.log", "SHA256SUMS.txt", "e0c_repeat.json")))
+        check("exec.groups_12", len(raw["groups"]) == 12, str(len(raw["groups"])))
+        check("exec.inputs_96", len(raw["inputs"]) == 96, str(len(raw["inputs"])))
+        check("exec.inputs_rel_prefix",
+              all(r["rel_path"].startswith("附件/附件2-测距数据/") for r in raw["inputs"]))
+        check("exec.air_loo_folds_10", len(raw["air_loo_folds"]) == 10)
+        check("exec.array_map_groups",
+              set(raw["array_map"]["group_prefix"]) == {"墙体数据/data1-42cm", "金属板数据/data1-69cm"})
+        check("exec.methods_fixed_alpha", raw["methods"]["alpha_mode"] == "fixed_1.0"
+              and raw["methods"]["n0_improvements_enabled"] is False)
+        check("exec.single_process", raw["resource"]["single_process"] is True)
+        check("exec.ancestor_anchors",
+              raw["config_sha256_match"] and raw["plan_sha256_match"]
+              and raw["split_sha256_match"] and raw["e0_s_results_sha256_match"])
+        check("exec.two_cases", len(raw["cases"]) == 2, str(len(raw["cases"])))
+        check("exec.errors_lt_1cm",
+              all(c["abs_err_cm"] <= 1.0 for c in raw["cases"]),
+              str([round(c["abs_err_cm"], 4) for c in raw["cases"]]))
+        check("exec.air_loo_eligible", raw["air_loo_eligibility"] == "eligible",
+              str(raw["air_loo_eligibility"]))
+        check("exec.freeze_eligible", raw["freeze"]["eligible"] is True
+              and raw["freeze"]["written"] is True, raw["freeze"]["status"])
+        check("exec.no_hard_stops", raw["hard_stops"] == [], str(raw["hard_stops"]))
+        check("exec.freeze_file", (out_dir / "e0c_frozen.json").is_file())
         check("exec.d_true_usage", raw["d_true_usage"] == "evaluation_only")
         check("exec.npz_tau_step",
               raw["cases"][0]["metric_grid"]["tau_step_ns"] == 0.05)
-        frozen = json.loads((out_dir / "e0c_frozen.json").read_text(encoding="utf-8"))
-        check("exec.frozen_triplet", {"lambda_cal", "lambda_inv", "eta_wall", "lambdas"} <= set(frozen))
         check("exec.results_no_arrays", "arrays" not in raw)
 
-        # 交付指标必须能由交付数组按 C10 口径复算（write_outputs 已调用一次）
-        deltas = A.verify_delivery_metrics(raw, result_ctx["arrays"], c0=setup.c0)
-        check("exec.delivery_metrics_recompute", len(deltas) == 8 and max(deltas.values()) < 1e-9,
-              "max |Δ|=%.3g" % max(deltas.values()))
+        # --- C12：两次独立进程证据（E0-C-C12-REPEAT-1） ---------------
+        check("exec.repeat_manifest_n2",
+              man["n_runs"] == 2 and len(man["runs"]) == 2,
+              "n_runs=%r" % man.get("n_runs"))
+        runs = man["runs"]
+        check("exec.repeat_pids_distinct",
+              all(isinstance(r["pid"], int) for r in runs)
+              and runs[0]["pid"] != runs[1]["pid"],
+              "%r" % [r["pid"] for r in runs])
+        check("exec.repeat_run_ids_distinct",
+              len({r["run_id"] for r in runs}) == 2)
+        check("exec.repeat_files_distinct",
+              runs[0]["results_file"] != runs[1]["results_file"]
+              and runs[0]["arrays_file"] != runs[1]["arrays_file"])
+        check("exec.repeat_run0_binds_delivery",
+              runs[0]["results_file"] == "e0c_results.json"
+              and runs[0]["arrays_file"] == "e0c_arrays.npz")
+        check("exec.repeat_hashes_match",
+              all(sha256_file(out_dir / r["results_file"]) == r["results_sha256"]
+                  and sha256_file(out_dir / r["arrays_file"]) == r["arrays_sha256"]
+                  for r in runs))
+        check("exec.repeat_windows_ordered",
+              runs[0]["finished_at"] <= runs[1]["started_at"])
+        check("exec.run2_metrics_equal",
+              run2["metrics_sha256"] == raw["metrics_sha256"]
+              and run2["groups"] == raw["groups"])
+        check("exec.repeat_summary",
+              raw["repeat_run"]["runs_file"] == "e0c_repeat.json"
+              and "runs" not in raw["repeat_run"]
+              and raw["repeat_run"]["arrays_sha256"] == raw["arrays_sha256"]
+              and raw["repeat_run"]["metrics_sha256"] == raw["metrics_sha256"])
+        check("exec.repeat_verify_ok", bool(A.verify_repeat_manifest(out_dir)))
+        check("exec.repeat_in_sums",
+              "e0c_repeat.json" in (out_dir / "SHA256SUMS.txt").read_text(encoding="utf-8")
+              and "repeat_runs/run-2/e0c_arrays.npz" in
+              (out_dir / "SHA256SUMS.txt").read_text(encoding="utf-8"))
         check("exec.resource_repeat_runs",
               raw["resource"]["repeat_runs"] == 2
-              and len(raw["resource"]["per_run_wall_time_s"]) == 2)
-        return {"result": raw, "out_dir": out_dir, "repeat_run": rr}
+              and len(raw["resource"]["per_run_wall_time_s"]) == 2
+              and raw["resource"]["wall_time_s"] >= max(
+                  raw["resource"]["per_run_wall_time_s"]))
+        check("exec.arrays_byte_identical",
+              sha256_file(out_dir / runs[0]["arrays_file"])
+              == sha256_file(out_dir / runs[1]["arrays_file"]))
+
+        # --- C12 反例：重复序列化/复用证据/时间窗重叠必须被拒绝 -------------
+        man_path = out_dir / "e0c_repeat.json"
+        original = man_path.read_text(encoding="utf-8")
+
+        def rejected(mutate) -> bool:
+            fake = copy.deepcopy(man)
+            mutate(fake)
+            man_path.write_text(
+                json.dumps(fake, ensure_ascii=False, indent=1) + "\n", encoding="utf-8"
+            )
+            try:
+                A.verify_repeat_manifest(out_dir)
+                return False
+            except A.E0CStop:
+                return True
+            finally:
+                man_path.write_text(original, encoding="utf-8")
+
+        check(
+            "exec.repeat_duplicate_record_rejected",
+            rejected(lambda m: m["runs"][1].update({
+                "pid": m["runs"][0]["pid"],
+                "run_id": m["runs"][0]["run_id"],
+                "started_at": m["runs"][0]["started_at"],
+                "finished_at": m["runs"][0]["finished_at"],
+                "results_file": m["runs"][0]["results_file"],
+                "arrays_file": m["runs"][0]["arrays_file"],
+            })),
+        )
+        check(
+            "exec.repeat_reused_evidence_rejected",
+            rejected(lambda m: m["runs"][1].update(
+                arrays_file=m["runs"][0]["arrays_file"])),
+        )
+        check(
+            "exec.repeat_overlap_rejected",
+            rejected(lambda m: m["runs"][1].update(
+                started_at=m["runs"][0]["started_at"])),
+        )
+        check(
+            "exec.repeat_hash_tamper_rejected",
+            rejected(lambda m: m["runs"][1].update(arrays_sha256="0" * 64)),
+        )
+        check("exec.repeat_missing_runs_rejected", rejected(lambda m: m.pop("runs")))
+
+        # ③ 缺 e0c_repeat.json 必须被拒绝（不是“默认通过”）。
+        man_path.unlink()
+        try:
+            A.verify_repeat_manifest(out_dir)
+            missing_manifest_rejected = False
+        except A.E0CStop:
+            missing_manifest_rejected = True
+        finally:
+            man_path.write_text(original, encoding="utf-8")
+        check("exec.repeat_missing_manifest_rejected", missing_manifest_rejected)
+
+        # 第二次运行指标与交付不一致必须被拒绝：同时更新清单里的 results_sha256，
+        # 否则先被“SHA 与文件不符”挡住，测不到“指标不一致”这条门。
+        run2_path = out_dir / runs[1]["results_file"]
+        run2_original = run2_path.read_text(encoding="utf-8")
+        tampered = json.loads(run2_original)
+        tgt = next(g for g in tampered["groups"] if g.get("d_hat_m") is not None)
+        tgt["d_hat_m"] = float(tgt["d_hat_m"]) + 1e-3
+        run2_path.write_text(
+            json.dumps(tampered, ensure_ascii=False, indent=1), encoding="utf-8"
+        )
+        fake = copy.deepcopy(man)
+        fake["runs"][1]["results_sha256"] = sha256_file(run2_path)
+        man_path.write_text(
+            json.dumps(fake, ensure_ascii=False, indent=1) + "\n", encoding="utf-8"
+        )
+        try:
+            A.verify_repeat_manifest(out_dir)
+            run2_mismatch_rejected = False
+        except A.E0CStop:
+            run2_mismatch_rejected = True
+        finally:
+            run2_path.write_text(run2_original, encoding="utf-8")
+            man_path.write_text(original, encoding="utf-8")
+        check("exec.repeat_run2_metrics_mismatch_rejected", run2_mismatch_rejected)
+        check("exec.repeat_verify_restored", bool(A.verify_repeat_manifest(out_dir)))
+
+        # --- 交付指标可由交付数组按 C10 口径复算 ---------------------------
+        with np.load(out_dir / "e0c_arrays.npz") as npz_file:
+            arrays = {key: npz_file[key] for key in npz_file.files}
+        deltas = A.verify_delivery_metrics(raw, arrays, c0=setup.c0)
+        check("exec.delivery_metrics_recompute",
+              len(deltas) == 8 and max(deltas.values()) < 1e-9,
+              "max |Δ|=%.3g" % max(deltas.values()))
+        return {"result": raw, "out_dir": out_dir, "manifest": man}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -515,11 +537,12 @@ def test_cli_boundaries() -> None:
         )
         check("cli.refuses_overwrite", code == 2, "exit=%d" % code)
 
-        code = A.main(
-            ["--mode", "execute", "--approval-ref", "X", "--repeat-runs", "1",
-             "--out", str(tmp / "o3")]
-        )
-        check("cli.repeat_runs_lt2_rejected", code == 2, "exit=%d" % code)
+        for bad in ("1", "3"):
+            code = A.main(
+                ["--mode", "execute", "--approval-ref", "X", "--repeat-runs", bad,
+                 "--out", str(tmp / ("o3_" + bad))]
+            )
+            check("cli.repeat_runs_%s_rejected" % bad, code == 2, "exit=%d" % code)
 
         check_mode_out = tmp / "check"
         code = A.main(["--mode", "check", "--out", str(check_mode_out)])
@@ -555,5 +578,46 @@ def main() -> int:
     return 0
 
 
+def worker_main(argv: List[str]) -> int:
+    """测试用的单次运行 worker：桩掉 preflight 后走生产 execute_single_delivery。"""
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--worker", action="store_true")
+    ap.add_argument("--root", required=True)
+    ap.add_argument("--out", required=True)
+    args = ap.parse_args(argv)
+    cfg = A.load_config(A.CONFIG_PATH)
+    setup = E0S.Setup(cfg)
+    stub = {
+        "contract_version": A.PF.CONTRACT_VERSION,
+        "preconditions_pass": True,
+        "execution_ready": True,
+        "summary": {"passed": 32, "total": 32, "failed_ids": [], "blocking_ids": []},
+        "open_items": [],
+        "data": {"path_guard": {"guarded_files": 96, "rejections": []},
+                 "signal_files_hashed": 96},
+    }
+    A.PF.run_preflight = lambda *a, **k: stub
+    out = A.execute_single_delivery(
+        REPO,
+        Path(args.root),
+        REPO / "recon/manifests/a_dat_manifest.csv",
+        A.CONFIG_PATH,
+        cfg,
+        setup,
+        "TEST-APPROVAL-REF",
+        None,
+        Path(args.out),
+        DUMMY_IMPL,
+        DUMMY_PARENT,
+        DUMMY_MAIN,
+        "python solutions/A/test_a_e0_c.py --worker",
+        [],
+    )
+    status = out["freeze_status"]
+    return 0 if status == "eligible" else (3 if status == "hard_stop" else 1)
+
+
 if __name__ == "__main__":
+    if "--worker" in sys.argv[1:]:
+        raise SystemExit(worker_main(sys.argv[1:]))
     raise SystemExit(main())
