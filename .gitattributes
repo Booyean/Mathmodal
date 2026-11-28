@@ -36,3 +36,7 @@ experiments/A/A-Q2Q3-SYN/results/*.npz binary
 /experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3/*.npz binary
 /experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3/**/*.npz binary
 
+
+# N0 预登记契约（ACCEPT-3）：按原始字节保全（含 CRLF），与包内
+# registration.prereg_sha256 的 raw 口径一致；验收器 N12 同时接受 raw/LF。
+/checks/A/e0_n0_prereg.json -text
