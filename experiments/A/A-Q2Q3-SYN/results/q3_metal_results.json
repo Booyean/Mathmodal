@@ -3,7 +3,7 @@
   "input_mode": "synthetic_only",
   "real_dat_files_read": 0,
   "citable": false,
-  "implementation_sha": "5b5a10258a9e2625917f2f278dc9eb6ea7b16c05",
+  "implementation_sha": "8dd0b4126591d7daaf50fad4f425613378773cd1",
   "main_commit": "934b089",
   "q1_frozen_config_path": "synthetic://q1-frozen-baseline",
   "q1_frozen_config_sha256": "4a70304a305b87d9fc3a17c023dab5e5e6f7abeb9403ab2bb024ec27f6559939",
@@ -127,7 +127,7 @@
     "file_level_ledger": "SHA256SUMS.txt is the byte-level ledger over the JSON+NPZ files of one run; it is run-specific and is not expected to match across environments."
   },
   "provenance": {
-    "implementation_sha": "5b5a10258a9e2625917f2f278dc9eb6ea7b16c05",
+    "implementation_sha": "8dd0b4126591d7daaf50fad4f425613378773cd1",
     "implementation_sha_kind": "generation_code_commit",
     "git_dirty": false,
     "git_branch": "model/a-q2q3-synthetic-baseline",
