@@ -22,7 +22,11 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import os
+import platform
 import shutil
+import stat
+import subprocess
 import sys
 import uuid
 from contextlib import contextmanager
@@ -216,6 +220,9 @@ def test_real_data() -> None:
     check("real.total_bytes", data["total_bytes"] == 88073632, str(data["total_bytes"]))
     check("real.inventory_check", find_check(result, "data.inventory")["passed"] is True)
     check("real.no_out_of_scope", find_check(result, "data.no_out_of_scope_open")["passed"] is True)
+    guard = find_check(result, "data.path_guard")
+    check("real.path_guard_check", guard["passed"] is True and data["path_guard"]["rejections"] == [],
+          "guarded=%d" % data["path_guard"]["guarded_files"])
 
     allowed_dirs = {P.group_dir(A_ROOT, g).resolve() for g in P.expected_air_groups(real_cfg())}
     allowed_dirs |= {P.group_dir(A_ROOT, t["group"]).resolve() for t in P.expected_targets(real_cfg())}
@@ -319,6 +326,186 @@ def test_out_of_scope() -> None:
         check("neg.in_scope_ok", P.find_out_of_scope([str(good / "a.dat")], [good]) == [])
 
 
+# ---------------------------------------------------------------- 读前路径校验
+class _FakeStat:
+    """注入用：伪造 ``lstat`` 结果（可带 Windows 重解析点属性）。"""
+
+    def __init__(self, mode: int, attrs: int = 0) -> None:
+        self.st_mode = mode
+        self.st_file_attributes = attrs
+
+
+def make_dir_link(link: Path, target: Path) -> bool:
+    """创建目录联接 / 目录符号链接；环境不允许时返回 False（测试记为 SKIP）。"""
+    try:
+        if platform.system() == "Windows":
+            proc = subprocess.run(
+                ["cmd", "/c", "mklink", "/J", str(link), str(target)],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            return proc.returncode == 0 and link.exists()
+        os.symlink(target, link, target_is_directory=True)
+        return link.exists()
+    except Exception:
+        return False
+
+
+def build_linked_root(tmp: Path) -> Tuple[Path, Path, str, List[Path]]:
+    """造一个数据根：白名单组目录是指向根外真实目录的目录联接。"""
+    root = tmp / "data_root"
+    outside = tmp / "outside_group"
+    key = "空场数据/data1"
+    files = make_group(outside, key, range(8))
+    gdir = P.group_dir(root, key)
+    gdir.parent.mkdir(parents=True, exist_ok=True)
+    return root, outside, key, files
+
+
+def test_path_guard_unit() -> None:
+    with work_tmp() as tmp:
+        base = Path(tmp)
+        root = base / "data_root"
+        gdir = P.group_dir(root, "空场数据/data1")
+        gdir.mkdir(parents=True)
+        f = gdir / "2026-01-01-00-00-00_16000_0.dat"
+        f.write_bytes(b"abc")
+        outside = base / "outside"
+        outside.mkdir()
+        (outside / "o.dat").write_bytes(b"xyz")
+        root_real = Path(os.path.realpath(str(root)))
+
+        real_g = P.guard_group_dir(gdir, root)
+        real_f = P.guard_dat_path(f, real_g, root_real)
+        check("guard.normal_path_ok", real_f == Path(os.path.realpath(str(f))))
+
+        try:
+            P.guard_dat_path(outside / "o.dat", real_g, root_real)
+            ok = False
+        except P.PathGuardError as exc:
+            ok = "直接子项" in str(exc)
+        check("guard.rejects_lexical_outside", ok, "父目录不在白名单组目录")
+
+        def fake_lstat(path: str):
+            if os.path.normcase(str(path)) == os.path.normcase(str(f)):
+                return _FakeStat(stat.S_IFREG | 0o666, P.FILE_ATTRIBUTE_REPARSE_POINT)
+            return os.lstat(path)
+
+        try:
+            P.guard_dat_path(f, real_g, root_real, lstat=fake_lstat)
+            ok = False
+        except P.PathGuardError as exc:
+            ok = "重解析点" in str(exc)
+        check("guard.rejects_symlink_file", ok, "lstat 见到重解析点即拒绝，不跟随")
+
+        def fake_realpath(path: str) -> str:
+            if os.path.normcase(path) == os.path.normcase(str(f)):
+                return str(outside / "o.dat")
+            return os.path.realpath(path)
+
+        try:
+            P.guard_dat_path(f, real_g, root_real, realpath=fake_realpath)
+            ok = False
+        except P.PathGuardError as exc:
+            ok = "越出白名单" in str(exc)
+        check("guard.rejects_realpath_escape", ok, "实际路径逃逸被拒")
+
+        def fake_lstat_dir(path: str):
+            if os.path.normcase(str(path)) == os.path.normcase(str(gdir)):
+                return _FakeStat(stat.S_IFDIR, P.FILE_ATTRIBUTE_REPARSE_POINT)
+            return os.lstat(path)
+
+        try:
+            P.guard_group_dir(gdir, root, lstat=fake_lstat_dir)
+            ok = False
+        except P.PathGuardError as exc:
+            ok = "重解析点" in str(exc)
+        check("guard.rejects_reparse_group_dir", ok)
+
+        try:
+            P.guard_group_dir(outside / "sub", root)
+            ok = False
+        except P.PathGuardError as exc:
+            ok = "不在数据根之下" in str(exc)
+        check("guard.rejects_lexical_root_escape", ok)
+
+
+def test_path_guard_junction_integration() -> None:
+    """负例：白名单组目录本身是指向根外目录的联接 → 拒绝且一个文件都不打开。"""
+    with work_tmp() as tmp:
+        base = Path(tmp)
+        root, outside, key, files = build_linked_root(base)
+        gdir = P.group_dir(root, key)
+        if not make_dir_link(gdir, outside):
+            check("neg.guard_junction_available", True, "SKIP: 本机不允许创建目录联接")
+            return
+        check("neg.guard_junction_available", True)
+
+        manifest = base / "manifest.csv"
+        write_manifest(manifest, [manifest_entry(outside, p) for p in files])
+        ck = P.Checker()
+        info = P.check_data(REPO, root, manifest, mini_cfg(key), ck)
+        guard = [c for c in ck.checks if c["id"] == "data.path_guard"][0]
+        inventory = [c for c in ck.checks if c["id"] == "data.inventory"][0]
+        check(
+            "neg.junction_group_rejected",
+            guard["passed"] is False and guard["rejected"] == 1,
+            "rejections=%s" % guard.get("rejections"),
+        )
+        check(
+            "neg.junction_no_file_opened",
+            info["signal_files_hashed"] == 0 and info["opened_dat_files"] == [],
+            "opened=%d" % info["signal_files_hashed"],
+        )
+        check("neg.junction_blocks_inventory", inventory["passed"] is False)
+
+
+def test_path_guard_entry_negative() -> None:
+    """负例：组目录真实存在，但其中一个 ``.dat`` 指向白名单外（注入 realpath）。"""
+    with work_tmp() as tmp:
+        base = Path(tmp)
+        root = base / "data_root"
+        key = "空场数据/data1"
+        files = make_group(root, key, range(8))
+        outside = base / "outside"
+        outside.mkdir()
+        (outside / "secret.dat").write_bytes(b"secret")
+        manifest = base / "manifest.csv"
+        write_manifest(manifest, [manifest_entry(root, p) for p in files])
+
+        realpath_orig = os.path.realpath
+
+        def fake_realpath(path: str, *args: Any, **kwargs: Any) -> str:
+            if os.path.normcase(os.path.abspath(str(path))) == os.path.normcase(
+                os.path.abspath(str(files[0]))
+            ):
+                return str(outside / "secret.dat")
+            return realpath_orig(path, *args, **kwargs)
+
+        # 仅在本测试内替换模块级 os.path.realpath（guard 在调用时查找该函数，
+        # 因此补丁能同时作用于路径校验与后续 rel_to）。
+        saved = P.os.path.realpath
+        P.os.path.realpath = fake_realpath
+        try:
+            ck = P.Checker()
+            info = P.check_data(REPO, root, manifest, mini_cfg(key), ck)
+        finally:
+            P.os.path.realpath = saved
+
+        guard = [c for c in ck.checks if c["id"] == "data.path_guard"][0]
+        check(
+            "neg.entry_escape_rejected",
+            guard["passed"] is False and guard["rejected"] == 1,
+            "rejections=%s" % guard.get("rejections"),
+        )
+        check(
+            "neg.entry_escape_not_opened",
+            info["signal_files_hashed"] == 7 and len(info["opened_dat_files"]) == 7,
+            "其余 7 份仍被校验并摘要，逃逸项未打开",
+        )
+
+
 def test_e0s_failure() -> None:
     with work_tmp() as tmp:
         repo = Path(tmp)
@@ -383,6 +570,9 @@ def main() -> int:
     test_cli()
     test_negative_inventory()
     test_out_of_scope()
+    test_path_guard_unit()
+    test_path_guard_junction_integration()
+    test_path_guard_entry_negative()
     test_e0s_failure()
     test_anchor_negative()
     test_main_smoke()

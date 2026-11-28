@@ -9,6 +9,9 @@
   ``E0-S`` 结果 JSON / R0 清单 CSV / 白名单 96 个 ``.dat`` 的字节摘要。
 - 不读：任何包头、任何采样语义、任何检验组、``附件3``、B 题数据。
 - 不写：除 ``--out`` 指定的 JSON 之外不写任何文件；不修改原件。
+- **读前路径校验**：任何 ``lstat``/``stat``/``open`` 之前先做词法归属、重解析点
+  （符号链接/目录联接）与 ``realpath`` 包含性检查，见 ``guard_group_dir`` /
+  ``guard_dat_path``；未通过的条目记录为问题且**绝不打开**。
 
 口径（与主管线一致）：
 
@@ -35,16 +38,21 @@ import argparse
 import csv
 import hashlib
 import json
+import os
 import platform
 import re
+import stat
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-CONTRACT_VERSION = "E0C-PREFLIGHT-1"
+CONTRACT_VERSION = "E0C-PREFLIGHT-2"
 SCOPE = "metadata_only_no_signal_parse"
+
+# Windows 重解析点标志（符号链接、目录联接、挂载点共用这一属性）。
+FILE_ATTRIBUTE_REPARSE_POINT = 0x400
 
 # ---------------------------------------------------------------- 版本锚点
 APPROVED_ANCHORS: Dict[str, Any] = {
@@ -194,6 +202,132 @@ class Checker:
     @property
     def failed_ids(self) -> List[str]:
         return [c["id"] for c in self.checks if not c["passed"]]
+
+
+# ---------------------------------------------------------------- 读前路径校验
+class PathGuardError(RuntimeError):
+    """待读路径未通过白名单归属 / 重解析点 / 实际路径包含性校验。"""
+
+
+def _is_reparse_point(st: "os.stat_result") -> bool:
+    """判断一个 ``lstat`` 结果是否符号链接或其它重解析点。
+
+    Windows 上目录联接（junction）不是 ``stat.S_ISLNK``，但一定带
+    ``FILE_ATTRIBUTE_REPARSE_POINT``；仅查 ``islink()`` 会漏掉它。
+    """
+    attrs = getattr(st, "st_file_attributes", None)
+    if attrs is not None:
+        return bool(int(attrs) & FILE_ATTRIBUTE_REPARSE_POINT)
+    return stat.S_ISLNK(st.st_mode)
+
+
+def _norm(path: "os.PathLike[str]") -> str:
+    """仅做词法规范化（不触碰文件系统），用于父子目录比较。"""
+    return os.path.normcase(os.path.normpath(os.path.abspath(str(path))))
+
+
+def _is_within(child: Path, parent: Path) -> bool:
+    try:
+        child.relative_to(parent)
+        return True
+    except ValueError:
+        return False
+
+
+def _check_no_reparse(
+    path: Path, lstat: "Any" = None
+) -> "os.stat_result":
+    """对单个路径做 ``lstat`` 并拒绝重解析点；不跟随链接。"""
+    if lstat is None:
+        lstat = os.lstat
+    try:
+        st = lstat(str(path))
+    except OSError as exc:
+        raise PathGuardError("无法 lstat：%s（%s）" % (path, exc)) from exc
+    if _is_reparse_point(st):
+        raise PathGuardError("是符号链接/重解析点，拒绝跟随：%s" % path)
+    return st
+
+
+def guard_group_dir(
+    group_dir: "os.PathLike[str]",
+    data_root: "os.PathLike[str]",
+    *,
+    lstat: "Any" = None,
+    realpath: "Any" = None,
+) -> Path:
+    """在任何 ``stat``/``iterdir``/``open`` 之前校验一个白名单组目录。
+
+    步骤（顺序即安全边界）：
+
+    1. **词法归属**：``group_dir`` 必须位于 ``data_root`` 之下（纯字符串比较，
+       不访问文件系统）；
+    2. **逐级反重解析点**：从 ``data_root`` 到 ``group_dir`` 的每一级目录都
+       ``lstat`` 一次，任一级是符号链接/目录联接就拒绝——否则后续对孩子节点的
+       访问会先穿过它到达白名单之外；
+    3. **真实路径包含性**：``realpath(group_dir)`` 必须仍在
+       ``realpath(data_root)`` 之内。
+
+    返回经过校验的**真实目录路径**（后续 ``iterdir`` 只用它）。
+    """
+    root_lex = Path(_norm(data_root))
+    gdir_lex = Path(_norm(group_dir))
+    if not _is_within(gdir_lex, root_lex) or gdir_lex == root_lex:
+        raise PathGuardError("组目录不在数据根之下：%s ∉ %s" % (gdir_lex, root_lex))
+
+    if realpath is None:
+        realpath = os.path.realpath
+    current = root_lex
+    for part in gdir_lex.relative_to(root_lex).parts:
+        current = current / part
+        st = _check_no_reparse(current, lstat)
+        if not stat.S_ISDIR(st.st_mode):
+            raise PathGuardError("路径组件不是目录：%s" % current)
+
+    real_gdir = Path(realpath(str(gdir_lex)))
+    real_root = Path(realpath(str(root_lex)))
+    if not _is_within(real_gdir, real_root) or real_gdir == real_root:
+        raise PathGuardError(
+            "组目录实际路径越出数据根：%s ∉ %s" % (real_gdir, real_root)
+        )
+    return real_gdir
+
+
+def guard_dat_path(
+    entry: "os.PathLike[str]",
+    group_real_dir: "os.PathLike[str]",
+    data_root_real: "os.PathLike[str]",
+    *,
+    lstat: "Any" = None,
+    realpath: "Any" = None,
+) -> Path:
+    """在 ``stat``/``open`` 之前校验一个待读 ``.dat`` 条目。
+
+    与 ``guard_group_dir`` 同序：词法父目录 → ``lstat`` 反重解析点 → 普通文件
+    → ``realpath`` 同时落在组真实目录与数据根真实路径内。返回真实路径；调用方
+    只应 ``stat``/``open`` 这个返回值。
+    """
+    entry_lex = Path(_norm(entry))
+    group_lex = Path(_norm(group_real_dir))
+    root_real = Path(_norm(data_root_real))
+
+    if _norm(entry_lex.parent) != _norm(group_lex):
+        raise PathGuardError(
+            "%s 不是白名单组目录 %s 的直接子项" % (entry_lex, group_lex)
+        )
+    st = _check_no_reparse(entry_lex, lstat)
+    if not stat.S_ISREG(st.st_mode):
+        raise PathGuardError("不是普通文件：%s" % entry_lex)
+
+    if realpath is None:
+        realpath = os.path.realpath
+    real = Path(realpath(str(entry_lex)))
+    if not _is_within(real, group_lex) or not _is_within(real, root_real):
+        raise PathGuardError(
+            "实际路径越出白名单（组=%s，根=%s）：%s -> %s"
+            % (group_lex, root_real, entry_lex, real)
+        )
+    return real
 
 
 # ---------------------------------------------------------------- 白名单
@@ -593,22 +727,42 @@ def check_data(
     plan: List[Tuple[str, str]] = [(g, "air") for g in air]
     plan += [(str(t["group"]), str(t["target_type"])) for t in targets]
 
+    data_root_real = Path(os.path.realpath(str(data_root)))
     opened: List[str] = []
+    guarded: List[str] = []
+    rejections: List[Dict[str, str]] = []
     problems: List[str] = []
     total_files = 0
     total_bytes = 0
     for key, role in plan:
         gdir = group_dir(data_root, key)
-        summary: Dict[str, Any] = {"group": key, "role": role, "dir": rel_to(gdir, repo), "files": 0, "bytes": 0}
-        if not gdir.is_dir():
+        # 目录字段用词法相对路径，避免在路径校验之前调用 resolve() 触碰可疑目标。
+        summary: Dict[str, Any] = {
+            "group": key,
+            "role": role,
+            "dir": "%s/%s" % (DATA_SUBDIR.as_posix(), key),
+            "files": 0,
+            "bytes": 0,
+        }
+        # 读前校验（1/2）：组目录本身必须是白名单内的真实目录，且逐级无重解析点。
+        try:
+            real_gdir = guard_group_dir(gdir, data_root)
+        except PathGuardError as exc:
+            problems.append("%s：组目录未通过路径校验 - %s" % (key, exc))
+            rejections.append({"group": key, "path": str(gdir), "kind": "group_dir", "reason": str(exc)})
+            summary["ok"] = False
+            summary["path_guard"] = "rejected"
+            info["groups"].append(summary)
+            continue
+        if not real_gdir.is_dir():
             problems.append("%s：目录不存在" % key)
             summary["ok"] = False
             info["groups"].append(summary)
             continue
         by_row: Dict[int, Path] = {}
         prefixes = set()
-        for entry in sorted(gdir.iterdir()):
-            if not entry.is_file() or entry.suffix.lower() != ".dat":
+        for entry in sorted(real_gdir.iterdir()):
+            if entry.suffix.lower() != ".dat":
                 continue
             match = _ROW_RE.match(entry.name)
             if not match:
@@ -618,7 +772,19 @@ def check_data(
             if row in by_row:
                 problems.append("%s：行 %d 重复" % (key, row))
                 continue
-            by_row[row] = entry
+            # 读前校验（2/2）：条目必须在 stat/open 之前通过词法归属、反重解析点
+            # 与 realpath 包含性检查；通过后只使用返回的真实路径。
+            try:
+                real_path = guard_dat_path(entry, real_gdir, data_root_real)
+            except PathGuardError as exc:
+                problems.append("%s：%s 未通过路径校验 - %s" % (key, entry.name, exc))
+                rejections.append(
+                    {"group": key, "path": str(entry), "kind": "dat_entry", "reason": str(exc)}
+                )
+                total_files += 1
+                continue
+            by_row[row] = real_path
+            guarded.append(str(real_path))
             prefixes.add(match.group("prefix"))
 
         if sorted(by_row) != list(range(8)):
@@ -672,6 +838,13 @@ def check_data(
     info["opened_dat_files"] = [rel_to(Path(p), repo) for p in opened]
     info["total_files"] = total_files
     info["total_bytes"] = total_bytes
+    info["path_guard"] = {
+        "rule": "lexical_parent -> lstat_no_reparse -> realpath_within_group_and_root",
+        "applied_before": ["stat", "open"],
+        "guarded_files": len(guarded),
+        "rejections": rejections,
+        "data_root_real": str(data_root_real),
+    }
 
     ck.add(
         "data.inventory",
@@ -682,6 +855,18 @@ def check_data(
         total_bytes=total_bytes,
         problems=problems[:20],
         problem_count=len(problems),
+    )
+
+    ck.add(
+        "data.path_guard",
+        "data",
+        not rejections and len(guarded) == 96,
+        "96 个待读 .dat 在 stat/open 之前均通过词法归属、反重解析点与 realpath 包含性校验"
+        if not rejections and len(guarded) == 96
+        else "存在未通过读前路径校验的条目（已拒绝访问）",
+        guarded_files=len(guarded),
+        rejected=len(rejections),
+        rejections=rejections[:10],
     )
 
     allowed_dirs = [group_dir(data_root, key).resolve() for key, _ in plan]

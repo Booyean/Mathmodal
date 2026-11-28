@@ -3,7 +3,7 @@
 - **任务 / 分支**：E0-C 执行清单准备 / `data/a-q1-e0-c-checklist`
 - **主责**：`dsh`（数据与求解）；放行与验收：`codex`；前置 `E0-S` 独立验收：`my_deepseek`
 - **依据**：`experiments/A/A-Q1-E0/PLAN.md`（`073511c0…5a88`）、`experiments/A/A-Q1-E0/config.json`（`schema_version=3`，LF 归一化 `8fb6821f…e06a`）、`coordination/A_Q1_SPLIT.json`（`A-Q1-SPLIT0` 冻结，LF `d623da4e…8b3a`）、`coordination/A_Q1_E0_S_DECISION.md`、`solutions/A/data_contract.md`（`D0-4`）、`solutions/A/fold_gate_contract.md`（`D1-2`）、`solutions/A/e0_s1s2_contract.md`
-- **状态**：**清单草案 + 元数据自检（尚未运行 E0-C 真实信号）**。截至本分支，E0-C **未获统筹放行**，`E0-T` 冻结前不得触碰。
+- **状态**：**清单 + 元数据自检 + 正式执行入口已交付（`a_e0_c.py`）**。截至本分支，E0-C **未获统筹放行**，`E0-T` 冻结前不得触碰；入口的 `--mode execute` 强制要求 `--approval-ref`，未放行时只能跑 `--mode check`（不解析采样）。
 
 > 本清单只回答四件事：**能用哪些数据、用什么命令复跑、什么算通过、什么必须停**。不产生、也不预设任何真实测距结论。
 
@@ -54,6 +54,8 @@ A 题原始附件在仓库内：
 
 **边界铁律**：E0-C 主运行只允许打开上表 96 个 `.dat`；任何对禁止组的 `open/stat/glob` 都算越界，触发硬停止并登记。`E0-T` 指定的两组在冻结前一律不读。
 
+**入口侧的强制约束（E0C-CL-3）**：`solutions/A/a_e0_c.py` **不调用** `a_dat_reader.discover_groups()`（该函数 `rglob("*.dat")` 整棵 A 题目录，会 glob 到禁止组），组清单由本表显式给出；每个组目录、每个待读文件在 `stat`/`open` 之前都要过 §2.4 的读前路径校验。
+
 ### 1.4 原件与版本
 
 | 项 | 值 |
@@ -73,33 +75,42 @@ A 题原始附件在仓库内：
 ### 2.1 本轮可执行的元数据自检（不解析采样，可立即跑）
 
 ```powershell
-# 1) 清单自检：锚点、白名单、96 个文件身份、E0-S 前置、D1-2 契约
+# 1) 清单自检：锚点、白名单、96 个文件身份、读前路径校验、E0-S 前置、D1-2 契约
 python solutions/A/e0c_preflight.py `
   --out experiments/A/A-Q1-E0/e0c/preflight.json
 
-# 2) 自检测试（含篡改反例：缺行、改大小、改 SHA、掺入检验组、E0-S 门失败）
+# 2) 自检测试（含篡改反例：缺行、改大小、改 SHA、掺入检验组、E0-S 门失败、
+#    符号链接/目录联接指向白名单外、realpath 逃逸）
 python solutions/A/test_e0c_preflight.py
+
+# 3) 正式入口的 check 模式：放行前自检 + 12 组白名单边界扫描（不解析采样）
+python solutions/A/a_e0_c.py --mode check
+
+# 4) 正式入口的自检测试（合成 .dat 端到端 + 门槛 + CLI 边界；零真实信号）
+python solutions/A/test_a_e0_c.py
 ```
 
-- 退出码：`0` = 放行前条件（`preconditions_pass`）全部通过；`1` = 任一条件失败；`2` = 用法/环境错误。JSON 始终写出。
+- 退出码：`e0c_preflight.py` `0` = 放行前条件（`preconditions_pass`）全部通过；`1` = 任一条件失败；`2` = 用法/环境错误。JSON 始终写出。
+- `a_e0_c.py --mode check` 退出码：`0` = 入口就绪（`ready_for_execute`）；`1` = 前置或边界扫描有问题。
 - 两级判定，避免把“条件齐了”误读成“可以开跑”：
-  - `preconditions_pass`：锚点、白名单、96 个文件身份、E0-S 前置、D1-2 契约全部通过；
-  - `execution_ready = preconditions_pass AND a_e0_c.py 已交付`；当前为 **false**（缺实现，见 §6 B-01）；
+  - `preconditions_pass`：锚点、白名单、96 个文件身份、读前路径校验、E0-S 前置、D1-2 契约全部通过；
+  - `execution_ready = preconditions_pass AND a_e0_c.py 已交付`；**现已为 true**（入口已交付）；
   - `overall_pass` 只等于 `preconditions_pass`，**不等于放行**。`--no-hash` 会把 `data.hash_skipped` 记为失败，调试模式不能充当放行证据。
 - 自检只做：读 `config.json` / `PLAN.md` / `SPLIT.json` / `E0-S` 结果 JSON / R0 清单；对白名单 96 个 `.dat` 只算 `size + SHA256`（不解析包头、不读采样语义）；落盘一份 JSON。
 - 自检**不等于** E0-C 通过，也不构成放行。它只证明“放行前该齐的东西齐了、该锁的东西没被改、越界文件没被打开”。
 
-输出 JSON 关键字段：`preconditions_pass`、`execution_ready`、`overall_pass`、`checks[]`（`id/group/passed/detail`）、`summary.failed_ids` / `summary.blocking_ids`、`data_allow_list`、`data.signal_files_hashed`、`data.opened_dat_files`、`anchors`、`open_items`。
+输出 JSON 关键字段：`preconditions_pass`、`execution_ready`、`overall_pass`、`checks[]`（`id/group/passed/detail`）、`summary.failed_ids` / `summary.blocking_ids`、`data_allow_list`、`data.signal_files_hashed`、`data.opened_dat_files`、`data.path_guard`（`guarded_files` / `rejections`）、`anchors`、`open_items`。
 
-### 2.2 E0-C 主运行命令（**待实现、未放行，现在不得执行**）
+### 2.2 E0-C 主运行命令（入口已交付，**未放行，现在不得执行**）
 
-`a_e0_c.py` 尚未交付；下列接口是本清单锁定的**实现契约**，实现分支需按此交付，并在实现提交后从该提交运行、再登记结果（避免自引用 SHA）：
+入口：`solutions/A/a_e0_c.py`（`CONTRACT_VERSION = "E0-C-1"`）。两种模式：默认 `--mode check`；真实执行必须 `--mode execute --approval-ref <统筹放行编号/链接>`，否则直接退出码 `2`。若输出目录已有 `e0c_results.json`，无 `--overwrite` 时拒绝启动（失败证据不得被覆盖）。
 
 ```powershell
 $env:OMP_NUM_THREADS="1"; $env:OPENBLAS_NUM_THREADS="1"
 $env:MKL_NUM_THREADS="1"; $env:NUMEXPR_NUM_THREADS="1"
 
-python solutions/A/a_e0_c.py `
+python solutions/A/a_e0_c.py --mode execute `
+  --approval-ref <codex 放行消息编号/链接> `
   --config experiments/A/A-Q1-E0/config.json `
   --split coordination/A_Q1_SPLIT.json `
   --data-root "竞赛题目/A 题：单发多收下的雷达信号处理及成像问题" `
@@ -109,23 +120,25 @@ python solutions/A/a_e0_c.py `
   --main-commit <main-sha>
 ```
 
-必须产出（文件名可自定，但同一提交的接口说明要给出映射）：
+退出码：`0` 全部门槛可冻结（写 `e0c_frozen.json`）；`1` 灰区/不可冻结；`2` 用法错误（缺 `--approval-ref`、拒绝覆盖）；`3` 硬停止（前置未过、越界、`valid_rx<63`、NaN/Inf、超预算、空场 `<6 dB`、`abs_err>10.71 cm` 等）。
+
+必须产出：
 
 | 文件 | 内容 |
 |---|---|
-| `e0c_results.json` | 机器可读：版本锚点、参数、逐组指标、逐门 `value/threshold/passed`、`stop_reason`、资源用量 |
-| `e0c_arrays.npz` | 用于独立重算的逐通道校准谱、减除前后谱、压缩响应、剖面与采样轴 |
+| `e0c_results.json` | 机器可读：版本锚点、`approval_ref`、参数、逐组指标、逐门 `value/threshold/status/passed`、`hard_stops` / `gray_reasons`、资源用量、`files_sha256` |
+| `e0c_arrays.npz` | 逐通道校准谱、对齐空场谱、`h_rel`、减除前后谱、`S_eff`、压缩响应、剖面与采样轴 |
 | `e0c_air_loo.json` | 10 折 × 9 组 `Supp_air-LOO`、`J_air`、`min/median`、选中对与切换原因 |
 | `e0c_frozen.json` | **仅当全部门槛可冻结时**写出：`(λ_cal, λ_inv, η_wall)`、实现 SHA、配置 SHA、冻结时间 |
-| `run.log` / `SHA256SUMS.txt` | 诊断日志与全部产物的 SHA256 |
+| `run.log` / `SHA256SUMS.txt` | 诊断日志与全部产物的 SHA256（`e0c_results.json` 自身摘要只在 `SHA256SUMS.txt` 中，避免自引用） |
 
 实现约束（与 `PLAN.md` 一致，不得夹带 `N0`）：
 
-- 链路固定 `M0-Cal-Base → M0-DW-Base（α_g ≡ 1.0）→ M0-Rng-Base（P_norm,eff 主统计量）`；`P_norm`、`P_env` 仅作对照。
+- 链路固定 `M0-Cal-Base → M0-DW-Base（α_g ≡ 1.0）→ M0-Rng-Base（P_norm,eff 主统计量）`；`P_norm`、`P_env` 仅作对照。数学原语直接复用已验收的 `a_e0_s1s2.py`，不另写一套。
 - 折迭统一用 `solutions/A/a_fold_gate.py`（`D1-2`），每包 16000 点 → 4 段 × 4000 点，等权折叠、无相位补偿；任一通道 NaN/Inf 整包拒绝。
 - 有效通道必须 **63/63**（含 `ref_idx=28`），禁止静默丢通道或补零；`valid_rx < 63` 即硬停止。
 - 搜索区间 `[0.15, 2.00] m`：粗 1 mm、细 0.1 mm；`PSLR` 主瓣保护半宽 `1.6031e-1 m`。
-- 墙体首峰规则默认 `η_wall=0.25`；`{0.15,0.25,0.35}` 只允许在 `墙体数据/data1-42cm` 上核对，冻结后不得再改。金属板用全局 `argmax`。
+- 墙体首峰规则默认 `η_wall=0.25`；`{0.15,0.25,0.35}` 只允许在 `墙体数据/data1-42cm` 上按“满足条件且最接近默认 0.25”核对（确定序：`(round(|η-0.25|,12), η)`，即 `0.25 → 0.15 → 0.35`），冻结后不得再改。金属板用全局 `argmax`。
 - 单进程单线程；总墙钟 ≤ 600 s、峰值 RSS ≤ 4096 MiB；超预算即停。
 
 ### 2.3 复跑登记规则
@@ -133,6 +146,25 @@ python solutions/A/a_e0_c.py `
 - 先提交实现与测试（implementation commit），再 `git archive`/新 worktree 从该提交运行，`--implementation-sha` 填该提交，`--parent-commit` 填其父提交，`--main-commit` 填运行时 `origin/main`。
 - 结果单独提交（只加 `experiments/A/A-Q1-E0/e0c/` 产物）。失败实验也保留提交、配置、日志、退出原因，不删证据。
 - 同一环境内重复运行应逐位一致；跨机只要求指标一致，不宣称数组逐位（`E0-S` 验收已记录该边界）。
+
+### 2.4 读前路径校验（E0C-CL-3 新增，回应统筹“stat/读取前校验实际路径”）
+
+`solutions/A/e0c_preflight.py` 新增并导出 `guard_group_dir()` / `guard_dat_path()`，`a_e0_c.py` 复用同一实现。顺序即安全边界：
+
+1. **词法归属**（只做字符串规范化，不触碰文件系统）：组目录必须在数据根之下；待读文件必须是白名单组目录的直接子项；
+2. **逐级反重解析点**：从数据根到组目录的每一级、以及文件本身，先 `lstat`；带 `FILE_ATTRIBUTE_REPARSE_POINT`（符号链接、Windows 目录联接、挂载点）一律拒绝。仅查 `os.path.islink()` 会漏掉目录联接（实测 `islink=False`、属性 `0x400`）；
+3. **真实路径包含性**：`realpath` 必须同时落在组真实目录与数据根真实路径之内；
+4. 通过后才 `stat`/`open`，且**只使用校验返回的真实路径**；未通过记入 `data.path_guard.rejections` 并计入 `data.path_guard` 失败，绝不打开。
+
+反例（`test_e0c_preflight.py`，均实际跑通）：
+
+| 反例 | 构造 | 断言 |
+|---|---|---|
+| 词法越界 | 文件不在白名单组目录下 | `PathGuardError`（“直接子项”） |
+| 文件级重解析点 | 注入 `lstat` 返回 `0x400` | 拒绝，不跟随 |
+| `realpath` 逃逸 | 注入 `realpath` 指向根外 | 拒绝（“越出白名单”） |
+| 组目录本身是联接 | `cmd /c mklink /J` 指向根外真实目录 | `data.path_guard` 失败；`signal_files_hashed==0`；一个文件都不打开 |
+| 单文件逃逸（端到端） | 组内 8 文件中 1 个 `realpath` 指向根外 | `rejected==1`，其余 7 份仍摘要，逃逸项未打开 |
 
 ---
 
@@ -202,8 +234,8 @@ python solutions/A/a_e0_c.py `
 
 | 编号 | 事项 | 状态 / 需要什么 |
 |---|---|---|
-| B-01 | `solutions/A/a_e0_c.py` 主运行程序 | **未实现**。需另立实现分支（`PLAN.md` 原记 `data/a-q1-pilot`，E0-S 实际用 `data/a-q1-e0-s`），交付 CLI + 结果接口 + 测试，再申请放行 |
-| B-02 | 真实信号执行放行 | **未获**。需 `codex` 核对本清单白名单与停止条件后明确放行 |
+| B-01 | `solutions/A/a_e0_c.py` 主运行程序 | **已交付（E0C-CL-3）**：`--mode check/execute`、`--approval-ref` 强制、六类产物、47 项作者测试（合成 `.dat` 端到端）。真实运行仍待 B-02 |
+| B-02 | 真实信号执行放行 | **未获**。需 `codex` 核对本清单白名单、读前路径校验与停止条件后明确放行；放行前 `--mode execute` 一律拒绝 |
 | B-03 | `E0-T` | **禁止**。须 E0-C 全部门槛可冻结并锁配置后单次盲评 |
 | B-04 | 目标组标称距离与真实物理距离的关系 | 未知（O-D0-04）；只按标称标签报告误差，不宣称绝对测距精度 |
 | B-05 | 实测 SNR / 直达波泄漏量级 | 未知；只有合成反例（`verify_e0_spec.py`）与 S2 数值，不能外推为实测结论 |
@@ -216,25 +248,28 @@ python solutions/A/a_e0_c.py `
 
 ---
 
-## 7. 本轮自检结论（2026-11-28 实测）
+## 7. 本轮自检结论（2026-11-28 实测，E0C-CL-3）
 
 命令：`python solutions/A/e0c_preflight.py --out experiments/A/A-Q1-E0/e0c/preflight.json`
 
 | 项 | 实测 |
 |---|---|
-| 检查项 | **30 / 31 通过**（唯一未过：`code.e0c_runner_present`，属 readiness，不是数据/锚点问题） |
+| 检查项 | **32 / 32 通过**（`code.e0c_runner_present` 已过：入口交付后 readiness 满足） |
 | `preconditions_pass` | **true**（`blocking_ids=[]`）；退出码 `0` |
-| `execution_ready` | **false**（`a_e0_c.py` 未交付） |
+| `execution_ready` | **true**（`a_e0_c.py` 已交付） |
 | 锚点 | `config` `8fb6821f…e06a`、`PLAN` `073511c0…5a88`、`SPLIT` `d623da4e…8b3a` 全部匹配 |
 | 白名单 | 12 组 / 96 文件 / **88,073,632 B**；逐文件 `size+SHA256` 与 R0 清单一致 |
+| 读前路径校验 | `data.path_guard` 通过：`guarded_files=96`、`rejections=[]`；12 组目录逐级无重解析点 |
 | R0 清单 | 881 行，总体 SHA256 `86305548…fa06` 按 **CSV 行序** 复现（B-09） |
 | 越界读取 | 打开并摘要的 96 个 `.dat` 全部落在白名单 12 组内；无检验组、无 `附件3`、无 B 题 |
 | E0-S 前置 | `overall_pass=true`、三例逐门通过、数组/参数表摘要匹配、验收报告在库 |
 | D1-2 | `CONTRACT_VERSION="D1-2"`；D0 读取器在库 |
-| 自检测试 | **43 / 43 通过**（含缺行、大小/摘要不符、0 字节、越界、E0-S 门失败、锚点不符等反例） |
+| 自检测试 | **55 / 55 通过**（含缺行、大小/摘要不符、0 字节、越界、E0-S 门失败、锚点不符、词法越界、重解析点、`realpath` 逃逸、目录联接组 等反例） |
+| 入口 check | `a_e0_c.py --mode check` 退出码 `0`、`ready_for_execute=true`、`packets_parsed=0`、12 组边界扫描无问题 |
+| 入口测试 | **47 / 47 通过**（合成频谱数学链 + 合法 `.dat` 写读回 + 桩 preflight 的完整 `run_execute` + 门槛/CLI 边界） |
 
-- **本清单不产生任何真实测距数值**：`a_e0_c.py` 未交付（B-01），E0-C 未放行（B-02）。
-- 本清单不修改 `PLAN.md`、`config.json`、`SPLIT.json`、D0/D1-2/E0-S 生产代码或任何原始数据；只新增文档与只读自检工具。
+- **本清单不产生任何真实测距数值**：入口已交付但 E0-C 未放行（B-02），`--mode execute` 缺 `--approval-ref` 时拒绝启动。
+- 本清单不修改 `PLAN.md`、`config.json`、`SPLIT.json`、D0/D1-2/E0-S 生产代码或任何原始数据；只新增文档、只读自检工具、读前路径校验与 E0-C 入口/测试。
 
 ---
 
@@ -244,3 +279,4 @@ python solutions/A/a_e0_c.py `
 |---|---|---|
 | E0C-CL-1 | 2026-11-28 | 首版：12 组白名单（96 文件）、E0-C 命令契约、按 `PLAN.md` §5.2 的门槛表、停止/回溯/登记格式、依赖与未知项；新增元数据自检与 43 项测试 |
 | E0C-CL-2 | 2026-11-28 | 记录实测自检 30/31（`preconditions_pass=true`、`execution_ready=false`）；补 B-09（清单哈希行序）、B-10（跨数据集同名组）、B-11（18 未触碰 = 16 内插 + 2 外推）三项口径差异 |
+| E0C-CL-3 | 2026-11-28 | 回应统筹复核意见：① `e0c_preflight.py` 在 `stat`/`open` **之前**做词法归属、逐级反重解析点（含 Windows 目录联接）与 `realpath` 包含性校验，新增 `data.path_guard` 与 4 类负例（含 `mklink /J` 指向根外的端到端负例）；② 交付 `solutions/A/a_e0_c.py` 正式入口（`check`/`execute` 双模式、`--approval-ref` 强制、拒绝覆盖失败证据、六类产物）与 `test_a_e0_c.py`（47 项，含合法 `.dat` 合成端到端）；③ 实测更新为自检 31/32、`execution_ready=true`、测试 55/55 与 47/47；B-01 结项，B-02 仍未放行 |

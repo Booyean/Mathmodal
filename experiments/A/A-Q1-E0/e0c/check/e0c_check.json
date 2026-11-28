@@ -1,0 +1,155 @@
+{
+  "contract_version": "E0-C-1",
+  "generated_at": "2026-11-28T13:13:34+08:00",
+  "mode": "check",
+  "repo": "D:\\数模\\Mathmodal",
+  "environment": {
+    "python": "3.13.5",
+    "numpy": "2.1.3",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    }
+  },
+  "config_sha256": "8fb6821fa3335ef748e16ad2f5b5b8fc818c13cbe9d3315377faf48d5e40e06a",
+  "config_sha256_match": true,
+  "preflight": {
+    "preconditions_pass": true,
+    "execution_ready": true,
+    "summary": {
+      "total": 32,
+      "passed": 32,
+      "failed": 0,
+      "failed_ids": [],
+      "blocking_ids": [],
+      "elapsed_s": 0.31
+    },
+    "open_items": [
+      {
+        "id": "B-02",
+        "item": "统筹尚未放行 E0-C 真实信号执行",
+        "blocks": "E0-C 与后续 E0-T"
+      }
+    ],
+    "data_path_guard": {
+      "rule": "lexical_parent -> lstat_no_reparse -> realpath_within_group_and_root",
+      "applied_before": [
+        "stat",
+        "open"
+      ],
+      "guarded_files": 96,
+      "rejections": [],
+      "data_root_real": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题"
+    }
+  },
+  "boundary_scan": {
+    "allowed_groups": 12,
+    "groups": [
+      {
+        "group_key": "空场数据/data1",
+        "role": "air",
+        "ok": true,
+        "real_dir": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题\\附件\\附件2-测距数据\\空场数据\\data1",
+        "files": 8,
+        "bytes": 8192896
+      },
+      {
+        "group_key": "空场数据/data2",
+        "role": "air",
+        "ok": true,
+        "real_dir": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题\\附件\\附件2-测距数据\\空场数据\\data2",
+        "files": 8,
+        "bytes": 10241120
+      },
+      {
+        "group_key": "空场数据/data3",
+        "role": "air",
+        "ok": true,
+        "real_dir": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题\\附件\\附件2-测距数据\\空场数据\\data3",
+        "files": 8,
+        "bytes": 4096448
+      },
+      {
+        "group_key": "空场数据/data4",
+        "role": "air",
+        "ok": true,
+        "real_dir": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题\\附件\\附件2-测距数据\\空场数据\\data4",
+        "files": 8,
+        "bytes": 8192896
+      },
+      {
+        "group_key": "空场数据/data5",
+        "role": "air",
+        "ok": true,
+        "real_dir": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题\\附件\\附件2-测距数据\\空场数据\\data5",
+        "files": 8,
+        "bytes": 6144672
+      },
+      {
+        "group_key": "空场数据/data6",
+        "role": "air",
+        "ok": true,
+        "real_dir": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题\\附件\\附件2-测距数据\\空场数据\\data6",
+        "files": 8,
+        "bytes": 8192896
+      },
+      {
+        "group_key": "空场数据/data7",
+        "role": "air",
+        "ok": true,
+        "real_dir": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题\\附件\\附件2-测距数据\\空场数据\\data7",
+        "files": 8,
+        "bytes": 4096448
+      },
+      {
+        "group_key": "空场数据/data8",
+        "role": "air",
+        "ok": true,
+        "real_dir": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题\\附件\\附件2-测距数据\\空场数据\\data8",
+        "files": 8,
+        "bytes": 6144672
+      },
+      {
+        "group_key": "空场数据/data9",
+        "role": "air",
+        "ok": true,
+        "real_dir": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题\\附件\\附件2-测距数据\\空场数据\\data9",
+        "files": 8,
+        "bytes": 8192896
+      },
+      {
+        "group_key": "空场数据/data10",
+        "role": "air",
+        "ok": true,
+        "real_dir": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题\\附件\\附件2-测距数据\\空场数据\\data10",
+        "files": 8,
+        "bytes": 12289344
+      },
+      {
+        "group_key": "墙体数据/data1-42cm",
+        "role": "wall",
+        "ok": true,
+        "real_dir": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题\\附件\\附件2-测距数据\\墙体数据\\data1-42cm",
+        "files": 8,
+        "bytes": 6144672
+      },
+      {
+        "group_key": "金属板数据/data1-69cm",
+        "role": "metal",
+        "ok": true,
+        "real_dir": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题\\附件\\附件2-测距数据\\金属板数据\\data1-69cm",
+        "files": 8,
+        "bytes": 6144672
+      }
+    ],
+    "problems": [],
+    "dat_files_open_for_sha256": 96,
+    "packets_parsed": 0,
+    "note": "本模式不解析任何 .dat 包头/采样；只对白名单 96 个 .dat 计算 size+SHA256（与 e0c_preflight 同口径）并对 12 个组目录做 iterdir/lstat 边界扫描"
+  },
+  "ready_for_execute": true
+}
