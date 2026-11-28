@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="160mm" height="64mm" viewBox="0 0 160 64">
+  <g id="stage-backgrounds">
+    <rect x="37.50" y="5.60" width="38.00" height="46.40" rx="2.00" fill="#F8FAFC" stroke="none"/>
+    <path d="M 39.50,5.60 L 41.30,5.60 M 42.50,5.60 L 44.30,5.60 M 45.50,5.60 L 47.30,5.60 M 48.50,5.60 L 50.30,5.60 M 51.50,5.60 L 53.30,5.60 M 54.50,5.60 L 56.30,5.60 M 57.50,5.60 L 59.30,5.60 M 60.50,5.60 L 62.30,5.60 M 63.50,5.60 L 65.30,5.60 M 66.50,5.60 L 68.30,5.60 M 69.50,5.60 L 71.30,5.60 M 72.50,5.60 L 73.50,5.60 M 75.50,7.60 L 75.50,9.40 M 75.50,10.60 L 75.50,12.40 M 75.50,13.60 L 75.50,15.40 M 75.50,16.60 L 75.50,18.40 M 75.50,19.60 L 75.50,21.40 M 75.50,22.60 L 75.50,24.40 M 75.50,25.60 L 75.50,27.40 M 75.50,28.60 L 75.50,30.40 M 75.50,31.60 L 75.50,33.40 M 75.50,34.60 L 75.50,36.40 M 75.50,37.60 L 75.50,39.40 M 75.50,40.60 L 75.50,42.40 M 75.50,43.60 L 75.50,45.40 M 75.50,46.60 L 75.50,48.40 M 75.50,49.60 L 75.50,50.00 M 73.50,52.00 L 71.70,52.00 M 70.50,52.00 L 68.70,52.00 M 67.50,52.00 L 65.70,52.00 M 64.50,52.00 L 62.70,52.00 M 61.50,52.00 L 59.70,52.00 M 58.50,52.00 L 56.70,52.00 M 55.50,52.00 L 53.70,52.00 M 52.50,52.00 L 50.70,52.00 M 49.50,52.00 L 47.70,52.00 M 46.50,52.00 L 44.70,52.00 M 43.50,52.00 L 41.70,52.00 M 40.50,52.00 L 39.50,52.00 M 37.50,50.00 L 37.50,48.20 M 37.50,47.00 L 37.50,45.20 M 37.50,44.00 L 37.50,42.20 M 37.50,41.00 L 37.50,39.20 M 37.50,38.00 L 37.50,36.20 M 37.50,35.00 L 37.50,33.20 M 37.50,32.00 L 37.50,30.20 M 37.50,29.00 L 37.50,27.20 M 37.50,26.00 L 37.50,24.20 M 37.50,23.00 L 37.50,21.20 M 37.50,20.00 L 37.50,18.20 M 37.50,17.00 L 37.50,15.20 M 37.50,14.00 L 37.50,12.20 M 37.50,11.00 L 37.50,9.20 M 37.50,8.00 L 37.50,7.60 M 37.50,7.60 Q 37.50,5.60 39.50,5.60 M 73.50,5.60 Q 75.50,5.60 75.50,7.60 M 75.50,50.00 Q 75.50,52.00 73.50,52.00 M 39.50,52.00 Q 37.50,52.00 37.50,50.00" fill="none" stroke="#0F766E" stroke-width="0.46"/>
+    <text x="56.5" y="8.3" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="1.95" font-weight="700" fill="#0F766E">冻结校准池（空场 + cal · 标签隔离）</text>
+  </g>
+
+  <g id="stage-headers">
+    <text x="16.5" y="2.6" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.5" font-weight="700" fill="#1E3A8A">一、数据读取与门控</text>
+    <text x="56.5" y="2.6" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.5" font-weight="700" fill="#0F766E">二、基准参数冻结</text>
+    <text x="101.5" y="2.6" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.5" font-weight="700" fill="#92400E">三、多维求解分支</text>
+    <text x="143.5" y="2.6" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.5" font-weight="700" fill="#581C87">四、独立验证闭环</text>
+  </g>
+
+  <g id="node-input">
+    <rect x="1.50" y="5.80" width="30.00" height="13.60" rx="1.50" fill="#F1F5F9" stroke="#334155" stroke-width="0.45"/>
+    <path d="M 1.50,10.20 L 1.50,7.30 Q 1.50,5.80 3.00,5.80 L 30.00,5.80 Q 31.50,5.80 31.50,7.30 L 31.50,10.20 Z" fill="#334155"/>
+    <text x="16.50" y="8.00" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.40" font-weight="700" fill="#FFFFFF">原始观测输入</text>
+    <text x="16.50" y="13.32" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">附件 2/3 原始 .dat</text>
+    <text x="16.50" y="16.27" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">64 阵元(1发63收)交错阵</text>
+  </g>
+  <g id="node-d0">
+    <rect x="1.50" y="23.20" width="30.00" height="13.60" rx="1.50" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="0.45"/>
+    <path d="M 1.50,27.60 L 1.50,24.70 Q 1.50,23.20 3.00,23.20 L 30.00,23.20 Q 31.50,23.20 31.50,24.70 L 31.50,27.60 Z" fill="#1D4ED8"/>
+    <text x="16.50" y="25.40" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.40" font-weight="700" fill="#FFFFFF">D0 读取契约</text>
+    <text x="16.50" y="30.73" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">协议解析与 sync 交集</text>
+    <text x="16.50" y="33.68" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">63 路掩码与异常隔离</text>
+  </g>
+  <g id="node-d1">
+    <rect x="1.50" y="40.60" width="30.00" height="14.40" rx="1.50" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="0.45"/>
+    <path d="M 1.50,45.00 L 1.50,42.10 Q 1.50,40.60 3.00,40.60 L 30.00,40.60 Q 31.50,40.60 31.50,42.10 L 31.50,45.00 Z" fill="#1D4ED8"/>
+    <text x="16.50" y="42.80" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.40" font-weight="700" fill="#FFFFFF">D1-2 一致性门控折迭</text>
+    <text x="16.50" y="48.52" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">包内 4 段相干与 F1/F2 门控</text>
+    <text x="16.50" y="51.48" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">等权折迭 → 带内频谱</text>
+  </g>
+  <g id="node-q11">
+    <rect x="39.20" y="11.00" width="34.60" height="17.00" rx="1.50" fill="#F0FDFA" stroke="#0F766E" stroke-width="0.45"/>
+    <path d="M 39.20,15.50 L 39.20,12.50 Q 39.20,11.00 40.70,11.00 L 72.30,11.00 Q 73.80,11.00 73.80,12.50 L 73.80,15.50 Z" fill="#0F766E"/>
+    <text x="56.50" y="13.25" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" font-weight="700" fill="#FFFFFF">Q1.1 通道校准 (M0-Cal-Base)</text>
+    <text x="56.50" y="18.80" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.18" fill="#1F2937">对齐聚合与投影正交分解</text>
+    <text x="56.50" y="21.75" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.18" fill="#1F2937">Tikhonov 正则比值校准</text>
+    <text x="56.50" y="24.70" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.18" fill="#1F2937">纯空场留一 LOO 冻结参数</text>
+  </g>
+  <g id="node-q12">
+    <rect x="39.20" y="32.50" width="34.60" height="17.00" rx="1.50" fill="#F0FDFA" stroke="#0F766E" stroke-width="0.45"/>
+    <path d="M 39.20,37.00 L 39.20,34.00 Q 39.20,32.50 40.70,32.50 L 72.30,32.50 Q 73.80,32.50 73.80,34.00 L 73.80,37.00 Z" fill="#0F766E"/>
+    <text x="56.50" y="34.75" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" font-weight="700" fill="#FFFFFF">Q1.2 抑直模板 (M0-DW-Base)</text>
+    <text x="56.50" y="40.30" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.18" fill="#1F2937">第二奈奎斯特区 RF 镜像对齐</text>
+    <text x="56.50" y="43.25" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.18" fill="#1F2937">α=1 减除与 S_eff 模板重构</text>
+    <text x="56.50" y="46.20" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.18" fill="#1F2937">输出压缩域响应 z_MF</text>
+  </g>
+  <g id="node-q13">
+    <rect x="81.50" y="5.80" width="40.00" height="14.00" rx="1.50" fill="#FFFBEB" stroke="#B45309" stroke-width="0.45"/>
+    <path d="M 81.50,10.20 L 81.50,7.30 Q 81.50,5.80 83.00,5.80 L 120.00,5.80 Q 121.50,5.80 121.50,7.30 L 121.50,10.20 Z" fill="#B45309"/>
+    <text x="101.50" y="8.00" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.40" font-weight="700" fill="#FFFFFF">问题 1.3 · 一维平面测距</text>
+    <text x="101.50" y="13.53" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">归一化 GLRT 剖面 P_norm,eff</text>
+    <text x="101.50" y="16.48" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">墙体首峰判别与 10/10 评价</text>
+  </g>
+  <g id="node-q2">
+    <rect x="81.50" y="23.20" width="40.00" height="14.20" rx="1.50" fill="#FFFBEB" stroke="#B45309" stroke-width="0.45"/>
+    <path d="M 81.50,27.60 L 81.50,24.70 Q 81.50,23.20 83.00,23.20 L 120.00,23.20 Q 121.50,23.20 121.50,24.70 L 121.50,27.60 Z" fill="#B45309"/>
+    <text x="101.50" y="25.40" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.40" font-weight="700" fill="#FFFFFF">问题 2 · 二维剖面聚焦成像</text>
+    <text x="101.50" y="31.02" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">两步封顶增益 M2-Gain-BSEC</text>
+    <text x="101.50" y="33.98" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">第 4 行聚焦 CohBPA / EnvBPA</text>
+  </g>
+  <g id="node-q3">
+    <rect x="81.50" y="40.60" width="40.00" height="14.40" rx="1.50" fill="#FFFBEB" stroke="#B45309" stroke-width="0.45"/>
+    <path d="M 81.50,45.00 L 81.50,42.10 Q 81.50,40.60 83.00,40.60 L 120.00,40.60 Q 121.50,40.60 121.50,42.10 L 121.50,45.00 Z" fill="#B45309"/>
+    <text x="101.50" y="42.80" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.40" font-weight="700" fill="#FFFFFF">问题 3 · 全阵三维成像定位</text>
+    <text x="101.50" y="48.52" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">63 路解耦孔径 3D 反向投影</text>
+    <text x="101.50" y="51.48" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">柱域 3D-NMS 与遮挡阴影诊断</text>
+  </g>
+  <g id="node-val">
+    <rect x="128.50" y="10.50" width="30.00" height="39.50" rx="1.50" fill="#FAF5FF" stroke="#6B21A8" stroke-width="0.45"/>
+    <path d="M 128.50,15.30 L 128.50,12.00 Q 128.50,10.50 130.00,10.50 L 157.00,10.50 Q 158.50,10.50 158.50,12.00 L 158.50,15.30 Z" fill="#6B21A8"/>
+    <text x="143.50" y="12.90" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.40" font-weight="700" fill="#FFFFFF">独立验证与检验闭环</text>
+    <text x="143.50" y="26.75" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">合成 / 校准 / 盲评闭环</text>
+    <text x="143.50" y="29.70" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">跨机器与可复现核查</text>
+    <text x="143.50" y="32.65" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">参数灵敏度与稳定性</text>
+    <text x="143.50" y="35.60" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">多行一致与遮挡对照</text>
+    <text x="143.50" y="38.55" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.25" fill="#1F2937">物理边界与误差归因</text>
+  </g>
+
+  <g id="connectors">
+    <path d="M 16.50,19.40 L 16.50,21.65" fill="none" stroke="#334155" stroke-width="0.52"/>
+    <polygon points="16.50,23.20 15.65,21.55 17.35,21.55" fill="#334155"/>
+    <path d="M 16.50,36.80 L 16.50,39.05" fill="none" stroke="#1D4ED8" stroke-width="0.52"/>
+    <polygon points="16.50,40.60 15.65,38.95 17.35,38.95" fill="#1D4ED8"/>
+    <path d="M 31.50,47.80 L 34.60,47.80 L 34.60,19.50 L 37.65,19.50" fill="none" stroke="#0F766E" stroke-width="0.52"/>
+    <polygon points="39.20,19.50 37.55,20.35 37.55,18.65" fill="#0F766E"/>
+    <path d="M 56.50,28.00 L 56.50,30.95" fill="none" stroke="#0F766E" stroke-width="0.52"/>
+    <polygon points="56.50,32.50 55.65,30.85 57.35,30.85" fill="#0F766E"/>
+    <path d="M 73.8,41.0 L 77.6,41.0 M 77.6,12.8 L 77.6,47.8" fill="none" stroke="#0F766E" stroke-width="0.52"/>
+    <path d="M 77.60,12.80 L 79.95,12.80" fill="none" stroke="#0F766E" stroke-width="0.52"/>
+    <polygon points="81.50,12.80 79.85,13.65 79.85,11.95" fill="#0F766E"/>
+    <path d="M 77.60,30.30 L 79.95,30.30" fill="none" stroke="#0F766E" stroke-width="0.52"/>
+    <polygon points="81.50,30.30 79.85,31.15 79.85,29.45" fill="#0F766E"/>
+    <path d="M 77.60,47.80 L 79.95,47.80" fill="none" stroke="#0F766E" stroke-width="0.52"/>
+    <polygon points="81.50,47.80 79.85,48.65 79.85,46.95" fill="#0F766E"/>
+    <path d="M 121.50,12.80 L 124.80,12.80 L 124.80,19.50 L 126.95,19.50" fill="none" stroke="#6B21A8" stroke-width="0.52"/>
+    <polygon points="128.50,19.50 126.85,20.35 126.85,18.65" fill="#6B21A8"/>
+    <path d="M 121.50,30.30 L 126.95,30.30" fill="none" stroke="#6B21A8" stroke-width="0.52"/>
+    <polygon points="128.50,30.30 126.85,31.15 126.85,29.45" fill="#6B21A8"/>
+    <path d="M 121.50,47.80 L 124.80,47.80 L 124.80,41.00 L 126.95,41.00" fill="none" stroke="#6B21A8" stroke-width="0.52"/>
+    <polygon points="128.50,41.00 126.85,41.85 126.85,40.15" fill="#6B21A8"/>
+    <path d="M 143.50,50.00 L 143.50,51.70 M 143.50,52.85 L 143.50,54.55 M 143.50,55.70 L 143.50,57.40 M 143.50,58.55 L 143.50,60.00 M 143.50,60.00 L 141.80,60.00 M 140.65,60.00 L 138.95,60.00 M 137.80,60.00 L 136.10,60.00 M 134.95,60.00 L 133.25,60.00 M 132.10,60.00 L 130.40,60.00 M 129.25,60.00 L 127.55,60.00 M 126.40,60.00 L 124.70,60.00 M 123.55,60.00 L 121.85,60.00 M 120.70,60.00 L 119.00,60.00 M 117.85,60.00 L 116.15,60.00 M 115.00,60.00 L 113.30,60.00 M 112.15,60.00 L 110.45,60.00 M 109.30,60.00 L 107.60,60.00 M 106.45,60.00 L 104.75,60.00 M 103.60,60.00 L 101.90,60.00 M 100.75,60.00 L 99.05,60.00 M 97.90,60.00 L 96.20,60.00 M 95.05,60.00 L 93.35,60.00 M 92.20,60.00 L 90.50,60.00 M 89.35,60.00 L 87.65,60.00 M 86.50,60.00 L 84.80,60.00 M 83.65,60.00 L 81.95,60.00 M 80.80,60.00 L 79.10,60.00 M 77.95,60.00 L 76.25,60.00 M 75.10,60.00 L 73.40,60.00 M 72.25,60.00 L 70.55,60.00 M 69.40,60.00 L 67.70,60.00 M 66.55,60.00 L 64.85,60.00 M 63.70,60.00 L 62.00,60.00 M 60.85,60.00 L 59.15,60.00 M 58.00,60.00 L 56.50,60.00 M 56.50,60.00 L 56.50,58.30 M 56.50,57.15 L 56.50,55.45 M 56.50,54.30 L 56.50,53.75" fill="none" stroke="#6B21A8" stroke-width="0.45"/>
+    <polygon points="56.50,52.20 57.35,53.85 55.65,53.85" fill="#6B21A8"/>
+    <text x="100.0" y="58.2" text-anchor="middle" dominant-baseline="central" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="2.15" fill="#581C87">受控改进消融对照闭环（基准冻结后单因子迭代 · 检验标签仍盲评隔离）</text>
+  </g>
+</svg>
