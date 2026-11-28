@@ -1,0 +1,299 @@
+{
+  "schema_version": 3,
+  "experiment_id": "A-Q1-E0",
+  "problem": "A-Q1",
+  "phase": "pilot_baseline_verification",
+  "status": "pending_approval",
+  "approvals_required": [
+    "A-Q1-E0"
+  ],
+  "dependencies": {
+    "approved": [
+      "A-Q1-P0",
+      "A-Q1-SPLIT0",
+      "A-Q1-M0"
+    ],
+    "completed_prerequisites": [
+      "D0_merged (PR #7, PR #11 on main)",
+      "D1-1_merged (PR #12 dfdae8ed27065acaf51dcfa67d650ea600bceb67, SPLIT0 audit 15/15 on main f56dbc0)"
+    ],
+    "blocking_before_execution": [
+      "D1-2_accepted (F1 anchor polarity/order dependence and F2 finite-input/output validation independently retested)",
+      "A-Q1-E0_approved"
+    ]
+  },
+  "version_anchors": {
+    "raw_data_commit": "d8ee44021dd7acec18e7fd608e50835b0f7e8dd9",
+    "a_dat_manifest_overall_sha256": "86305548ac35e44bf07f15fbbfa2e10c30713d0e64721e7ec81d37939f3cfa06",
+    "a_dat_manifest_blob_sha256": "d5013e9330ded4464d2d6214b382b9436fc53d1436b0442048a61b25cbade8d4",
+    "main_baseline_commit": "f56dbc0b472008f3a212bcefa47aa0392343d357",
+    "d1_1_merge_commit": "dfdae8ed27065acaf51dcfa67d650ea600bceb67",
+    "m0_spec_commit": "098e17de9f42c843ab48923547d07b80883cf47c",
+    "split_file": "coordination/A_Q1_SPLIT.json",
+    "split_blob_sha256_lf": "d623da4ea186f372f2be094121c202c55dae0e236f4683005ab88d220a248b3a",
+    "rollback_commit": "f56dbc0b472008f3a212bcefa47aa0392343d357"
+  },
+  "physical_constants": {
+    "c0_m_s": 299792458.0,
+    "fs_hz": 4000000000.0,
+    "np_samples": 4000,
+    "tp_ns": 1000.0,
+    "f_start_hz": 300000000.0,
+    "f_stop_hz": 1700000000.0,
+    "core_band_hz": [
+      400000000.0,
+      1600000000.0
+    ],
+    "tx_amplitude": 30000.0,
+    "tx_idx": 27,
+    "ref_idx": 28,
+    "n_channels_total": 64,
+    "n_channels_rx": 63,
+    "rayleigh_range_resolution_cm": 10.7068735,
+    "sample_two_way_step_cm": 3.747405725
+  },
+  "windows_and_metrics": {
+    "response_domain": "circular_range_compressed_matched_filter_delay_z_i",
+    "compressed_delay_spec": {
+      "formula": "z_i(tau) = (1 / ||S_eff_hat||_B) * sum_{f_D in B} X_i(f_D) * conj(S_eff_hat(f_D)) * exp(-j * 2 * pi * f_R * tau)",
+      "reference_template": "S_eff_hat_in_B_reconstructed_from_aligned_cal_air",
+      "normalization": "divide_by_L2_norm_of_S_eff_hat_over_B",
+      "lag_sign": "exp(-j*2*pi*f_R*tau)_with_f_R=f_s-f_D",
+      "delay_zero_mapping": "tau=0 aligns to absorbed (t0^(g), H_ref) in S_eff_hat; direct wave peaks at +tau_dir_i and planar target at +tau_tgt_i(d)",
+      "circular_period_ns": 1000.0,
+      "circular_boundary_rule": "all delay-window checks use wrapped distance wrap_{[-Tp/2, Tp/2)}(tau - center) mod 1000 ns"
+    },
+    "direct_wave_window": {
+      "domain": "circular_range_compressed_delay_z_i",
+      "rel_tau_dir_ns": [
+        -1.0,
+        1.0
+      ],
+      "evaluation_grid": "tau_i_dir + linspace(-1.0, +1.0, 41) ns modulo Tp (covers wraparound across 0/1000 ns on close channels such as ref_idx=28)"
+    },
+    "off_target_late_delay_bg_window": {
+      "domain": "circular_range_compressed_delay_z_i",
+      "delay_interval_ns": [
+        50.0,
+        950.0
+      ],
+      "evaluation_grid": "discrete DFT delay grid tau_m = m * Ts for m in [200, 3800] (50.0 to 950.0 ns)",
+      "is_proven_noise_only": false,
+      "role": "off_target_late_delay_background_proxy",
+      "caveat": "Compressed-delay proxy well beyond 2.00 m (~13.47 ns) and away from circular wraparound; may contain finite-band sidelobes, residual DW/dispersion leakage, or late multipath/rear-wall reflections, NOT proven pure thermal noise."
+    },
+    "ranging_search_interval_m": [
+      0.15,
+      2.0
+    ],
+    "pslr_mainlobe_half_width_m": 0.1606031,
+    "pslr_scale": "10*log10_on_quadratic_profile",
+    "suppression_air_loo_domain": "in_band_frequency_spectrum_over_B_and_63_rx",
+    "suppression_dw_win_domain": "circular_range_compressed_delay_z_i_over_wrapped_W_dw_i",
+    "suppression_scale": "10*log10_on_power",
+    "pnr_domain": "circular_range_compressed_delay_z_i_peak_at_tau_tgt_vs_W_bg_proxy",
+    "cal_residual_scale": "20*log10_on_rms"
+  },
+  "methods_classic_baseline_only": {
+    "n0_improvements_enabled": false,
+    "calibration": {
+      "id": "M0-Cal-Base",
+      "air_reference_origin": "空场数据/data1",
+      "air_groups_used": [
+        "data1",
+        "data2",
+        "data3",
+        "data4",
+        "data5",
+        "data6",
+        "data7",
+        "data8",
+        "data9",
+        "data10"
+      ],
+      "regularizer_unit": "dimensionless_power_ratio",
+      "lambda_cal_definition": "ratio_to_mean_inband_ref_psd_P_ref",
+      "lambda_inv_definition": "ratio_to_unit_ref_channel_gain_sq",
+      "lambda_cal_default": 0.001,
+      "lambda_inv_default": 0.001,
+      "lambda_cal_grid_air_loo": [
+        0.0001,
+        0.001,
+        0.01
+      ],
+      "lambda_inv_grid_air_loo": [
+        0.0001,
+        0.001,
+        0.01
+      ],
+      "air_loo_budget_pairs": 9,
+      "air_loo_objective": "median(Supp_air_LOO_dB) + 0.5 * min(Supp_air_LOO_dB)",
+      "switch_from_default_trigger": "J_air(best) - J_air(default) >= 0.5 dB OR (min(default) < 10.0 dB AND min(best) >= 10.0 dB)",
+      "tie_break_order": [
+        "smaller_(lambda_cal + lambda_inv)",
+        "closer_to_default_(1e-3, 1e-3)",
+        "lexicographically_smaller_(lambda_cal, lambda_inv)"
+      ],
+      "phase_projection_weights": "abs(S_ref_band)^2",
+      "freeze_before_holdout": true
+    },
+    "direct_wave_suppression": {
+      "id": "M0-DW-Base",
+      "alignment_operator": "2nd_nyquist_rf_shift_exp_pos_j2pi_fR_dt0",
+      "dw_channel_weights": "uniform_over_rx",
+      "fine_search_half_window_samples": 1.0,
+      "fine_search_step_samples": 0.001,
+      "alpha_mode": "fixed_1.0",
+      "alpha_fixed_value": 1.0,
+      "alpha_fitting_in_this_pilot": false,
+      "adaptive_alpha_and_dw_projection_deferred_to": "A-Q1-N0 (M0-DW-Subspace)"
+    },
+    "ranging": {
+      "id": "M0-Rng-Base",
+      "channel_weights": "equal_w_i_1.0",
+      "coarse_step_m": 0.001,
+      "fine_step_m": 0.0001,
+      "primary_statistic": "P_norm_eff",
+      "comparison_statistics": [
+        "P_norm",
+        "P_env"
+      ],
+      "metal_peak_rule": "global_argmax_in_search_interval",
+      "wall_first_peak_rule": "earliest_local_max_above_eta_wall*P_max_and_BG_proxy_plus_6dB",
+      "eta_wall_default": 0.25,
+      "eta_wall_candidates_cal_only": [
+        0.15,
+        0.25,
+        0.35
+      ],
+      "freeze_eta_wall_before_holdout": true
+    }
+  },
+  "pilot_datasets": {
+    "phase_s_synthetic": [
+      {
+        "case_id": "E0-S1",
+        "description": "2-RX closed-loop analytical verification (M0 §8)",
+        "d_true_m": 0.6,
+        "noise_snr_db": null,
+        "seed": null
+      },
+      {
+        "case_id": "E0-S2",
+        "description": "63-RX full-array synthetic closed loop with planted dispersion & AWGN",
+        "rng": "numpy.random.default_rng(20261128)",
+        "seed": 20261128,
+        "channel_draw_order": "sorted rx_idx in 0..63 excluding 27 and 28",
+        "planted_H_ref": {
+          "tau_ref_hw_s": 2e-10,
+          "amp_tilt_u_coeff": 0.2,
+          "quad_phase_u2_rad": 0.5,
+          "u_def": "(f_D - 1.0e9) / 0.7e9"
+        },
+        "planted_rx_rel_distributions": {
+          "delta_tau_s": "Uniform(-0.75e-9, +0.75e-9)",
+          "gain_mag": "Uniform(0.5, 1.5)",
+          "psi_0_rad": "Uniform(-0.5, +0.5)",
+          "psi_quad_u2_rad": "Uniform(-0.3, +0.3)"
+        },
+        "trigger_offsets": {
+          "air_0_samples": 120.25,
+          "air_1_to_9": "Uniform(0, Tp)",
+          "targets_2": "Uniform(0, Tp)"
+        },
+        "amplitudes": {
+          "direct_wave_E_dir": "1.0 / R_dir_i",
+          "wall_0.42m_Gamma": 0.25,
+          "metal_0.69m_Gamma": -0.35
+        },
+        "d_true_m_list": [
+          0.42,
+          0.69
+        ],
+        "noise": {
+          "placement": "real_time_domain_AWGN_after_H_and_propagation",
+          "snr_db": 25.0,
+          "snr_reference": "63_rx_mean_time_domain_target_echo_only_power"
+        }
+      }
+    ],
+    "phase_c_calibration_pilot": {
+      "air_groups": [
+        "空场数据/data1",
+        "空场数据/data2",
+        "空场数据/data3",
+        "空场数据/data4",
+        "空场数据/data5",
+        "空场数据/data6",
+        "空场数据/data7",
+        "空场数据/data8",
+        "空场数据/data9",
+        "空场数据/data10"
+      ],
+      "target_groups": [
+        {
+          "group": "墙体数据/data1-42cm",
+          "target_type": "wall",
+          "d_true_cm": 42.0,
+          "in_split": "wall_cal",
+          "note": "already_explored_in_V0_M0"
+        },
+        {
+          "group": "金属板数据/data1-69cm",
+          "target_type": "metal",
+          "d_true_cm": 69.0,
+          "in_split": "metal_cal",
+          "note": "already_explored_in_V0_M0"
+        }
+      ],
+      "expansion_to_remaining_cal_requires_separate_approval": true
+    },
+    "phase_t_holdout_single_shot_eval": {
+      "requires_frozen_config": true,
+      "label_usage_policy": "evaluation_only_never_used_for_calibration_or_tuning",
+      "target_groups": [
+        {
+          "group": "墙体数据/data20-73cm",
+          "target_type": "wall",
+          "d_true_cm": 73.0,
+          "in_split": "wall_test",
+          "regime": "interpolation_inside_42_106cm"
+        },
+        {
+          "group": "金属板数据/data5-60cm",
+          "target_type": "metal",
+          "d_true_cm": 60.0,
+          "in_split": "metal_test",
+          "regime": "interpolation_inside_48_91cm"
+        }
+      ],
+      "untouched_remaining_holdout_groups_count": 16
+    }
+  },
+  "gates_and_thresholds": {
+    "required_valid_rx_channels": 63,
+    "allow_dropped_rx_channels": false,
+    "synthetic_noiseless_max_range_err_cm": 0.05,
+    "synthetic_noiseless_max_dtau_err_ns": 0.001,
+    "synthetic_noisy_max_range_err_cm": 1.0,
+    "synthetic_noisy_min_dw_suppression_db": 20.0,
+    "air_loo_eligible_min_suppression_db": 10.0,
+    "air_loo_hard_stop_suppression_db": 6.0,
+    "target_echo_min_pslr_db": 3.0,
+    "target_echo_min_pnr_db": 6.0,
+    "cal_pilot_eligible_max_range_err_cm": 5.0,
+    "cal_pilot_hard_stop_range_err_cm": 10.71,
+    "intermediate_band_policy": "not_eligible_for_freeze_halt_before_E0_T"
+  },
+  "resource_budget": {
+    "single_process_cpu_only": true,
+    "env_threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "max_wall_time_sec": 600,
+    "max_peak_rss_mib": 4096
+  }
+}
