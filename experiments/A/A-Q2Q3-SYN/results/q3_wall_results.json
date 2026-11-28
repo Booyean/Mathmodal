@@ -1,0 +1,112 @@
+{
+  "phase": "Q3-Wall",
+  "input_mode": "synthetic_only",
+  "real_dat_files_read": 0,
+  "citable": false,
+  "implementation_sha": "934b089",
+  "main_commit": "934b089",
+  "q1_frozen_config_path": "synthetic://q1-frozen-baseline",
+  "q1_frozen_config_sha256": "4a70304a305b87d9fc3a17c023dab5e5e6f7abeb9403ab2bb024ec27f6559939",
+  "d0_contract_version": "D0-4",
+  "d1_contract_version": "D1-2",
+  "groups_used": [
+    "syn-wall-01",
+    "syn-wall-02",
+    "syn-wall-03",
+    "syn-wall-04",
+    "syn-wall-05",
+    "syn-wall-06",
+    "syn-wall-07",
+    "syn-wall-08",
+    "syn-wall-09",
+    "syn-wall-10",
+    "syn-wall-11",
+    "syn-wall-12",
+    "syn-wall-13",
+    "syn-wall-14",
+    "syn-wall-15",
+    "syn-wall-16",
+    "syn-wall-17",
+    "syn-wall-18",
+    "syn-wall-19",
+    "syn-wall-20",
+    "syn-wall-21",
+    "syn-wall-22",
+    "syn-wall-23",
+    "syn-wall-24",
+    "syn-wall-25",
+    "syn-wall-26",
+    "syn-wall-27",
+    "syn-wall-28",
+    "syn-wall-29",
+    "syn-wall-30",
+    "syn-wall-31",
+    "syn-wall-32",
+    "syn-wall-33"
+  ],
+  "anomaly_isolation": {
+    "group3_sync_common": 3,
+    "real_dat_files_read": 0,
+    "note": "synthetic mirror of wall-group 3 packet intersection P_common=3; no .dat read"
+  },
+  "arrays_sha256": "4b022843e1c17a1624e2f458924eac2009874894efbc06177963d131405330fd",
+  "finite": true,
+  "status": "synthetic_baseline_only",
+  "grid_spec": {
+    "x_range_m": [
+      -0.2,
+      1.4
+    ],
+    "y_range_m": [
+      0.0,
+      2.5
+    ],
+    "z_range_m": [
+      0.2,
+      0.8
+    ],
+    "coarse_step_m": 0.05,
+    "fine_step_m": 0.025
+  },
+  "aperture_weights": {
+    "theta_x_flat_deg": 35.0,
+    "theta_x_cut_deg": 45.0,
+    "theta_z_flat_deg": 45.0,
+    "theta_z_cut_deg": 55.0,
+    "valid_rx_count": 63
+  },
+  "inherited_gain_params": {
+    "beta": 1.0,
+    "alpha_gain_per_ns": 0.08,
+    "g_cap": 20.0
+  },
+  "wall_a_3d": {
+    "x_span_m": [
+      0.2,
+      1.12
+    ],
+    "y_front_mean_m": 0.4395244243440785,
+    "y_front_range_m": [
+      0.25,
+      0.632074095594936
+    ],
+    "z_envelope_m": [
+      0.2,
+      0.8
+    ],
+    "tilt_deg": 13.965466900749574
+  },
+  "wall_b_3d": {
+    "air_y_mean_m": 2.002564456146151,
+    "behind_a_y_mean_m": 2.0651100050999607,
+    "z_consistency_cm": 3.9551106980626916,
+    "pbr_b_coh_db": 44.30159361795055,
+    "pbr_b_env_db": 16.718289048327634
+  },
+  "q2_q3_reconciliation": {
+    "z_slice_m": 0.545,
+    "air_segment_max_diff_cm": 0.5441448495965284,
+    "air_segment_mae_cm": 0.1802447669645758,
+    "passed_le_2cm": true
+  }
+}

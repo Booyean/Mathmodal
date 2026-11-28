@@ -1,0 +1,162 @@
+{
+  "phase": "Q2",
+  "input_mode": "synthetic_only",
+  "real_dat_files_read": 0,
+  "citable": false,
+  "implementation_sha": "934b089",
+  "main_commit": "934b089",
+  "q1_frozen_config_path": "synthetic://q1-frozen-baseline",
+  "q1_frozen_config_sha256": "4a70304a305b87d9fc3a17c023dab5e5e6f7abeb9403ab2bb024ec27f6559939",
+  "d0_contract_version": "D0-4",
+  "d1_contract_version": "D1-2",
+  "groups_used": [
+    "syn-wall-01",
+    "syn-wall-02",
+    "syn-wall-03",
+    "syn-wall-04",
+    "syn-wall-05",
+    "syn-wall-06",
+    "syn-wall-07",
+    "syn-wall-08",
+    "syn-wall-09",
+    "syn-wall-10",
+    "syn-wall-11",
+    "syn-wall-12",
+    "syn-wall-13",
+    "syn-wall-14",
+    "syn-wall-15",
+    "syn-wall-16",
+    "syn-wall-17",
+    "syn-wall-18",
+    "syn-wall-19",
+    "syn-wall-20",
+    "syn-wall-21",
+    "syn-wall-22",
+    "syn-wall-23",
+    "syn-wall-24",
+    "syn-wall-25",
+    "syn-wall-26",
+    "syn-wall-27",
+    "syn-wall-28",
+    "syn-wall-29",
+    "syn-wall-30",
+    "syn-wall-31",
+    "syn-wall-32",
+    "syn-wall-33"
+  ],
+  "anomaly_isolation": {
+    "group3_sync_common": 3,
+    "real_dat_files_read": 0,
+    "note": "synthetic mirror of wall-group 3 packet intersection P_common=3; no .dat read"
+  },
+  "arrays_sha256": "06f20077729374be0b1e8948700bbdddd38f79e8e029b097015570964a0dba3c",
+  "finite": true,
+  "status": "synthetic_baseline_only",
+  "row_id": 4,
+  "rx_indices": [
+    24,
+    25,
+    26,
+    28,
+    29,
+    30,
+    31
+  ],
+  "z_slice_m": 0.545,
+  "gain_params": {
+    "beta": 1.0,
+    "alpha_gain_per_ns": 0.08,
+    "alpha_y_per_m": 0.5337025523170433,
+    "slope_db_per_m": 4.63568146897947,
+    "y0_m": 0.25,
+    "tau0_s": 1.6678204759907602e-09,
+    "y_sat_m": 2.6,
+    "tau_sat_s": 1.7345332950303906e-08,
+    "g_cap": 20.0
+  },
+  "gain_selection": {
+    "alpha_grid_per_ns": [
+      0.0,
+      0.04,
+      0.08,
+      0.12,
+      0.14,
+      0.2
+    ],
+    "delta_far_near_db": [
+      -12.366089807259058,
+      -9.067702624956835,
+      -6.108386494918684,
+      -6.934197035808438,
+      -7.347410336750917,
+      -8.630166916794087
+    ],
+    "c_far_med_db": [
+      30.498530017183178,
+      32.02810905556847,
+      34.19554850467168,
+      32.84291844895365,
+      32.394396720128114,
+      31.39537171025818
+    ],
+    "selected_alpha_per_ns": 0.08
+  },
+  "metrics_before_gain": {
+    "delta_ba_db": -24.904472487061785,
+    "pbr_b_db": 23.518487527596296,
+    "pslr_b_db": 13.810680553736123,
+    "b_coverage_pct": 100.0,
+    "delta_far_near_db": -24.904472487061785,
+    "c_far_med_db": 23.518487527596296
+  },
+  "metrics_after_gain_coh": {
+    "delta_ba_db": -6.108386494918684,
+    "pbr_b_db": 34.19554850467168,
+    "pslr_b_db": 17.631972274654068,
+    "b_coverage_pct": 100.0,
+    "delta_far_near_db": -6.108386494918684,
+    "c_far_med_db": 34.19554850467168
+  },
+  "metrics_after_gain_env": {
+    "delta_ba_db": -7.502733249689381,
+    "pbr_b_db": 15.29675462472342,
+    "pslr_b_db": 7.07809913966776,
+    "b_coverage_pct": 100.0
+  },
+  "wall_a_apparent": {
+    "x_min_m": 0.2,
+    "x_max_m": 1.12,
+    "y_start_m": 0.38474668664372963,
+    "y_end_m": 0.5933435971397107,
+    "slope_dy_dx": 0.2267357722782403,
+    "tilt_deg": 12.775008481370993,
+    "fit_r2": 0.9594688588323669
+  },
+  "wall_b_apparent": {
+    "air_x_ranges_m": [
+      [
+        -0.16,
+        0.12000000000000001
+      ],
+      [
+        1.2000000000000002,
+        1.3599999999999999
+      ]
+    ],
+    "air_y_mean_m": 2.001688908238673,
+    "air_tilt_deg": 0.22659146435460806,
+    "behind_a_x_range_m": [
+      0.28,
+      1.04
+    ],
+    "behind_a_y_mean_m": 2.0636379093870687,
+    "delta_y_app_m": 0.061949001148395855,
+    "eps_r_diag": 2.528069749156198
+  },
+  "row_consistency": {
+    "row_3_wall_b_y_m": 2.001184203056557,
+    "row_4_wall_b_y_m": 2.001688908238673,
+    "row_5_wall_b_y_m": 2.0012596889170657,
+    "max_row_diff_cm": 0.05047051821156501
+  }
+}
