@@ -11,7 +11,11 @@
 | 拟合窗 | 直射波 `±1.0 ns` |
 | 跨频相位锚 | `ref_channel`（ref_pos=27） |
 | 真实 `.dat` 读取 | `0` |
-| 打开文件数 | `0` |
+| 打开的数据文件数 | `0` |
+| 生成代码 | `6b08846f3c95c13eb9a570d61e98ebbbf4933f38` |
+| 生成时间（UTC） | `2026-11-28T12:48:38Z`（system_clock） |
+| 生成命令 | `python solutions/A/a_e0_n0.py --mode synthetic --seed 20261128 --out experiments/A/A-Q1-E0/n0/synthetic --profile-step-m 0.001 --p4-step-m 0.0001 --p4-half-m 0.03 --overwrite` |
+| 运行环境 | `python 3.13.5` / `numpy 2.1.3` / `Windows-11-10.0.26200-SP0` |
 
 ## 1. 分簇与训练范围（锁定）
 
@@ -54,7 +58,7 @@
 |---|---|
 | P3 单侧非退化 | `True` |
 | P4 回波保留（≥ −0.1 dB，≤ 2 mm） | `True` |
-| C8′ 固定 λ 逐值复算（≤ 1e-6 dB） | `True`（max `9.67e-12 dB`） |
+| C8′ 固定 λ 逐值复算（≤ 1e-6 dB） | `True`（max `9.67e-12 dB`，覆盖 P1/P2/目标侧 `66` 值） |
 | P5a 接口与证据链 | `True` |
 | 近零内积事件 | `none` |
 | 相位锚正交化残差中位 | `0.994` |
@@ -75,5 +79,7 @@
 - 合成 `L1` 只用来验证判定逻辑分支；`L2` 因无冻结证据必然 FAIL（即提案 `S8`），不是方法失败。
 - 数值内核（`solve_bundle` 等）未改动；分簇、窗宽、λ、η 全部固定。
 
-复跑：`python solutions/A/a_e0_n0.py --mode synthetic --out experiments/A/A-Q1-E0/n0/synthetic --overwrite`
+复跑：`python solutions/A/a_e0_n0.py --mode synthetic --seed 20261128 --out experiments/A/A-Q1-E0/n0/synthetic --profile-step-m 0.001 --p4-step-m 0.0001 --p4-half-m 0.03 --overwrite`
+
+逐字节复现：在同上命令后追加 `--generated-at 2026-11-28T12:48:38Z`（或设 `SOURCE_DATE_EPOCH=...`），并要求 `implementation_dirty=false` 且运行环境一致。
 

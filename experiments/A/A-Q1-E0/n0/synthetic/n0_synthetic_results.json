@@ -3,7 +3,7 @@
   "墙体数据/data1-42cm": {
    "abs_err_cm": 6.18,
    "d_hat_m": 0.4818,
-   "pnr_db": 34.287,
+   "pnr_db": 34.293809,
    "pslr_db": 2.6643
   },
   "金属板数据/data1-69cm": {
@@ -120,12 +120,27 @@
   "sigma2_over_sigma1_median": 0.11031353724479691
  },
  "c8_prime": {
+  "coverage": {
+   "arms": [
+    "c0",
+    "c1",
+    "c2"
+   ],
+   "coeff_note": "系数差仅作诊断，不参与 C8' 判定（Supp 为门槛量）",
+   "max_delta_coeff": 9.820925191391734e-15,
+   "metric": "supp_db（充分统计量路径 vs 数组路径的 Supp 差，两条路径解同一臂模型）",
+   "p1_values": 30,
+   "p2_folds_per_arm": 10,
+   "p2_values": 30,
+   "target_values": 6,
+   "total_values": 66
+  },
   "lambda_fixed": [
    0.001,
    0.001
   ],
   "max_delta_db": 9.670486633694964e-12,
-  "note": "固定 λ 的逐值复算；不做 9 对 λ 选择/并列裁决",
+  "note": "固定 λ 的逐值复算；P1 五折 + P2 十折 + 目标侧全覆盖；不做 9 对 λ 选择/并列裁决",
   "pass": true
  },
  "c9b": {
@@ -723,42 +738,62 @@
    "tier": "not_met",
    "values": [
     {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 6.572520305780927e-14,
      "group": "空场数据/data1",
      "supp_db": 12.157692422811044
     },
     {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 6.927791673660977e-14,
      "group": "空场数据/data2",
      "supp_db": 12.119528325815148
     },
     {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 3.907985046680551e-14,
      "group": "空场数据/data3",
      "supp_db": 9.252269149963228
     },
     {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 5.5067062021407764e-14,
      "group": "空场数据/data4",
      "supp_db": 9.489598035479586
     },
     {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 5.329070518200751e-15,
      "group": "空场数据/data5",
      "supp_db": 13.721831047248367
     },
     {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 1.4210854715202004e-14,
      "group": "空场数据/data6",
      "supp_db": 13.561756863433157
     },
     {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 1.9539925233402755e-13,
      "group": "空场数据/data7",
      "supp_db": 14.202265011383663
     },
     {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 1.3500311979441904e-13,
      "group": "空场数据/data8",
      "supp_db": 14.268638229332248
     },
     {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 1.4921397450962104e-13,
      "group": "空场数据/data9",
      "supp_db": 11.863214256862758
     },
     {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 2.3803181647963356e-13,
      "group": "空场数据/data10",
      "supp_db": 13.260635640377778
     }
@@ -770,42 +805,62 @@
    "tier": "met",
    "values": [
     {
+     "c8_delta_coeff": 1.5840143722667704e-15,
+     "c8_delta_supp_db": 1.3855583347321954e-13,
      "group": "空场数据/data1",
      "supp_db": 16.088629754427494
     },
     {
+     "c8_delta_coeff": 1.1270951119217139e-15,
+     "c8_delta_supp_db": 1.7763568394002505e-13,
      "group": "空场数据/data2",
      "supp_db": 16.010903259257073
     },
     {
+     "c8_delta_coeff": 6.804363002006077e-16,
+     "c8_delta_supp_db": 7.638334409421077e-14,
      "group": "空场数据/data3",
      "supp_db": 13.021617712524428
     },
     {
+     "c8_delta_coeff": 7.947987303456224e-16,
+     "c8_delta_supp_db": 1.1546319456101628e-13,
      "group": "空场数据/data4",
      "supp_db": 12.919999856292828
     },
     {
+     "c8_delta_coeff": 1.2214867846108463e-15,
+     "c8_delta_supp_db": 2.1316282072803006e-14,
      "group": "空场数据/data5",
      "supp_db": 13.768083585420356
     },
     {
+     "c8_delta_coeff": 2.445012586343469e-15,
+     "c8_delta_supp_db": 7.105427357601002e-15,
      "group": "空场数据/data6",
      "supp_db": 13.76230496790046
     },
     {
+     "c8_delta_coeff": 1.5561852268676503e-15,
+     "c8_delta_supp_db": 2.1316282072803006e-13,
      "group": "空场数据/data7",
      "supp_db": 14.471363469173916
     },
     {
+     "c8_delta_coeff": 3.469446951953614e-18,
+     "c8_delta_supp_db": 1.0125233984581428e-13,
      "group": "空场数据/data8",
      "supp_db": 14.509094800402703
     },
     {
+     "c8_delta_coeff": 2.4876491105670564e-15,
+     "c8_delta_supp_db": 3.2862601528904634e-13,
      "group": "空场数据/data9",
      "supp_db": 15.455814006226511
     },
     {
+     "c8_delta_coeff": 8.989550626504553e-16,
+     "c8_delta_supp_db": 4.227729277772596e-13,
      "group": "空场数据/data10",
      "supp_db": 15.400459553531219
     }
@@ -817,42 +872,62 @@
    "tier": "met",
    "values": [
     {
+     "c8_delta_coeff": 5.274435786004485e-15,
+     "c8_delta_supp_db": 3.396394276933279e-12,
      "group": "空场数据/data1",
      "supp_db": 30.319624958887076
     },
     {
+     "c8_delta_coeff": 9.820925191391734e-15,
+     "c8_delta_supp_db": 4.508393658397836e-12,
      "group": "空场数据/data2",
      "supp_db": 30.10827105697264
     },
     {
+     "c8_delta_coeff": 8.79251776862914e-15,
+     "c8_delta_supp_db": 1.9682033780554775e-12,
      "group": "空场数据/data3",
      "supp_db": 30.326414651729706
     },
     {
+     "c8_delta_coeff": 5.0353234783744615e-15,
+     "c8_delta_supp_db": 6.501466032204917e-12,
      "group": "空场数据/data4",
      "supp_db": 29.83307600511108
     },
     {
+     "c8_delta_coeff": 6.772790562663012e-15,
+     "c8_delta_supp_db": 1.4459544672718039e-12,
      "group": "空场数据/data5",
      "supp_db": 30.27676169009957
     },
     {
+     "c8_delta_coeff": 2.2205436253018787e-15,
+     "c8_delta_supp_db": 5.755396159656812e-13,
      "group": "空场数据/data6",
      "supp_db": 30.251312648513043
     },
     {
+     "c8_delta_coeff": 4.668220486087868e-15,
+     "c8_delta_supp_db": 4.948930154569098e-12,
      "group": "空场数据/data7",
      "supp_db": 28.395716070064104
     },
     {
+     "c8_delta_coeff": 7.277679177773948e-15,
+     "c8_delta_supp_db": 2.398081733190338e-12,
      "group": "空场数据/data8",
      "supp_db": 28.522324148723506
     },
     {
+     "c8_delta_coeff": 4.7467714928543955e-15,
+     "c8_delta_supp_db": 8.061107337198337e-12,
      "group": "空场数据/data9",
      "supp_db": 29.173633618176233
     },
     {
+     "c8_delta_coeff": 7.464134339039856e-15,
+     "c8_delta_supp_db": 7.762679388179095e-12,
      "group": "空场数据/data10",
      "supp_db": 29.030151678632844
     }
@@ -919,16 +994,23 @@
   "items": {
    "p5a_1_interfaces": {
     "arms_fixed": true,
-    "fit_window_ns": 1.0,
+    "fit_window_ns": true,
+    "fit_window_ns_value": 1.0,
     "lambda_fixed": true,
+    "lambda_fixed_value": [
+     0.001,
+     0.001
+    ],
     "no_grid_search": true,
     "rank_fixed": true
    },
    "p5a_2_self_consistency": {
     "c8_max_delta_db": 9.670486633694964e-12,
     "c8_pass": true,
+    "c8_total_values": 66,
     "fold_count": 5,
-    "p1_values": 30
+    "p1_values": 30,
+    "p2_values": 30
    },
    "p5a_3_freeze_integrity": {
     "freeze_status": "not_eligible_for_freeze",
@@ -949,11 +1031,25 @@
   "usage": "synthetic_prototype_only_no_real_conclusion"
  },
  "proposal_head": "4904bc8",
+ "provenance": {
+  "command": "python solutions/A/a_e0_n0.py --mode synthetic --seed 20261128 --out experiments/A/A-Q1-E0/n0/synthetic --profile-step-m 0.001 --p4-step-m 0.0001 --p4-half-m 0.03 --overwrite",
+  "environment": {
+   "numpy": "2.1.3",
+   "platform": "Windows-11-10.0.26200-SP0",
+   "python": "3.13.5"
+  },
+  "generated_at": "2026-11-28T12:48:38Z",
+  "generated_at_source": "system_clock",
+  "implementation_dirty": false,
+  "implementation_sha": "6b08846f3c95c13eb9a570d61e98ebbbf4933f38",
+  "reproduction": "数值字段由 seed/参数决定，可按容差复算；逐字节复现需用 --generated-at 或 SOURCE_DATE_EPOCH 指定同一 generated_at、保持 implementation_dirty=false，并使用相同运行环境（本块已记录）。"
+ },
  "scope": {
   "attachment3_touched": false,
   "e0t_touched": false,
   "holdout_touched": false,
   "mode": "synthetic",
+  "note": "`opened_files`/`real_dat_reads` 只统计实验数据文件（`.dat`/附件）；`config`、归档登记等只读元数据不在该计数内",
   "opened_files": 0,
   "real_dat_reads": 0
  },
@@ -976,7 +1072,7 @@
      "abs_err_cm": 0.10000000000002784,
      "bg_proxy": 95018591.4470915,
      "c8": {
-      "delta_coeff": 1.124608960497278,
+      "delta_coeff": 0.0,
       "delta_supp_db": 6.217248937900877e-14
      },
      "coefficients": {
@@ -1016,7 +1112,7 @@
      "abs_err_cm": 0.10000000000002784,
      "bg_proxy": 40294722.12777316,
      "c8": {
-      "delta_coeff": 1.124608960497278,
+      "delta_coeff": 9.305364597889227e-16,
       "delta_supp_db": 1.6697754290362354e-13
      },
      "coefficients": {
@@ -1103,7 +1199,7 @@
      "abs_err_cm": 4.440892098500626e-14,
      "bg_proxy": 54548674.23111016,
      "c8": {
-      "delta_coeff": 1.7341433902824648,
+      "delta_coeff": 0.0,
       "delta_supp_db": 6.750155989720952e-14
      },
      "coefficients": {
@@ -1143,7 +1239,7 @@
      "abs_err_cm": 4.440892098500626e-14,
      "bg_proxy": 47219634.14094296,
      "c8": {
-      "delta_coeff": 1.7341433902824648,
+      "delta_coeff": 1.1144649932300827e-15,
       "delta_supp_db": 7.638334409421077e-14
      },
      "coefficients": {

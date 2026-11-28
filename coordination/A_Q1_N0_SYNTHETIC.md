@@ -5,10 +5,11 @@
 | 契约 | `N0-SYN-1`（**合成原型**，不是 N0 实测） |
 | 判定口径 | `A-Q1-N0-DEC-2`（`coordination/A_Q1_N0_PROPOSAL.md` @ `4904bc8`） |
 | 入口 | `solutions/A/a_e0_n0.py`（`--mode check` / `--mode synthetic`，**无 execute**） |
-| 自检 | `solutions/A/test_a_e0_n0.py`（49 项，200.5 s，全 PASS） |
+| 自检 | `solutions/A/test_a_e0_n0.py`（55 项，151.1 s，全 PASS） |
 | 回归 | `solutions/A/a_e0_n0_channel_regression.py`（`N0-CHREG-1`，8 项自检，全 PASS） |
 | 产物 | `experiments/A/A-Q1-E0/n0/synthetic/{n0_synthetic_results.json,N0_SYNTHETIC.md,SHA256SUMS.txt}`；`experiments/A/A-Q1-E0/n0/channel_regression/{n0_channel_regression.json,N0_CHANNEL_REGRESSION.md,SHA256SUMS.txt}` |
-| 首轮结果 | 合成夹具 **L1 PASS / L2 FAIL（`S8`）**；`real_dat_reads=0`、`opened_files=0` |
+| 首轮结果 | 合成夹具 **L1 PASS / L2 FAIL（`S8`）**；`real_dat_reads=0`、打开的数据文件数 `=0` |
+| 产物溯源 | 产物内含 `implementation_sha / implementation_dirty / generated_at / command / environment`；`--generated-at` 可逐字节复现 |
 | 状态 | **待统筹复审**；N0 实测（B-02）、E0-C 重跑、E0-T 均**未放行** |
 
 > 本文与产物一律 `synthetic=true` / `citable=false`：只验证 N0 的代码路径与 L1/L2 判定链条，
@@ -16,7 +17,7 @@
 
 ---
 
-## 1. 本轮锁定的四件事（代码里都是常量/守卫，不是可调参数）
+## 1. 本轮锁定的口径与证据链（代码里都是常量/守卫，不是可调参数）
 
 ### 1.1 分簇与训练范围
 
@@ -89,9 +90,31 @@
 - 影响：P1 min **23.179 → 26.115 dB**、P2 min **24.570 → 28.396 dB**、`c2−c1`
   （P1/P2 min）**11.168/11.650 → 14.104/15.476 dB**；**判定不变**（`L1=PASS`、
   `L2=FAIL（S8）`、`P3/P4/C8′/P5a` 仍 PASS）；
-- 产物已重新生成：`n0_synthetic_results.json = 731d5935…6ffad8`、
-  `N0_SYNTHETIC.md = 90259f7e…37025d`；修复前字节（`e2835b91…` / `0c342a4f…`）可用
-  `207510c` 逐字节复现，证据见 `experiments/A/A-Q1-E0/n0/channel_regression/`。
+- 产物已重新生成；当前 SHA256 见 `SHA256SUMS.txt`
+  （`n0_synthetic_results.json = 69aca85a…b3ce07d`、`N0_SYNTHETIC.md = 644e5b4f…a18067ad`）。
+  `e235c3a` 的产物（`731d5935…` / `90259f7e…`）可用该提交复跑；修复前字节
+  （`e2835b91…` / `0c342a4f…`）可用 `207510c` 逐字节复现，证据见
+  `experiments/A/A-Q1-E0/n0/channel_regression/`。
+
+### 1.5 证据链与复算口径（codex 2026-11-28 复审后的修订）
+
+1. **LF 锁定（F1）**：`.gitattributes` 只对纳入 `SHA256SUMS` 的三份 JSON 钉 `eol=lf`
+   （synthetic / channel_regression / poststop），避免 `core.autocrlf=true` 的 Windows
+   干净检出把 JSON 变成 CRLF 导致摘要必失败；`e0c/results`、`s1s2/results` 等冻结登记
+   不在本次覆盖范围，保持原有 CRLF 字节。已在独立 worktree（`core.autocrlf=true`）实测：
+   三份 JSON 均为 LF，摘要逐字节一致。
+2. **生成溯源（F2）**：产物新增 `provenance` 块——完整 `implementation_sha`、`dirty`、
+   `generated_at`（显式参数 > `SOURCE_DATE_EPOCH` > 系统时钟）、实际命令、Python/NumPy/
+   平台；`--generated-at` 固定时可逐字节复现。当前合成产物由 `6b08846` 在干净工作区生成
+   （`implementation_dirty=false`）。
+3. **C8′ 覆盖 P2 十折（F3）**：`C8′` 现在逐值覆盖 P1 五折 30 值 + P2 十折 30 值 + 目标侧
+   6 值，共 **66 值**；数组路径改为与 `c0/c1/c2` **同模型**（c0 `a≡1,b=0`；c1 只解 `a`；
+   c2 解两系数），不再出现“模型差冒充实现差”。`max|ΔSupp| = 9.67e-12 dB`、
+   `max|Δcoeff| = 9.82e-15`。
+4. **P3 锚点（F4）**：墙体 `pnr_db` 锚点由 `34.2870` 校正为归档值 `34.293809`；
+   自检逐项比对归档 `e0c_results.json`。
+5. **P5a/口径（F5/F6）**：`lambda_fixed`、`fit_window_ns` 成为真正参与判定的布尔项；
+   `scope.note` 明确 `opened_files`/`real_dat_reads` 只统计实验数据文件，不含 config/归档。
 
 ---
 
@@ -115,7 +138,8 @@
 | 金属 `data1-69cm` | 32.352 | 9.207 | 78.234 | 0.690000 | 0.000 | −0.003 | −0.5 |
 
 守卫：P3 单侧非退化 **PASS**、P4（−0.1 dB / 2 mm）**PASS**、C8′ 固定 λ 逐值复算
-`max|Δ| = 9.67e-12 dB` **PASS**、P5a **PASS**、近零内积事件 **0**。
+`max|Δ| = 9.67e-12 dB` **PASS**（P1/P2/目标侧 **66 值**全覆盖，数组路径与各臂同模型）、
+P5a **PASS**、近零内积事件 **0**。
 
 判定链：**L1 = `pass`**（P1/P2 均 `met`，P3/P4/P5a 全过）；**L2 = `fail`**，原因只有
 `freeze.status='not_eligible_for_freeze'` 与 `e0c_frozen.json` 不存在 → 落 `S8`
@@ -136,7 +160,7 @@
 # 只读自检（不生成合成数据、不读 .dat）
 python solutions/A/a_e0_n0.py --mode check
 
-# 合成夹具全流程（约 85 s）
+# 合成夹具全流程（本机约 2–3 min）
 python solutions/A/a_e0_n0.py --mode synthetic \
   --out experiments/A/A-Q1-E0/n0/synthetic --overwrite
 
@@ -144,13 +168,13 @@ python solutions/A/a_e0_n0.py --mode synthetic \
 python solutions/A/a_e0_n0_channel_regression.py \
   --out experiments/A/A-Q1-E0/n0/channel_regression
 
-# 自检（49 项，约 200 s）
+# 自检（55 项，本机 151 s）
 python solutions/A/test_a_e0_n0.py
 ```
 
-- 主分支基线：`934b089`（PR #33 已合入）；本批分支 `data/a-q1-n0-batch`。
-- 产物 SHA256 按 **LF 归一化**计算（`lf_sha256`，与 `b63e217` 产物同口径）；本仓
-  `core.autocrlf=true`，CRLF 检出不会让复核值漂移。
+- 主分支基线：`934b089`（PR #33 已合入）；本批分支 `data/a-q1-n0-batch`（PR #41）。
+- 产物 SHA256 按 **LF 归一化**计算（`lf_sha256`，与 `b63e217` 产物同口径）；纳入摘要的
+  三份 JSON 已由 `.gitattributes` 钉 `eol=lf`，`core.autocrlf=true` 的干净检出也可复核。
 - 合成夹具：`E0S.synth_group_spectrum`（直射波 + 1/R 回波）+ `E0S.calibrate_air(λ_cal=λ_inv=1e-3)`；
   五簇第一模态通道形状相同、簇复系数不同（秩 2 可精确表示），第二模态逐簇不同（留给残差）。
 - 数值内核未改动；`E0-C` 仍硬停、`E0-T` 未放行、N0 实测未开工。
@@ -167,3 +191,6 @@ python solutions/A/test_a_e0_n0.py
    `(1, e^{2πi/3}, e^{4πi/3})/√3` 下确认旧式 `vh[0].conj()` 会反转相对通道相位
    （方向误差 √2、行重建残差 27.7%–50%、`b ≡ 0`），已修正为 `vh[0]` 并重生成合成产物；
    证据 `experiments/A/A-Q1-E0/n0/channel_regression/`，请复审后裁定合并。
+5. `@codex`：复审后的四项证据链修订（F1 LF、F2 溯源、F3 C8′ 覆盖 P2、F4 PNR 锚点）
+   连同 P5a/scope 两项建议（F5/F6）已在 PR #41 同一分支完成，见 §1.5；请按新产物
+   SHA（`69aca85a…` / `644e5b4f…`）复审。
