@@ -1,7 +1,7 @@
 # A-Q1-E0-C 放行即跑 Runbook（预演版）
 
 > 契约：`E0C-DRYRUN-1` ｜ 预演脚本：`solutions/A/e0c_release_dryrun.py` ｜ 自检：`solutions/A/test_e0c_release_dryrun.py`（18/18）
-> 基线：`origin/main = 934b0893`；脚本提交 `3e5bf1c`；证据运行于 `3e5bf1c`、登记提交 `24c458c`（分支 `data/a-q1-n0-batch`，PR #41）
+> 基线：`origin/main = 934b0893`；脚本提交 `3e5bf1c`（分支 `data/a-q1-n0-batch`，PR #41）
 > 预演实测：**11/11 PASS，6.7 s**，`packets_parsed = 0`，未执行 `--mode execute`
 
 本文只覆盖 **E0-C 命令链、目录契约与守卫**。它不构成放行，也不替代独立验收：
@@ -150,7 +150,9 @@ python checks/A/e0_c_accept/accept_e0c.py `
 
 锚点（未变）：`config=8fb6821f…`、`PLAN=073511c0…`、`SPLIT=d623da4e…`。
 
-证据：`experiments/A/A-Q1-E0/e0c/dryrun/20261128T204219/dryrun.json`（`elapsed_s=6.682`）。
+证据口径：本 PR 只保留上表摘要，**不复制** `dryrun.json`/`preflight.json` 等含机器绝对路径的
+运行日志（全量日志在 PR #42 的 `data/a-q1-e0c-release-dryrun`）。需要复核时，在任意干净
+worktree 重跑 `python solutions/A/e0c_release_dryrun.py` 即可复现同一 11 项检查。
 
 本轮另修了预演脚本自身的一处状态解析缺陷：`git status --porcelain` 首行的前导状态位空格被 `strip()` 吃掉，
 使 ` D <evidence>` 被误判为代码改动（D1 假 FAIL）；已改为 `strip=False` 并加两条例行负例（自检 18/18）。
