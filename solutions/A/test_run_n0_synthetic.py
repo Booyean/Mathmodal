@@ -120,6 +120,32 @@ class PreflightTests(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
     @unittest.skipUnless(os.path.isfile(PREREG), "set E0N0_PREREG")
+    def test_prereg_contract_accepts_accept3_and_rejects_unknown(self) -> None:
+        # ACCEPT-3 只加严验收口径、不改阈值：同一入口应能消费；未知/未冻结版本仍须拒收。
+        base = json.load(open(PREREG, encoding="utf-8"))
+        tmp = _workdir()
+        try:
+            ok = os.path.join(tmp, "prereg_acc3.json")
+            base["id"] = "E0-N0-ACCEPT-3"
+            R._write_json(ok, base)
+            doc = R.build_preflight(
+                repo=REPO, config_path=N0_CONFIG, prereg_path=ok,
+                oracle_path=ORACLE, out_dir=os.path.join(tmp, "out"),
+                overwrite=False)
+            self.assertTrue({c["id"]: c["ok"] for c in doc["checks"]}["prereg_contract"])
+
+            bad = os.path.join(tmp, "prereg_acc1.json")
+            base["id"] = "E0-N0-ACCEPT-1"
+            R._write_json(bad, base)
+            doc = R.build_preflight(
+                repo=REPO, config_path=N0_CONFIG, prereg_path=bad,
+                oracle_path=ORACLE, out_dir=os.path.join(tmp, "out"),
+                overwrite=False)
+            self.assertFalse({c["id"]: c["ok"] for c in doc["checks"]}["prereg_contract"])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    @unittest.skipUnless(os.path.isfile(PREREG), "set E0N0_PREREG")
     def test_preflight_passes_on_clean_tree(self) -> None:
         dirty = R._git_stdout(REPO, ["status", "--porcelain", "--untracked-files=no"])
         if dirty:

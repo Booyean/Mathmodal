@@ -69,6 +69,10 @@ import a_e0_s1s2 as E0S  # noqa: E402
 TWO_PROCESS_CONTRACT = "E0-N0-C12-SYNTHETIC-1"
 PREFLIGHT_CONTRACT = "E0-C-PREFLIGHT-1"
 DRYRUN_CONTRACT = "E0-C-DRYRUN-1"
+#: 本入口可消费的冻结 prereg 契约（必须 `status=frozen`、`n0_contract=E0-N0-1`）。
+#: `E0-N0-ACCEPT-3` 只加严验收口径、不改阈值，因此同一打包器可直接消费；
+#: 包内 `registration.prereg_sha256` 记录实际消费的那份 prereg 字节，不预设版本。
+PREREG_ACCEPT_CONTRACTS = ("E0-N0-ACCEPT-2", "E0-N0-ACCEPT-3")
 #: 冻结的 `n0_config.json`（纯 LF 口径；见 coordination/A_Q1_N0_PHASE_EVIDENCE.md §5）。
 FROZEN_N0_CONFIG_LF_SHA256 = (
     "ec39673787e5dd05986095bca8f7c6cb41904dc13265e40798157ad9efadd32d"
@@ -369,7 +373,7 @@ def build_preflight(*, repo: str, config_path: str, prereg_path: str,
         except Exception:
             pre = {}
     ck("prereg_contract",
-       pre.get("id") == "E0-N0-ACCEPT-2" and pre.get("status") == "frozen"
+       pre.get("id") in PREREG_ACCEPT_CONTRACTS and pre.get("status") == "frozen"
        and pre.get("n0_contract") == "E0-N0-1",
        "%s/%s" % (pre.get("id"), pre.get("status")))
     th = pre.get("thresholds") or {}
