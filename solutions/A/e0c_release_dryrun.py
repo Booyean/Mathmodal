@@ -172,17 +172,20 @@ def _python() -> str:
     return sys.executable or "python"
 
 
-def git(repo: Path, *args: str) -> str:
+def git(repo: Path, *args: str, strip: bool = True) -> str:
     proc = subprocess.run(
         ["git", *args], cwd=str(repo), capture_output=True, text=True,
         encoding="utf-8", errors="replace",
     )
-    return (proc.stdout or "").strip()
+    text = proc.stdout or ""
+    # `--porcelain` 的首行以状态位（可能是空格）开头，strip() 会吃掉它，
+    # 导致 ` D path` 被误判为 `D  path`（路径错位、代码改动误分类）。
+    return text.strip() if strip else text.rstrip("\r\n")
 
 
 def git_state(repo: Path) -> Dict[str, str]:
     return {
-        "porcelain": git(repo, "status", "--porcelain"),
+        "porcelain": git(repo, "status", "--porcelain", strip=False),
         "head": git(repo, "rev-parse", "HEAD"),
         "branch": git(repo, "rev-parse", "--abbrev-ref", "HEAD"),
         "origin_main": git(repo, "rev-parse", "origin/main"),

@@ -191,6 +191,29 @@ class HelperTests(unittest.TestCase):
         porcelain = "?? experiments/A/A-Q1-E0/e0c/dryrun/x.json\n"
         self.assertEqual(len(D.split_status(porcelain)["code"]), 1)
 
+    def test_split_status_first_line_deletion_lands_in_evidence(self):
+        # 首行是未暂存删除（前导空格）；strip 过的状态串会丢空格、路径错位。
+        porcelain = " D experiments/A/A-Q1-E0/e0c/dryrun/old/x.json\n?? y.json\n"
+        parts = D.split_status(porcelain, str(D.DRYRUN_EVIDENCE_REL))
+        self.assertEqual(parts["code"], ["?? y.json"])
+        self.assertEqual(parts["evidence"], [" D experiments/A/A-Q1-E0/e0c/dryrun/old/x.json"])
+
+    def test_git_state_preserves_leading_space(self):
+        seen = {}
+
+        def fake(repo, *args, strip=True):
+            seen[args] = strip
+            return "" if strip else " D x.json"
+
+        original = D.git
+        D.git = fake
+        try:
+            state = D.git_state(Path("."))
+        finally:
+            D.git = original
+        self.assertEqual(state["porcelain"], " D x.json")
+        self.assertFalse(seen[("status", "--porcelain")])
+
     def test_read_sha256sums_two_space_and_blank(self):
         root = WORK / ("sha_test_" + uuid.uuid4().hex[:8])
         root.mkdir(parents=True, exist_ok=True)
