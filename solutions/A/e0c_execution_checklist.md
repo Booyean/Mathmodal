@@ -103,7 +103,7 @@ python solutions/A/test_a_e0_c.py
 
 ### 2.2 E0-C 主运行命令（入口已交付，**未放行，现在不得执行**）
 
-入口：`solutions/A/a_e0_c.py`（`CONTRACT_VERSION = "E0-C-1"`）。两种模式：默认 `--mode check`；真实执行必须 `--mode execute --approval-ref <统筹放行编号/链接>`，否则直接退出码 `2`。若输出目录已有 `e0c_results.json`，无 `--overwrite` 时拒绝启动（失败证据不得被覆盖）。
+入口：`solutions/A/a_e0_c.py`（`CONTRACT_VERSION = "E0-C-1"`）。两种模式：默认 `--mode check`；真实执行必须 `--mode execute --approval-ref <统筹放行编号/链接>`，否则直接退出码 `2`。`--repeat-runs` 默认 `2`（C12 要求 >=2，小于 2 直接退出码 `2`）。若输出目录已有 `e0c_results.json`，无 `--overwrite` 时拒绝启动（失败证据不得被覆盖）。
 
 ```powershell
 $env:OMP_NUM_THREADS="1"; $env:OPENBLAS_NUM_THREADS="1"
@@ -111,14 +111,17 @@ $env:MKL_NUM_THREADS="1"; $env:NUMEXPR_NUM_THREADS="1"
 
 python solutions/A/a_e0_c.py --mode execute `
   --approval-ref <codex 放行消息编号/链接> `
+  --repeat-runs 2 `
   --config experiments/A/A-Q1-E0/config.json `
   --split coordination/A_Q1_SPLIT.json `
   --data-root "竞赛题目/A 题：单发多收下的雷达信号处理及成像问题" `
-  --out experiments/A/A-Q1-E0/e0c/results `
+  --out experiments/A/A-Q1-E0/e0c/results-r2 `
   --implementation-sha <impl-sha> `
   --parent-commit <parent-sha> `
   --main-commit <main-sha>
 ```
+
+> 旧登记 `b63e217`（`e0c/results/`）是**一次**运行，缺少 E0C-CL-5 的 `repeat_run.runs[]` 证据，不再满足新 C12；不要用 `--overwrite` 覆盖它。放行后按上面的命令写到新目录（示例 `results-r2`），两次运行约 306 s。
 
 退出码：`0` 全部门槛可冻结（写 `e0c_frozen.json`）；`1` 灰区/不可冻结；`2` 用法错误（缺 `--approval-ref`、拒绝覆盖）；`3` 硬停止（前置未过、越界、`valid_rx<63`、NaN/Inf、超预算、空场 `<6 dB`、`abs_err>10.71 cm` 等）。
 
@@ -130,7 +133,8 @@ python solutions/A/a_e0_c.py --mode execute `
 | `e0c_arrays.npz` | 逐通道校准谱、对齐空场谱、`h_rel`、减除前后谱、`S_eff`、压缩响应、剖面与采样轴 |
 | `e0c_air_loo.json` | 10 折 × 9 组 `Supp_air-LOO`、`J_air`、`min/median`、选中对与切换原因 |
 | `e0c_frozen.json` | **仅当全部门槛可冻结时**写出：`(λ_cal, λ_inv, η_wall)`、实现 SHA、配置 SHA、冻结时间 |
-| `run.log` / `SHA256SUMS.txt` | 诊断日志与全部产物的 SHA256（`e0c_results.json` 自身摘要只在 `SHA256SUMS.txt` 中，避免自引用） |
+| `repeat_runs/run-1/`、`repeat_runs/run-2/` | 两次独立完整重算的证据：各自的 `e0c_arrays.npz`、`run_manifest.json`（`run_id`/`pid`/起止时间/墙钟/摘要/分类）与 `run.log`；`e0c_results.json#repeat_run` 绑定两次运行 |
+| `run.log` / `SHA256SUMS.txt` | 诊断日志与全部产物的 SHA256（含 `repeat_runs/` 证据；`e0c_results.json` 自身摘要只在 `SHA256SUMS.txt` 中，避免自引用） |
 
 实现约束（与 `PLAN.md` 一致，不得夹带 `N0`）：
 
@@ -146,6 +150,9 @@ python solutions/A/a_e0_c.py --mode execute `
 - 先提交实现与测试（implementation commit），再 `git archive`/新 worktree 从该提交运行，`--implementation-sha` 填该提交，`--parent-commit` 填其父提交，`--main-commit` 填运行时 `origin/main`。
 - 结果单独提交（只加 `experiments/A/A-Q1-E0/e0c/` 产物）。失败实验也保留提交、配置、日志、退出原因，不删证据。
 - 同一环境内重复运行应逐位一致；跨机只要求指标一致，不宣称数组逐位（`E0-S` 验收已记录该边界）。
+- **C12 的两次独立运行**：`--mode execute` 默认 `--repeat-runs 2`，顺序把整条链路（preflight → 读 96 个 `.dat` → 选参 → 校准 → DW → 测距 → 门槛）完整跑两次。两次运行**不共享数组或中间结果**，各自落盘 `repeat_runs/run-K/e0c_arrays.npz`、`run_manifest.json`、`run.log`；`e0c_results.json#repeat_run` 记录两次运行的 `run_id`/`pid`/起止时间/墙钟/`arrays_sha256`/`metrics_sha256`/分类摘要与比对结果。
+- 若两次运行的数组摘要、指标摘要、分类/停止原因不是逐位一致，`write_outputs` 拒绝登记（不会写“通过”结果）；运行器也**不做择优**：第 2 次运行就是交付运行，第 1 次只作确定性重复。`--repeat-runs 1` 与任何“把同一批数组序列化两次”的写法都不再构成 C12 证据。
+- 资源预算按两次运行的总墙钟计（实测合成包 **301.1 s** < 600 s，单次约 150 s），任一时刻仍为单进程单线程。
 
 ### 2.4 读前路径校验（E0C-CL-3 新增，回应统筹“stat/读取前校验实际路径”）
 
@@ -177,7 +184,7 @@ python solutions/A/a_e0_c.py --mode execute `
 | 顶层 `groups[12]` | 空场 10 组（`split="air"`，指标 `null`）+ 2 目标组（`wall_cal`/`metal_cal`，含 `d_hat_m`/`abs_err_cm`/`supp_dw_win_db`/`pslr_db`/`pnr_db`/`echo_ret_db`/`valid_rx`/`finite`/`status`/`gate_results`/`stop_reason`） |
 | `inputs[96]` | 逐文件 `rel_path`（`附件/附件2-测距数据/<组>/<文件>`）、`size_bytes`、`sha256`；顺序与 R0 清单一致 |
 | `array_map` + `p_cal/p_sup` | `{"air_loo_prefix":"air_loo","group_prefix":{2 组}}`；`air_loo__p_cal`、`air_loo__p_sup` 形状 `(9,10,63)`，仅凭它们可独立重算 90 个 `Supp_air-LOO` |
-| `arrays_sha256`/`metrics_sha256`/`repeat_run` | 确定性 npz（固定 zip 时间戳）两次序列化逐字节比对；`metrics_sha256` 按 `groups` 的 8 个键规范化；`repeat_run` 绑定两者并记录“指标已由交付数组重算” |
+| `arrays_sha256`/`metrics_sha256`/`repeat_run` | 确定性 npz（固定 zip 时间戳）；**两次独立完整重算**各自落盘 `repeat_runs/run-K/` 证据并逐位比对（`n_runs=2`、`independent`、`arrays_identical`、`metrics_identical`、`outcomes_identical`、`runs[]` 带 `run_id`/`pid`/起止时间/墙钟/摘要）；`metrics_sha256` 按 `groups` 的 8 个键规范化；`repeat_run` 绑定两次运行与交付数组，写盘前由 `verify_repeat_evidence` 重算证据文件摘要 |
 | `resource.single_process` | `true`；四个线程变量均为 `"1"` |
 | `e0c_air_loo.json` | `folds[10]`、`grid[9]{lambdas,folds[10].supp_db,j_air_db,min_db,median_db}`、`selected`、`switched`、`min/median_supp_db`、`j_air_default_db`、`eligibility` |
 | 预览/阻断 | 空场 `status` 与目标 `status` 分别映射 `eligible` / `not_eligible_for_freeze` / `hard_stop`；仅全部门控可冻结才写 `e0c_frozen.json`（含 `lambdas`/`eta_wall`/`implementation_sha`） |
@@ -252,6 +259,18 @@ python solutions/A/a_e0_c.py --mode execute `
 - `freeze{status,written}`，以及冻结的三元组（仅 eligible 时）
 - `arrays_sha256`、`metrics_sha256`、`repeat_run`、`d_true_usage="evaluation_only"`、`files_sha256`、`stop_reason`
 
+`repeat_run` 的机械可核验字段（供 C12 与验收方负例使用）：
+
+| 字段 | 含义 |
+|---|---|
+| `n_runs` / `delivery_run_index` | 独立运行数（=2）与交付运行（第 2 次） |
+| `runs[]` | 每次运行一条：`run_index`、`run_id`（每次新建 UUID）、`pid`、`started_utc`/`finished_utc`、`wall_time_s`、`peak_rss_mib`、`arrays_sha256`、`npz_bytes`、`metrics_sha256`、`outcome_key`、`stop_reason`、`case_metrics`、`npz_path`/`manifest_path`/`log_path` |
+| `independent` / `sequential` | `run_id`、证据路径互不相同，且时间窗顺序不重叠 |
+| `arrays_identical` / `metrics_identical` / `outcomes_identical` | 两次运行的数组、指标、分类/停止原因逐位一致 |
+| `metrics_max_abs_delta` / `problems` | 目标指标最大绝对差（应为 `0.0`）与不一致清单（应为空） |
+
+验收方的最小负例集（E0C-CL-5 建议）：① 把 `runs[1]` 替换成 `runs[0]` 的副本（重复序列化口径）→ 必须失败；② 把 `runs[1].npz_path` 指向 `run-1` 的证据 → 必须失败；③ 有数组但无 `repeat_run` → 必须失败；④ `n_runs<2` 或时间窗重叠 → 必须失败。作者测试 `test_a_e0_c.py` 已按 ①②③ 做了反例。
+
 频道回传用下表，数值直接抄 JSON，不手算、不四舍五入掩盖灰区：
 
 | 组 | 类型 | `d_hat` | `abs_err` | `Supp_dw-win` | `PSLR` | `PNR` | `valid_rx` | 判定 |
@@ -263,7 +282,7 @@ python solutions/A/a_e0_c.py --mode execute `
 
 | 编号 | 事项 | 状态 / 需要什么 |
 |---|---|---|
-| B-01 | `solutions/A/a_e0_c.py` 主运行程序 | **已交付（E0C-CL-4）**：`--mode check/execute`、`--approval-ref` 强制、六类产物、E0-PREREG-3 全字段接口、72 项作者测试（合成 `.dat` 端到端；官方 `accept_e0c.py` 对合成包 C1–C15 PASS）。真实运行仍待 B-02 |
+| B-01 | `solutions/A/a_e0_c.py` 主运行程序 | **已交付（E0C-CL-4/-5）**：`--mode check/execute`、`--approval-ref` 强制、`--repeat-runs`（>=2）两次独立完整重算与 `repeat_runs/` 证据、七类产物、E0-PREREG-3 全字段接口、90 项作者测试（合成 `.dat` 端到端；官方 `accept_e0c.py` 对合成包 C1–C15 PASS）。真实运行仍待 B-02 |
 | B-02 | 真实信号执行放行 | **未获**。需 `codex` 核对本清单白名单、读前路径校验与停止条件后明确放行；放行前 `--mode execute` 一律拒绝 |
 | B-03 | `E0-T` | **禁止**。须 E0-C 全部门槛可冻结并锁配置后单次盲评 |
 | B-04 | 目标组标称距离与真实物理距离的关系 | 未知（O-D0-04）；只按标称标签报告误差，不宣称绝对测距精度 |
@@ -277,7 +296,7 @@ python solutions/A/a_e0_c.py --mode execute `
 
 ---
 
-## 7. 本轮自检结论（2026-11-28 实测，E0C-CL-4）
+## 7. 本轮自检结论（2026-11-28 实测，E0C-CL-5）
 
 命令：`python solutions/A/e0c_preflight.py --out experiments/A/A-Q1-E0/e0c/preflight.json`
 
@@ -295,8 +314,9 @@ python solutions/A/a_e0_c.py --mode execute `
 | D1-2 | `CONTRACT_VERSION="D1-2"`；D0 读取器在库 |
 | 自检测试 | **55 / 55 通过**（含缺行、大小/摘要不符、0 字节、越界、E0-S 门失败、锚点不符、词法越界、重解析点、`realpath` 逃逸、目录联接组 等反例） |
 | 入口 check | `a_e0_c.py --mode check` 退出码 `0`、`ready_for_execute=true`、`packets_parsed=0`、12 组边界扫描无问题 |
-| 入口测试 | **72 / 72 通过**（合成频谱数学链 + 合法 `.dat` 写读回 + 桩 preflight 的完整 `run_execute` + E0-PREREG-3 交付接口 + 确定性 npz + 门槛/CLI 边界） |
-| E0-PREREG-3 接口 | 官方 `accept_e0c.py` 对合成端到端包 **`PASS`（C1–C15 全过）**；C10 指标重算 `max|Δ|=0`（合成夹具）；非真实数据 |
+| 入口测试 | **90 / 90 通过**（合成频谱数学链 + 合法 `.dat` 写读回 + 桩 preflight 的两次独立完整 `run_execute_repeated` + E0-PREREG-3 交付接口 + `repeat_run` 两次运行证据 + 重复序列化/复用证据/缺证据三类反例 + 门槛/CLI 边界） |
+| C12 证据 | 合成端到端包：`n_runs=2`、`run_id` 互异、两次 npz 摘要相同但证据路径不同、指标 `max|Δ|=0`、分类一致；总墙钟 **301.1 s**、`single_process=true` |
+| E0-PREREG-3 接口 | 官方 `accept_e0c.py` 对生产链路合成端到端包 **`PASS`（C1–C15 全过）**；C10 指标重算 `max|Δ|=0`、C12 摘要绑定通过；C4 的 `inputs[]` 用真实数据 oracle 身份替换（合成 `.dat` 无法携带真实 SHA），非真实数据 |
 
 - **本清单不产生任何真实测距数值**：入口已交付但 E0-C 未放行（B-02），`--mode execute` 缺 `--approval-ref` 时拒绝启动。
 - 本清单不修改 `PLAN.md`、`config.json`、`SPLIT.json`、D0/D1-2/E0-S 生产代码或任何原始数据；只新增文档、只读自检工具、读前路径校验与 E0-C 入口/测试。
@@ -311,3 +331,4 @@ python solutions/A/a_e0_c.py --mode execute `
 | E0C-CL-2 | 2026-11-28 | 记录实测自检 30/31（`preconditions_pass=true`、`execution_ready=false`）；补 B-09（清单哈希行序）、B-10（跨数据集同名组）、B-11（18 未触碰 = 16 内插 + 2 外推）三项口径差异 |
 | E0C-CL-3 | 2026-11-28 | 回应统筹复核意见：① `e0c_preflight.py` 在 `stat`/`open` **之前**做词法归属、逐级反重解析点（含 Windows 目录联接）与 `realpath` 包含性校验，新增 `data.path_guard` 与 4 类负例（含 `mklink /J` 指向根外的端到端负例）；② 交付 `solutions/A/a_e0_c.py` 正式入口（`check`/`execute` 双模式、`--approval-ref` 强制、拒绝覆盖失败证据、六类产物）与 `test_a_e0_c.py`（47 项，含合法 `.dat` 合成端到端）；③ 实测更新为自检 31/32、`execution_ready=true`、测试 55/55 与 47/47；B-01 结项，B-02 仍未放行 |
 | E0C-CL-4 | 2026-11-28 | 回应 `V1-20261128-01/-02`（`E0-PREREG-3` 接口冻结）：① 合入 PLAN §3.1 近并列兜底（`1e-6 dB` → λ 和 → 索引距离 → 字典序）；② execute 产物补齐顶层 `groups[12]`、`inputs[96]`、`array_map` + `p_cal/p_sup (9,10,63)`、`arrays_sha256`/`metrics_sha256`/`repeat_run`、`resource.single_process`、`e0c_air_loo.json` 冻结结构；③ 目标指标改为按交付数组（0.05/0.25 ns τ、0.1 mm d）离散重算，写前自检 C10；④ 确定性 npz 两次序列化比对；⑤ 官方 `accept_e0c.py` 对合成端到端包 C1–C15 全过，作者测试 72/72 |
+| E0C-CL-5 | 2026-11-28 | 回应 `PR #33` 的 C12 阻塞（“两次序列化”不是两次独立运行）：① `run_execute` 增加 `run_execute_repeated`，`--mode execute` 默认 `--repeat-runs 2` 顺序做两次**完整独立重算**（重新 preflight、重读 96 个 `.dat`、不共享数组），各自落盘 `repeat_runs/run-K/e0c_arrays.npz` + `run_manifest.json` + `run.log`；② `repeat_run` 改为两次运行记录（`run_id`/`pid`/起止时间/墙钟/摘要/分类/逐案指标），写盘前 `verify_repeat_evidence` 重算证据摘要，`write_outputs` 拒绝重复序列化/复用证据/缺证据；③ `--repeat-runs<2` 用法拒绝；④ 作者测试扩至 **90/90**，含重复序列化、复用 npz 证据、缺 `repeat_run` 三类反例；⑤ 官方 `accept_e0c.py` 对生产链路合成端到端包 **C1–C15 PASS**（总墙钟 301.1 s，C12 通过），真实执行仍待 B-02 |

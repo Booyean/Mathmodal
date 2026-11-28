@@ -11,11 +11,14 @@
 * **I/O 链**：按 D0 契约自行写 8 行 × 2 包的合法 ``.dat`` 合成组，
   用 ``guarded_group_ref`` + ``load_group_spectrum`` 读回，验证
   ``valid_rx == 63``、频谱与写入值一致、且**不调用** ``discover_groups``；
-* **编排链**：在临时数据根上桩掉 ``run_preflight`` 后跑完整 ``run_execute``，
-  用 ``assemble_results`` 组装 E0-PREREG-3 的 ``groups[12]``/``inputs[96]``/
-  ``array_map``/``repeat_run``，核对 96 文件、两例误差、冻结判定与产物摘要；
+* **编排链**：在临时数据根上桩掉 ``run_preflight`` 后跑完整
+  ``run_execute_repeated``（两次独立完整重算），用 ``assemble_results`` 组装
+  E0-PREREG-3 的 ``groups[12]``/``inputs[96]``/``array_map``/``repeat_run``，
+  核对 96 文件、两例误差、冻结判定、两次运行证据与产物摘要；
+* **C12 反例**：把两次运行伪造成同一次（重复序列化口径）、复用同一 npz 证据、
+  或缺少 ``repeat_run``，都必须被拒绝；
 * **边界**：``--mode execute`` 缺 ``--approval-ref`` 必须拒绝；已有结果必须拒绝
-  覆盖；check 模式不解析采样。
+  覆盖；``--repeat-runs < 2`` 必须拒绝；check 模式不解析采样。
 
 用法::
 
@@ -24,6 +27,7 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import math
@@ -264,6 +268,7 @@ def test_run_execute_synthetic(ctx: Dict[str, Any]) -> Dict[str, Any]:
         build_synthetic_root(root, setup, gen)
         cfg = ctx["cfg"]
 
+        out_dir = tmp / "out"
         stub = {
             "contract_version": A.PF.CONTRACT_VERSION,
             "preconditions_pass": True,
@@ -276,12 +281,14 @@ def test_run_execute_synthetic(ctx: Dict[str, Any]) -> Dict[str, Any]:
         A.PF.run_preflight = lambda *a, **k: stub
         log: List[str] = []
         try:
-            result_ctx = A.run_execute(
+            repeated = A.run_execute_repeated(
                 REPO, root, REPO / "recon/manifests/a_dat_manifest.csv", cfg, setup,
-                "TEST-APPROVAL-REF", None, log,
+                "TEST-APPROVAL-REF", None, log, out_dir, n_runs=2,
             )
         finally:
             A.PF.run_preflight = saved
+        result_ctx = repeated["ctx"]
+        repeat_run = repeated["repeat_run"]
 
         check("exec.opened_96", result_ctx["data"]["opened_files"] == 96,
               str(result_ctx["data"]["opened_files"]))
@@ -300,7 +307,6 @@ def test_run_execute_synthetic(ctx: Dict[str, Any]) -> Dict[str, Any]:
               {"wall__z_before", "metal__z_after", "wall__P_after",
                "air_loo__p_cal"} <= set(result_ctx["arrays"]))
 
-        out_dir = tmp / "out"
         result = A.assemble_results(
             result_ctx,
             cfg,
@@ -312,8 +318,8 @@ def test_run_execute_synthetic(ctx: Dict[str, Any]) -> Dict[str, Any]:
             DUMMY_MAIN,
             "test-branch",
             "python solutions/A/a_e0_c.py --mode execute",
-            1.0,
-            10.0,
+            repeated["elapsed"],
+            repeated["peak"],
             out_dir,
         )
         check("exec.groups_12", len(result["groups"]) == 12, str(len(result["groups"])))
@@ -330,8 +336,15 @@ def test_run_execute_synthetic(ctx: Dict[str, Any]) -> Dict[str, Any]:
               result["config_sha256_match"] and result["plan_sha256_match"]
               and result["split_sha256_match"] and result["e0_s_results_sha256_match"])
         check("exec.metrics_digest_64", len(result["metrics_sha256"]) == 64)
+        result["resource"]["repeat_runs"] = repeated["n_runs"]
+        result["resource"]["per_run_wall_time_s"] = [
+            r["wall_time_s"] for r in repeated["runs"]
+        ]
 
-        sums = A.write_outputs(out_dir, result, result_ctx["arrays"], list(log), c0=setup.c0)
+        sums = A.write_outputs(
+            out_dir, result, repeated["arrays"], list(log), c0=setup.c0,
+            repeat_run=repeat_run,
+        )
         check("exec.out_files", all((out_dir / n).is_file() for n in (
             "e0c_results.json", "e0c_arrays.npz", "e0c_air_loo.json",
             "e0c_frozen.json", "run.log", "SHA256SUMS.txt")))
@@ -341,9 +354,64 @@ def test_run_execute_synthetic(ctx: Dict[str, Any]) -> Dict[str, Any]:
         check("exec.sums_cover_json", any("e0c_results.json" in ln for ln in lines))
         check("exec.sums_cover_arrays", any("e0c_arrays.npz" in ln for ln in lines))
         raw = json.loads((out_dir / "e0c_results.json").read_text(encoding="utf-8"))
+        rr = raw["repeat_run"]
+        check("exec.repeat_runs_2",
+              rr["n_runs"] == 2 and len(rr["runs"]) == 2,
+              "n_runs=%r" % rr.get("n_runs"))
+        check("exec.repeat_run_ids_distinct",
+              len({r["run_id"] for r in rr["runs"]}) == 2)
+        check("exec.repeat_run_evidence_files",
+              all((out_dir / r["npz_path"]).is_file()
+                  and (out_dir / r["manifest_path"]).is_file()
+                  and (out_dir / r["log_path"]).is_file()
+                  for r in rr["runs"]))
+        check("exec.repeat_run_npz_hash",
+              all(sha256_file(out_dir / r["npz_path"]) == r["arrays_sha256"]
+                  for r in rr["runs"]))
         check("exec.repeat_run_bound",
-              raw["repeat_run"]["arrays_sha256"] == raw["arrays_sha256"] == sha256_file(out_dir / "e0c_arrays.npz")
-              and raw["repeat_run"]["metrics_sha256"] == raw["metrics_sha256"])
+              rr["arrays_sha256"] == raw["arrays_sha256"] == sha256_file(out_dir / "e0c_arrays.npz")
+              and rr["metrics_sha256"] == raw["metrics_sha256"])
+        check("exec.repeat_run_identical",
+              rr["arrays_identical"] is True and rr["metrics_identical"] is True
+              and rr["outcomes_identical"] is True and rr["independent"] is True
+              and rr["problems"] == [])
+        check("exec.repeat_evidence_in_sums",
+              all(r["npz_path"] in raw["files_sha256"] for r in rr["runs"]))
+        check("exec.repeat_evidence_distinct_npz",
+              rr["runs"][0]["npz_path"] != rr["runs"][1]["npz_path"]
+              and sha256_file(out_dir / rr["runs"][0]["npz_path"])
+              == sha256_file(out_dir / rr["runs"][1]["npz_path"]))
+
+        # C12 反例：把第二次运行伪造成第一次的重复（旧“两次序列化”口径）
+        fake = copy.deepcopy(rr)
+        fake["runs"][1] = copy.deepcopy(fake["runs"][0])
+        fake["runs"][1]["run_index"] = 2
+        try:
+            A.verify_repeat_evidence(out_dir, fake)
+            dup_rejected = False
+        except A.E0CStop:
+            dup_rejected = True
+        check("exec.repeat_duplicate_record_rejected", dup_rejected)
+
+        # C12 反例：第二次运行复用第一次的 npz 证据路径
+        fake2 = copy.deepcopy(rr)
+        fake2["runs"][1]["npz_path"] = fake2["runs"][0]["npz_path"]
+        try:
+            A.verify_repeat_evidence(out_dir, fake2)
+            reuse_rejected = False
+        except A.E0CStop:
+            reuse_rejected = True
+        check("exec.repeat_reused_evidence_rejected", reuse_rejected)
+
+        # C12 反例：有数组但不给 repeat_run（序列化两次也不够）
+        try:
+            A.write_outputs(tmp / "no_repeat", result, repeated["arrays"], list(log),
+                            c0=setup.c0)
+            no_rr_rejected = False
+        except A.E0CStop:
+            no_rr_rejected = True
+        check("exec.repeat_missing_rejected", no_rr_rejected)
+
         check("exec.freeze_written", raw["freeze"]["written"] is True
               and raw["freeze"]["status"] == "eligible")
         check("exec.d_true_usage", raw["d_true_usage"] == "evaluation_only")
@@ -357,7 +425,10 @@ def test_run_execute_synthetic(ctx: Dict[str, Any]) -> Dict[str, Any]:
         deltas = A.verify_delivery_metrics(raw, result_ctx["arrays"], c0=setup.c0)
         check("exec.delivery_metrics_recompute", len(deltas) == 8 and max(deltas.values()) < 1e-9,
               "max |Δ|=%.3g" % max(deltas.values()))
-        return {"result": raw, "out_dir": out_dir}
+        check("exec.resource_repeat_runs",
+              raw["resource"]["repeat_runs"] == 2
+              and len(raw["resource"]["per_run_wall_time_s"]) == 2)
+        return {"result": raw, "out_dir": out_dir, "repeat_run": rr}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -443,6 +514,12 @@ def test_cli_boundaries() -> None:
             ["--mode", "execute", "--approval-ref", "X", "--out", str(out)]
         )
         check("cli.refuses_overwrite", code == 2, "exit=%d" % code)
+
+        code = A.main(
+            ["--mode", "execute", "--approval-ref", "X", "--repeat-runs", "1",
+             "--out", str(tmp / "o3")]
+        )
+        check("cli.repeat_runs_lt2_rejected", code == 2, "exit=%d" % code)
 
         check_mode_out = tmp / "check"
         code = A.main(["--mode", "check", "--out", str(check_mode_out)])

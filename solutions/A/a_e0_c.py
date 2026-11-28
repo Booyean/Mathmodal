@@ -32,15 +32,19 @@ glob 到禁止组）。组清单由白名单显式给出，且每个组目录、
 ``--mode execute``
     真正读取 96 个 `.dat` 并求解。**必须**同时给出 ``--approval-ref``（统筹放行
     消息的编号/链接），否则拒绝启动；该编号会写进结果 JSON 供追溯。
+    默认 ``--repeat-runs 2``：顺序把整条链路完整跑两次（重新 preflight、重新读
+    96 个 `.dat`、不共享数组），每次运行各自落盘 ``repeat_runs/run-K/`` 证据，
+    两次数组/指标/分类必须逐位一致；这是 ``E0-PREREG-3`` C12 的“两次独立运行”
+    证据，不再接受“同一批数组两次序列化”。
 
 用法::
 
     # 1) 现在可跑：入口 + 边界自检（不读采样）
     python solutions/A/a_e0_c.py --mode check
 
-    # 2) 放行后：正式执行（示例）
+    # 2) 放行后：正式执行（两次独立完整运行，示例）
     python solutions/A/a_e0_c.py --mode execute --approval-ref <release-ref> `
-        --implementation-sha <impl-sha> --parent-commit <parent-sha> `
+        --repeat-runs 2 --implementation-sha <impl-sha> --parent-commit <parent-sha> `
         --main-commit <main-sha>
 
 退出码
@@ -72,6 +76,7 @@ import re
 import sys
 import time
 import traceback
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -133,6 +138,12 @@ DELIVERY_BG_STOP_NS = 950.0
 DELIVERY_D_STEP_M = 1e-4  # 0.1 mm 细网格（E0-PREREG-3 §2.3）
 PSLR_HALF_WIDTH_M = 0.1606031
 DATA_REL_PREFIX = PF.DATA_SUBDIR.as_posix()  # "附件/附件2-测距数据"
+
+#: E0-PREREG-3 C12（两次独立运行证据，E0C-CL-5）：execute 必须顺序跑两次完整重算，
+#: 每次从原始 .dat 重新读取、互不共享数组，分别落盘证据后再比对。
+REPEAT_RUNS_DEFAULT = 2
+REPEAT_DIR_NAME = "repeat_runs"
+REPEAT_CONTRACT = "E0_PREREG_3.C12/two-independent-runs"
 
 
 class E0CStop(RuntimeError):
@@ -1184,6 +1195,370 @@ def save_npz_deterministic(path: Path, arrays: Dict[str, np.ndarray]) -> None:
             zf.writestr(info, buf.getvalue())
 
 
+def _iso_ms() -> str:
+    return datetime.now(timezone.utc).astimezone().isoformat(timespec="milliseconds")
+
+
+REPEAT_CASE_FIELDS: Tuple[str, ...] = (
+    "d_hat_m",
+    "abs_err_cm",
+    "supp_dw_win_db",
+    "pslr_db",
+    "pnr_db",
+    "echo_ret_db",
+)
+
+
+def _case_metrics(ctx: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    out: Dict[str, Dict[str, Any]] = {}
+    for case in ctx.get("cases") or []:
+        cid = str(case.get("case_id") or case.get("group_key"))
+        row: Dict[str, Any] = {}
+        for k in REPEAT_CASE_FIELDS:
+            value = case.get(k)
+            row[k] = None if value is None else float(value)
+        row["freeze_status"] = str(case.get("freeze_status"))
+        row["valid_rx"] = int(case.get("valid_rx") or 0)
+        out[cid] = row
+    return out
+
+
+def _outcome_key(ctx: Dict[str, Any]) -> str:
+    """把“结果分类”压成摘要：冻结状态、停止原因、逐案状态与指标。"""
+    payload = {
+        "freeze": (ctx.get("freeze") or {}).get("status"),
+        "stop_reasons": [str(s) for s in (ctx.get("stop_reasons") or [])],
+        "cases": _case_metrics(ctx),
+    }
+    return E0S.canonical_json_sha256(payload)
+
+
+def run_execute_repeated(
+    repo: Path,
+    data_root: Path,
+    manifest_path: Path,
+    cfg: Dict[str, Any],
+    setup: "E0S.Setup",
+    approval_ref: str,
+    eta_wall: Optional[float],
+    log: List[str],
+    out_dir: Path,
+    n_runs: int = REPEAT_RUNS_DEFAULT,
+) -> Dict[str, Any]:
+    """顺序执行 ``n_runs`` 次**完整独立重算**，产出 C12 可核验证据。
+
+    “独立”的硬性含义（代码保证）：每次运行都重新做一遍 ``run_execute``——
+    重新过 preflight、重新打开并解析 96 个 ``.dat``、重新选参/校准/抑制/测距，
+    两次运行之间不共享任何数组或中间结果；每次运行单独落盘
+    ``repeat_runs/run-K/e0c_arrays.npz``、``run_manifest.json``、``run.log``。
+
+    返回 ``{ctx, arrays, repeat_run, elapsed, peak, n_runs, runs}``：
+    ``ctx``/``arrays`` 取**最后一次**运行（交付运行），``repeat_run`` 记录全部
+    运行的身份、耗时与摘要，供 ``write_outputs`` 与验收方 C12 机械核验。
+    ``problems`` 非空表示两次运行不一致（不做“择优”，由验收判 C12 失败）。
+    """
+    n_runs = int(n_runs)
+    if n_runs < 2:
+        raise E0CStop(
+            "E0-PREREG-3 C12 要求至少两次独立运行，当前 --repeat-runs=%d" % n_runs
+        )
+    out_dir = Path(out_dir)
+    evidence_root = out_dir / REPEAT_DIR_NAME
+    evidence_root.mkdir(parents=True, exist_ok=True)
+    overall_started = time.perf_counter()
+    peak = 0.0
+    runs: List[Dict[str, Any]] = []
+    ctx: Dict[str, Any] = {}
+    arrays: Optional[Dict[str, np.ndarray]] = None
+
+    for idx in range(1, n_runs + 1):
+        run_dir = evidence_root / ("run-%d" % idx)
+        run_dir.mkdir(parents=True, exist_ok=True)
+        run_id = uuid.uuid4().hex
+        started = _iso_ms()
+        run_log: List[str] = [
+            "repeat_run_index=%d/%d" % (idx, n_runs),
+            "run_id=%s pid=%d" % (run_id, os.getpid()),
+            "started_utc=%s" % started,
+        ]
+        t0 = time.perf_counter()
+        try:
+            ctx = run_execute(
+                repo,
+                data_root,
+                manifest_path,
+                cfg,
+                setup,
+                approval_ref,
+                eta_wall,
+                run_log,
+            )
+        except E0CStop as exc:
+            wall = time.perf_counter() - t0
+            run_log.append("E0CStop: %s" % exc.reason)
+            record = {
+                "run_index": idx,
+                "run_id": run_id,
+                "pid": os.getpid(),
+                "started_utc": started,
+                "finished_utc": _iso_ms(),
+                "wall_time_s": round(wall, 3),
+                "peak_rss_mib": E0S.peak_rss_mib(),
+                "completed": False,
+                "groups_complete": False,
+                "arrays_sha256": None,
+                "npz_bytes": None,
+                "metrics_sha256": None,
+                "outcome_key": None,
+                "stop_reason": str(exc.reason),
+                "case_metrics": {},
+                "npz_path": None,
+                "manifest_path": (Path(REPEAT_DIR_NAME) / ("run-%d" % idx) / "run_manifest.json").as_posix(),
+                "log_path": (Path(REPEAT_DIR_NAME) / ("run-%d" % idx) / "run.log").as_posix(),
+            }
+            write_json(run_dir / "run_manifest.json", record)
+            (run_dir / "run.log").write_text("\n".join(run_log) + "\n", encoding="utf-8")
+            log.extend("[repeat %d] %s" % (idx, line) for line in run_log)
+            exc.detail = dict(getattr(exc, "detail", {}) or {})
+            exc.detail["repeat_run"] = {"runs": runs + [record]}
+            raise
+        wall = time.perf_counter() - t0
+        peak = max(peak, float(E0S.peak_rss_mib() or 0.0))
+        arrays = ctx.get("arrays")
+        groups: Optional[List[Dict[str, Any]]] = None
+        metrics_sha: Optional[str] = None
+        if arrays is not None and len(ctx.get("data", {}).get("groups") or []) == 12 and len(
+            ctx.get("cases") or []
+        ) == 2:
+            groups = build_groups(
+                ctx["cases"], ctx["data"]["groups"], cfg["gates_and_thresholds"]
+            )
+            metrics_sha = metrics_digest(groups)
+        arr_sha: Optional[str] = None
+        npz_bytes: Optional[int] = None
+        npz_path: Optional[str] = None
+        if arrays is not None:
+            npz_file = run_dir / "e0c_arrays.npz"
+            save_npz_deterministic(npz_file, arrays)
+            arr_sha = file_sha256(npz_file)
+            npz_bytes = int(npz_file.stat().st_size)
+            npz_path = (Path(REPEAT_DIR_NAME) / ("run-%d" % idx) / "e0c_arrays.npz").as_posix()
+        finished = _iso_ms()
+        record = {
+            "run_index": idx,
+            "run_id": run_id,
+            "pid": os.getpid(),
+            "started_utc": started,
+            "finished_utc": finished,
+            "wall_time_s": round(wall, 3),
+            "peak_rss_mib": float(E0S.peak_rss_mib() or 0.0),
+            "completed": arrays is not None,
+            "groups_complete": groups is not None,
+            "n_groups": len(ctx.get("data", {}).get("groups") or []),
+            "n_cases": len(ctx.get("cases") or []),
+            "arrays_sha256": arr_sha,
+            "npz_bytes": npz_bytes,
+            "metrics_sha256": metrics_sha,
+            "outcome_key": _outcome_key(ctx),
+            "stop_reason": (
+                "; ".join(str(s) for s in (ctx.get("stop_reasons") or [])) or None
+            ),
+            "case_metrics": _case_metrics(ctx),
+            "npz_path": npz_path,
+            "manifest_path": (Path(REPEAT_DIR_NAME) / ("run-%d" % idx) / "run_manifest.json").as_posix(),
+            "log_path": (Path(REPEAT_DIR_NAME) / ("run-%d" % idx) / "run.log").as_posix(),
+        }
+        write_json(run_dir / "run_manifest.json", record)
+        (run_dir / "run.log").write_text("\n".join(run_log) + "\n", encoding="utf-8")
+        log.extend("[repeat %d] %s" % (idx, line) for line in run_log)
+        runs.append(record)
+        if idx != n_runs:
+            # 释放本次数组，避免两次运行的峰值叠加；下一轮必须重新计算。
+            ctx = {}
+            arrays = None
+
+    problems: List[str] = []
+    completed = [r for r in runs if r.get("arrays_sha256")]
+    if len(completed) != n_runs:
+        problems.append(
+            "完成数组计算的运行数 %d/%d" % (len(completed), n_runs)
+        )
+    arrays_identical = (
+        len(completed) == n_runs
+        and len({r["arrays_sha256"] for r in completed}) == 1
+    )
+    metrics_identical = (
+        len(completed) == n_runs
+        and all(r.get("metrics_sha256") for r in completed)
+        and len({r["metrics_sha256"] for r in completed}) == 1
+    )
+    if not arrays_identical:
+        problems.append("两次独立运行的交付数组摘要不一致")
+    if not metrics_identical:
+        problems.append("两次独立运行的指标摘要不一致")
+
+    max_delta = 0.0
+    deltas: Dict[str, float] = {}
+    base = completed[0].get("case_metrics") if completed else {}
+    for rec in completed[1:]:
+        for cid, row in (rec.get("case_metrics") or {}).items():
+            other = (base or {}).get(cid) or {}
+            for field in REPEAT_CASE_FIELDS:
+                a, b = other.get(field), row.get(field)
+                if a is None or b is None:
+                    continue
+                d = abs(float(a) - float(b))
+                deltas["%s.%s" % (cid, field)] = d
+                max_delta = max(max_delta, d)
+    if max_delta != 0.0:
+        problems.append("两次独立运行的目标指标最大 |Δ|=%.3g" % max_delta)
+
+    outcomes_identical = len(runs) == n_runs and len(
+        {r.get("outcome_key") for r in runs}
+    ) == 1
+    if not outcomes_identical:
+        problems.append("两次独立运行的分类/停止原因不一致")
+
+    run_ids = [r.get("run_id") for r in runs]
+    independent = (
+        len(run_ids) >= 2
+        and len(set(run_ids)) == len(run_ids)
+        and len({r.get("npz_path") for r in runs}) == len(runs)
+        and len({r.get("manifest_path") for r in runs}) == len(runs)
+    )
+    if not independent:
+        problems.append("运行身份/证据路径不唯一，无法证明独立运行")
+
+    sequential = True
+    prev_finished = None
+    for rec in runs:
+        try:
+            started_dt = datetime.fromisoformat(str(rec["started_utc"]))
+            finished_dt = datetime.fromisoformat(str(rec["finished_utc"]))
+        except (KeyError, ValueError):
+            sequential = False
+            break
+        if prev_finished is not None and started_dt < prev_finished:
+            sequential = False
+            break
+        prev_finished = finished_dt
+    if not sequential:
+        problems.append("运行时间窗重叠或时间戳无效，不是顺序独立运行")
+
+    elapsed = time.perf_counter() - overall_started
+    delivery = runs[-1] if runs else {}
+    repeat_run: Dict[str, Any] = {
+        "contract": REPEAT_CONTRACT,
+        "n_runs": n_runs,
+        "strategy": "sequential_full_recompute_fresh_state",
+        "independent": bool(independent),
+        "sequential": bool(sequential),
+        "arrays_identical": bool(arrays_identical),
+        "metrics_identical": bool(metrics_identical),
+        "outcomes_identical": bool(outcomes_identical),
+        "metrics_max_abs_delta": float(max_delta),
+        "metrics_deltas": dict(sorted(deltas.items())),
+        "metrics_recomputed_from_delivered_arrays": True,
+        "arrays_sha256": delivery.get("arrays_sha256"),
+        "npz_bytes": delivery.get("npz_bytes"),
+        "metrics_sha256": delivery.get("metrics_sha256"),
+        "delivery_run_index": n_runs,
+        "selection_rule": (
+            "不做择优：第 N 次运行即交付运行，其余运行只作确定性重复；"
+            "全部分类/停止原因/指标/数组必须逐位一致"
+        ),
+        "evidence_dir": REPEAT_DIR_NAME,
+        "total_wall_time_s": round(elapsed, 3),
+        "runs": runs,
+        "problems": problems,
+    }
+    return {
+        "ctx": ctx,
+        "arrays": arrays,
+        "repeat_run": repeat_run,
+        "elapsed": elapsed,
+        "peak": peak,
+        "n_runs": n_runs,
+        "runs": runs,
+        "problems": problems,
+    }
+
+
+def verify_repeat_evidence(
+    out_dir: Path, repeat_run: Optional[Dict[str, Any]]
+) -> None:
+    """写盘前机械核验 C12 证据：两次运行的身份、证据文件与摘要必须自洽。
+
+    任何缺失/被替换/被复制成同一次运行的记录都会抛 ``E0CStop``，从而杜绝
+    “同一批数组两次序列化”再次被当成两次独立运行登记。
+    """
+    if not repeat_run:
+        raise E0CStop("缺少 repeat_run：E0-C 交付必须包含两次独立运行证据")
+    problems: List[str] = []
+    runs = list(repeat_run.get("runs") or [])
+    n_runs = int(repeat_run.get("n_runs") or 0)
+    if n_runs < 2 or len(runs) < 2:
+        problems.append("runs=%d n_runs=%d，少于两次独立运行" % (len(runs), n_runs))
+    if n_runs != len(runs):
+        problems.append("n_runs=%d 与 runs 长度 %d 不符" % (n_runs, len(runs)))
+    run_ids: List[str] = []
+    npz_paths: List[str] = []
+    manifest_paths: List[str] = []
+    for rec in runs:
+        idx = rec.get("run_index")
+        run_id = rec.get("run_id")
+        if not run_id:
+            problems.append("run_index=%r 缺少 run_id" % idx)
+        run_ids.append(str(run_id))
+        if not rec.get("started_utc") or not rec.get("finished_utc"):
+            problems.append("run_index=%r 缺少起止时间" % idx)
+        npz_paths.append(str(rec.get("npz_path")))
+        manifest_paths.append(str(rec.get("manifest_path")))
+        npz_path = Path(out_dir) / str(rec.get("npz_path"))
+        man_path = Path(out_dir) / str(rec.get("manifest_path"))
+        log_path = Path(out_dir) / str(rec.get("log_path"))
+        for label, path in (("npz", npz_path), ("manifest", man_path), ("log", log_path)):
+            if not path.is_file():
+                problems.append("run_index=%r 的 %s 证据缺失：%s" % (idx, label, path))
+        if not npz_path.is_file():
+            continue
+        actual = file_sha256(npz_path)
+        if rec.get("arrays_sha256") != actual:
+            problems.append(
+                "run_index=%r 的 npz 摘要 %s ≠ 登记值 %s"
+                % (idx, actual, rec.get("arrays_sha256"))
+            )
+        if not man_path.is_file():
+            continue
+        try:
+            manifest = json.loads(man_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            problems.append("run_index=%r 的 run_manifest.json 不可读：%s" % (idx, exc))
+            continue
+        for key in ("run_id", "arrays_sha256", "metrics_sha256", "started_utc", "finished_utc"):
+            if manifest.get(key) != rec.get(key):
+                problems.append(
+                    "run_index=%r 的 manifest.%s 与结果登记不一致" % (idx, key)
+                )
+    if len(set(run_ids)) != len(run_ids):
+        problems.append("run_id 重复：不是独立运行")
+    if len(set(npz_paths)) != len(npz_paths):
+        problems.append("npz 证据路径重复：不是独立运行")
+    if len(set(manifest_paths)) != len(manifest_paths):
+        problems.append("manifest 证据路径重复：不是独立运行")
+    delivery_idx = repeat_run.get("delivery_run_index")
+    if not isinstance(delivery_idx, int) or not (1 <= delivery_idx <= len(runs)):
+        problems.append("delivery_run_index=%r 越界" % delivery_idx)
+    elif runs[delivery_idx - 1].get("arrays_sha256") != repeat_run.get("arrays_sha256"):
+        problems.append("交付运行的数组摘要与 repeat_run.arrays_sha256 不一致")
+    if repeat_run.get("arrays_identical") is True:
+        hashes = {r.get("arrays_sha256") for r in runs if r.get("arrays_sha256")}
+        if len(hashes) != 1:
+            problems.append("repeat_run.arrays_identical=true 但运行摘要不一致")
+    if problems:
+        raise E0CStop("两次独立运行证据不可核验：" + "; ".join(problems[:6]))
+
+
 def verify_delivery_metrics(
     result: Dict[str, Any],
     arrays: Dict[str, np.ndarray],
@@ -1473,37 +1848,48 @@ def write_outputs(
     arrays: Optional[Dict[str, np.ndarray]],
     log: List[str],
     c0: float = 299792458.0,
+    repeat_run: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, str]:
     """落盘全部产物；返回 SHA256SUMS 的映射。
 
-    顺序：数组（两次确定性序列化并比对摘要）→ ``e0c_air_loo.json`` → 冻结文件
+    顺序：C12 证据核验 → 数组 → ``e0c_air_loo.json`` → 冻结文件
     → ``run.log`` → ``files_sha256`` → ``e0c_results.json`` → ``SHA256SUMS.txt``。
+
+    有数组时必须给出 ``repeat_run``（两次独立完整运行的证据）；本函数会重新
+    计算证据文件的摘要并核对，**不再**接受“同一批数组两次序列化”作为确定性证据。
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     sums: Dict[str, str] = {}
 
     if arrays:
         verify_delivery_metrics(result, arrays, c0=c0)
+        verify_repeat_evidence(out_dir, repeat_run)
+        assert repeat_run is not None  # verify_repeat_evidence 已保证
         npz_path = out_dir / "e0c_arrays.npz"
-        repeat_path = out_dir / ".e0c_arrays.repeat.npz"
-        save_npz_deterministic(repeat_path, arrays)
         save_npz_deterministic(npz_path, arrays)
-        sha_second = file_sha256(npz_path)
-        sha_first = file_sha256(repeat_path)
-        repeat_path.unlink()
-        if sha_first != sha_second:
-            raise E0CStop("e0c_arrays.npz 两次序列化摘要不同（非确定性）")
+        sha = file_sha256(npz_path)
+        if repeat_run.get("arrays_sha256") != sha:
+            raise E0CStop(
+                "交付数组摘要与 repeat_run 登记的独立运行摘要不同：%s ≠ %s"
+                % (sha, repeat_run.get("arrays_sha256"))
+            )
+        if repeat_run.get("metrics_sha256") != result.get("metrics_sha256"):
+            raise E0CStop("交付指标摘要与 repeat_run.metrics_sha256 不同")
+        if (
+            repeat_run.get("arrays_identical") is not True
+            or repeat_run.get("metrics_identical") is not True
+        ):
+            raise E0CStop("两次独立运行未做到数组与指标逐位一致，拒绝登记为确定性证据")
         result["arrays_file"] = npz_path.name
-        result["arrays_sha256"] = sha_second
-        result["arrays_file_sha256"] = sha_second
-        result["repeat_run"] = {
-            "arrays_sha256": sha_second,
-            "arrays_sha256_second_serialization": sha_first,
-            "metrics_sha256": result.get("metrics_sha256"),
-            "metrics_recomputed_from_delivered_arrays": True,
-            "note": "两次独立序列化逐字节一致；指标已由交付数组按 E0-PREREG-3 §5 重算核对",
-        }
-        sums[npz_path.name] = sha_second
+        result["arrays_sha256"] = sha
+        result["arrays_file_sha256"] = sha
+        result["repeat_run"] = repeat_run
+        sums[npz_path.name] = sha
+        for rec in repeat_run.get("runs") or []:
+            for rel in (rec.get("npz_path"), rec.get("manifest_path"), rec.get("log_path")):
+                if not rel:
+                    continue
+                sums[str(rel)] = file_sha256(out_dir / str(rel))
 
     loo = result.get("lambda_loo")
     if loo:
@@ -1592,6 +1978,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--parent-commit", default=None, help="实现提交的父提交")
     parser.add_argument("--main-commit", default=None, help="运行时 origin/main")
     parser.add_argument("--eta-wall", type=float, default=None, help="覆盖墙体首峰门限（默认取 config）")
+    parser.add_argument(
+        "--repeat-runs",
+        type=int,
+        default=REPEAT_RUNS_DEFAULT,
+        help="execute 的独立完整重算次数（>=2；默认 %d，C12 证据要求）" % REPEAT_RUNS_DEFAULT,
+    )
     parser.add_argument("--overwrite", action="store_true", help="允许覆盖已有 e0c_results.json")
     args = parser.parse_args(argv)
 
@@ -1634,6 +2026,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 file=sys.stderr,
             )
             return 2
+        if int(args.repeat_runs) < REPEAT_RUNS_DEFAULT:
+            print(
+                "拒绝执行：E0-PREREG-3 C12 要求 --repeat-runs >= %d（两次独立完整运行）；"
+                "当前 %d。" % (REPEAT_RUNS_DEFAULT, int(args.repeat_runs)),
+                file=sys.stderr,
+            )
+            return 2
 
     if args.mode == "check":
         check = run_check(repo, data_root, manifest_path, cfg, log)
@@ -1668,8 +2067,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return 0 if check["ready_for_execute"] else 1
 
     started = time.perf_counter()
+    repeated = None
+    repeat_run: Optional[Dict[str, Any]] = None
     try:
-        ctx = run_execute(
+        repeated = run_execute_repeated(
             repo,
             data_root,
             manifest_path,
@@ -1678,7 +2079,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             str(args.approval_ref).strip(),
             args.eta_wall,
             log,
+            out_dir,
+            n_runs=int(args.repeat_runs),
         )
+        ctx = repeated["ctx"]
+        if repeated["problems"]:
+            ctx["hard_stops"] = list(ctx.get("hard_stops") or []) + [
+                "repeat_run: " + "; ".join(repeated["problems"])
+            ]
+            ctx["stop_reasons"] = list(ctx.get("stop_reasons") or []) + [
+                "repeat_run: " + "; ".join(repeated["problems"])
+            ]
     except E0CStop as exc:
         ctx = {
             "experiment_id": "A-Q1-E0",
@@ -1712,8 +2123,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         out_dir.mkdir(parents=True, exist_ok=True)
         (out_dir / "run_error.log").write_text(err_text, encoding="utf-8")
 
-    elapsed = time.perf_counter() - started
-    peak = E0S.peak_rss_mib()
+    elapsed = (
+        float(repeated["elapsed"]) if repeated is not None else time.perf_counter() - started
+    )
+    peak = (
+        float(repeated["peak"] or 0.0)
+        if repeated is not None
+        else E0S.peak_rss_mib()
+    )
+    if repeated is not None:
+        repeat_run = repeated["repeat_run"]
     prov = E0S.git_info(repo)
     result = assemble_results(
         ctx,
@@ -1725,8 +2144,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         args.parent_commit or prov.get("parent_sha"),
         args.main_commit or prov.get("origin_main_sha"),
         prov.get("branch"),
-        "python solutions/A/a_e0_c.py --mode execute --approval-ref %s --out %s"
-        % (args.approval_ref, args.out),
+        "python solutions/A/a_e0_c.py --mode execute --approval-ref %s "
+        "--repeat-runs %d --out %s"
+        % (args.approval_ref, int(args.repeat_runs), args.out),
         elapsed,
         peak,
         out_dir,
@@ -1734,6 +2154,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     result["git"] = prov
     result["stop_detail"] = ctx.get("stop_detail")
     result["partial"] = ctx.get("partial")
+    result["resource"]["repeat_runs"] = int(args.repeat_runs)
+    if repeated is not None:
+        result["resource"]["per_run_wall_time_s"] = [
+            r["wall_time_s"] for r in repeated["runs"]
+        ]
+        result["resource"]["per_run_peak_rss_mib"] = [
+            r["peak_rss_mib"] for r in repeated["runs"]
+        ]
+        result["resource"]["max_single_run_wall_time_s"] = max(
+            r["wall_time_s"] for r in repeated["runs"]
+        )
 
     over_budget = elapsed > float(cfg["resource_budget"]["max_wall_time_sec"]) or (
         peak is not None and peak > float(cfg["resource_budget"]["max_peak_rss_mib"])
@@ -1765,7 +2196,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     arrays = ctx.get("arrays")
     try:
-        write_outputs(out_dir, result, arrays, log, c0=float(setup.c0))
+        write_outputs(
+            out_dir,
+            result,
+            arrays,
+            log,
+            c0=float(setup.c0),
+            repeat_run=repeat_run,
+        )
     except E0CStop as exc:
         # 交付自检失败：保留日志与错误证据，不写“通过”结果。
         out_dir.mkdir(parents=True, exist_ok=True)
