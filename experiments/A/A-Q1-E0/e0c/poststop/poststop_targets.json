@@ -1,0 +1,128 @@
+{
+  "contract": "E0-C-POSTSTOP-1",
+  "generated_at_utc": "2026-11-28T10:36:43.906218Z",
+  "phase": "E0-C-poststop",
+  "source": {
+    "results_dir": "experiments/A/A-Q1-E0/e0c/results",
+    "results_file": "e0c_results.json",
+    "results_sha256": "7d3fbcd582de301127cb5200d20093f4efcfa8adc295a6c1cb6fdd618f0aeba8",
+    "arrays_file": "e0c_arrays.npz",
+    "arrays_sha256": "03084cffe041900d6a9aa82b5492e6fb64474d971c37e0560adbd115ce4962ff",
+    "arrays_sha256_match": true,
+    "implementation_sha": "4cb44a0d59bfc8999187f40efe57318d70a033b7",
+    "parent_commit": "5ad8417b677ec727dc77ec0b5f12d00e4efe41f1",
+    "main_commit": "3b8b67e58156b9618c788ec8e114e50d960bbb0d",
+    "approval_ref": "workspace-approval:fb4c1003-3f83-4a71-b2e3-c80bd3d964d3",
+    "config_sha256": "8fb6821fa3335ef748e16ad2f5b5b8fc818c13cbe9d3315377faf48d5e40e06a"
+  },
+  "hard_stop": {
+    "freeze_status": "hard_stop",
+    "eligible": false,
+    "frozen_file_present": false,
+    "stop_reasons": [
+      "air_loo_hard_stop: min=2.9844 dB < 6.0 dB",
+      "E0-C/Wall-42cm: pslr_db(failed)"
+    ],
+    "air_loo_eligibility": "hard_stop",
+    "air_loo_min_supp_db": 2.9844339994900797,
+    "air_loo_median_supp_db": 10.300981802494189
+  },
+  "policy": {
+    "citable": false,
+    "usage": "diagnostic_only_after_hard_stop",
+    "may_enter_results_table": false,
+    "may_enter_paper_numbers": false,
+    "may_be_used_for_freeze": false,
+    "may_be_used_for_e0t": false,
+    "note": "本文件的目标指标来自一次未通过门控的硬停运行；按 E0-C 预登记与 DIAGNOSIS_AIR_LOO.md §8，硬停运行的 d_hat 一律不得作为结果引用。"
+  },
+  "targets": [
+    {
+      "group_key": "墙体数据/data1-42cm",
+      "target_type": "wall",
+      "split": "wall_cal",
+      "d_true_cm_nominal": 42.0,
+      "reported": {
+        "d_hat_m": 0.4817999999999635,
+        "abs_err_cm": 6.179999999996349,
+        "supp_dw_win_db": 3.268659668481082,
+        "pslr_db": 2.664330228102982,
+        "pnr_db": 34.29380923376331
+      },
+      "recomputed": {
+        "d_hat_m": 0.4817999999999635,
+        "d_hat_rule": "wall_first_peak",
+        "abs_err_cm": 6.179999999996349,
+        "supp_dw_win_db": 3.268659668481082,
+        "pslr_db": 2.664330228102982,
+        "pnr_db": 34.29380923376331,
+        "bg_proxy": 18393037242.888958,
+        "dw_window_samples": 2583
+      },
+      "delta": {
+        "d_hat_m": 0.0,
+        "abs_err_cm": 0.0,
+        "supp_dw_win_db": 0.0,
+        "pslr_db": 0.0,
+        "pnr_db": 0.0
+      },
+      "valid_rx": 63,
+      "finite": true,
+      "group_status": "hard_stop",
+      "group_stop_reason": "pslr_db",
+      "citable": false
+    },
+    {
+      "group_key": "金属板数据/data1-69cm",
+      "target_type": "metal",
+      "split": "metal_cal",
+      "d_true_cm_nominal": 69.0,
+      "reported": {
+        "d_hat_m": 0.7336999999999357,
+        "abs_err_cm": 4.3699999999935795,
+        "supp_dw_win_db": 4.185473074871163,
+        "pslr_db": 4.17257974985938,
+        "pnr_db": 35.42927899434393
+      },
+      "recomputed": {
+        "d_hat_m": 0.7336999999999357,
+        "d_hat_rule": "global_argmax",
+        "abs_err_cm": 4.3699999999935795,
+        "supp_dw_win_db": 4.185473074871163,
+        "pslr_db": 4.17257974985938,
+        "pnr_db": 35.42927899434393,
+        "bg_proxy": 41982779656.59266,
+        "dw_window_samples": 2583
+      },
+      "delta": {
+        "d_hat_m": 0.0,
+        "abs_err_cm": 0.0,
+        "supp_dw_win_db": 0.0,
+        "pslr_db": 0.0,
+        "pnr_db": 0.0
+      },
+      "valid_rx": 63,
+      "finite": true,
+      "group_status": "eligible",
+      "group_stop_reason": null,
+      "citable": false
+    }
+  ],
+  "checks": {
+    "whitelist_only": true,
+    "no_frozen_file": true,
+    "arrays_sha256_match": true,
+    "targets_recomputed": 2,
+    "max_delta_db": 0.0,
+    "max_delta_m": 0.0,
+    "all_within_tolerance": true,
+    "problems": []
+  },
+  "limits": [
+    "0.1 mm 剖面与 0.05 ns 压缩延迟轴均来自原交付数组，未重采样。",
+    "重算复用生产实现 a_e0_c.py 的度量原语，不是独立实现；独立复核归验证方。",
+    "未打开任何 .dat、未重跑求解链、未选参、未改阈值、未写 e0c_frozen.json。",
+    "未读取 E0-T 两组、18 组留出样、附件3 与 B 题。"
+  ],
+  "reproduce": "python solutions/A/a_e0_poststop.py --results-dir experiments/A/A-Q1-E0/e0c/results --out experiments/A/A-Q1-E0/e0c/poststop"
+}

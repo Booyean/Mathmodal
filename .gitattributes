@@ -1,5 +1,14 @@
 /竞赛题目/** -text
 *.md text eol=lf
+
+# 纳入 SHA256SUMS 的 JSON 产物：摘要按 LF 归一化计算，检出必须保持 LF，
+# 否则 `core.autocrlf=true` 的 Windows 干净检出会让摘要校验失败。
+# 只钉本 PR 新增的产物，避免改变 `e0c/results`、`s1s2/results` 等冻结登记的字节。
+/experiments/A/A-Q1-E0/n0/synthetic/n0_synthetic_results.json text eol=lf
+/experiments/A/A-Q1-E0/n0/channel_regression/n0_channel_regression.json text eol=lf
+/experiments/A/A-Q1-E0/e0c/poststop/poststop_targets.json text eol=lf
+
+# Q2/Q3 合成基线（#40）：结果 JSON 与台账按 LF 检出，NPZ 按二进制保护。
 experiments/A/A-Q2Q3-SYN/results/*.json text eol=lf
 experiments/A/A-Q2Q3-SYN/results/SHA256SUMS.txt text eol=lf
 experiments/A/A-Q2Q3-SYN/results/*.npz binary

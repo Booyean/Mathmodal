@@ -1,0 +1,276 @@
+{
+  "cases": [
+    {
+      "case": "flat_T",
+      "direction_recovery": {
+        "conjugate_separation": 1.414213562373095,
+        "error_to_conjugate_min": 1.4142135623730947,
+        "error_to_true_max": 0.0
+      },
+      "negative_control": {
+        "detected": true,
+        "direction_error_to_true_min": 1.4142135623730947,
+        "row_rel_residual_min": 0.2773500981126146,
+        "second_coeff_abs_max": 6.770547690674378e-16,
+        "second_coeff_zero_expected": true,
+        "variant": "v = vh[0].conj()（旧实现：相对通道相位反转）"
+      },
+      "production_basis": {
+        "anchor_idx": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "local_replica_gap_rel": 0.0,
+        "near_parallel": false,
+        "ortho_residual_rel_max": 1.0000000000000002,
+        "rank_effective": 2
+      },
+      "row_reconstruction": {
+        "coeff_rel_error_max": 1.0030952767362003e-15,
+        "row_rel_residual_max": 5.93873657494515e-16,
+        "second_coeff_abs_max": 1.0000000000000002
+      },
+      "spec": {
+        "T_shape": [
+          3,
+          4
+        ],
+        "channel_direction_re_im": [
+          [
+            0.5773502691896258,
+            0.0
+          ],
+          [
+            -0.2886751345948128,
+            0.5000000000000001
+          ],
+          [
+            -0.2886751345948131,
+            -0.4999999999999999
+          ]
+        ],
+        "fixture": "pool[g, c, f] = T[c, f] * (1 + alpha[g] * gamma[c])",
+        "group_coeffs_re_im": [
+          [
+            1.0,
+            0.0
+          ],
+          [
+            -1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.5
+          ],
+          [
+            -0.0,
+            -0.5
+          ],
+          [
+            0.7,
+            0.0
+          ],
+          [
+            -0.7,
+            0.0
+          ]
+        ],
+        "n_ch": 3,
+        "n_f": 4,
+        "n_groups": 6
+      }
+    },
+    {
+      "case": "ramp_T",
+      "direction_recovery": {
+        "conjugate_separation": 1.414213562373095,
+        "error_to_conjugate_min": 1.414213562373095,
+        "error_to_true_max": 0.0
+      },
+      "negative_control": {
+        "detected": true,
+        "direction_error_to_true_min": 1.414213562373095,
+        "row_rel_residual_min": 0.26378300152796397,
+        "second_coeff_abs_max": 0.166174794334603,
+        "second_coeff_zero_expected": false,
+        "variant": "v = vh[0].conj()（旧实现：相对通道相位反转）"
+      },
+      "production_basis": {
+        "anchor_idx": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "local_replica_gap_rel": 0.0,
+        "near_parallel": false,
+        "ortho_residual_rel_max": 0.9866456626006471,
+        "rank_effective": 2
+      },
+      "row_reconstruction": {
+        "coeff_rel_error_max": 1.1443916996305594e-15,
+        "row_rel_residual_max": 4.407785017692504e-16,
+        "second_coeff_abs_max": 1.0000000000000009
+      },
+      "spec": {
+        "T_shape": [
+          3,
+          4
+        ],
+        "channel_direction_re_im": [
+          [
+            0.5773502691896258,
+            0.0
+          ],
+          [
+            -0.2886751345948128,
+            0.5000000000000001
+          ],
+          [
+            -0.2886751345948131,
+            -0.4999999999999999
+          ]
+        ],
+        "fixture": "pool[g, c, f] = T[c, f] * (1 + alpha[g] * gamma[c])",
+        "group_coeffs_re_im": [
+          [
+            1.0,
+            0.0
+          ],
+          [
+            -1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.5
+          ],
+          [
+            -0.0,
+            -0.5
+          ],
+          [
+            0.7,
+            0.0
+          ],
+          [
+            -0.7,
+            0.0
+          ]
+        ],
+        "n_ch": 3,
+        "n_f": 4,
+        "n_groups": 6
+      }
+    }
+  ],
+  "claim": "由 rel_dev（组 × 通道）SVD 取行方向 v = vh[0] 得到的通道模态，能在允许任意全局相位的判据下恢复解析方向 (1, e^{2πi/3}, e^{4πi/3})/√3，并以 b_g = α_g 精确重建训练数据的行方向；旧式 v = vh[0].conj() 在同一夹具上失败（正是修复前的实现）。",
+  "contract": "N0-CHREG-1",
+  "defect": {
+    "location": "solutions/A/a_e0_n0.py::build_rank2_basis（逐频点 SVD 取通道权重）",
+    "mechanism": "A = U·S·Vh ⇒ A[g,c] = Σ s_k u_k[g]·conj(v_k[c])，行方向是 conj(v_k)，而 Vh 的行正是 conj(v_k)；conj 一次即把相对通道相位整体反转",
+    "numerical_impact": {
+      "fixture_direction_error_pre_fix": 1.414213562373095,
+      "fixture_row_residual_pre_fix": 0.5,
+      "fixture_second_coeff_pre_fix": 0.0,
+      "n0_synthetic_artifact_sha256": {
+        "post_fix": {
+          "N0_SYNTHETIC.md": "644e5b4f533f609ae940e0411bd0a2b40280d58d7f3a262e0090f691a18067ad",
+          "n0_synthetic_results.json": "69aca85a79a8f8180ec5960a3840de739185ed902b15c694e2754b118b3ce07d"
+        },
+        "post_fix_source": "experiments/A/A-Q1-E0/n0/synthetic/SHA256SUMS.txt（运行时读取当前提交产物，避免硬编码过期）",
+        "pre_fix": {
+          "N0_SYNTHETIC.md": "0c342a4f896c31a07fc7e4760c86d7af3274a62ab9958aab712b8bd2d27fbc5a",
+          "n0_synthetic_results.json": "e2835b91ecc688b7f7bdf0ea427176e93911054b70820c658e53ccdb5631b6b0"
+        },
+        "pre_fix_reproduced_at_207510c": true
+      },
+      "n0_synthetic_c2_over_c1_p1_db": {
+        "post_fix": 14.1038399996618,
+        "pre_fix": 11.1677360141308
+      },
+      "n0_synthetic_c2_over_c1_p2_db": {
+        "post_fix": 15.4757162137713,
+        "pre_fix": 11.6502400785097
+      },
+      "n0_synthetic_decisions_changed": false,
+      "n0_synthetic_p1_min_db": {
+        "post_fix": 26.1151960826842,
+        "pre_fix": 23.1790920971532
+      },
+      "n0_synthetic_p2_min_db": {
+        "post_fix": 28.3957160700641,
+        "pre_fix": 24.5702399348025
+      },
+      "note": "合成夹具的通道相对偏差是复向量（T 为组均值），所以修复让秩 2 的抑制量真实提升（P1 min +2.94 dB、P2 min +3.83 dB，c2/c1 增益 +2.94/+3.83 dB）；判定结论不变：L1=PASS、L2=FAIL（S8）、P3/P4/C8′ 仍 PASS。产物已重新生成并登记新 SHA256，旧值可用 207510c 逐字节复现"
+    },
+    "post_fix": "v = vh[0]",
+    "pre_fix": "v = vh[0].conj()",
+    "status": "found_and_fixed_in_this_commit",
+    "why_old_tests_missed_it": "旧夹具有两个盲点：① 通道方向为实向量；② 所有组共用同一个 T_c，于是 rel_dev = dev/T 恰好等于实 pattern，conj 只差全局相位。真实/合成流水线里 T 是**组均值**，rel_dev = dev/T 带着 T 的逐通道相位，行方向本身是复向量——`(1, e^{2πi/3}, e^{4πi/3})/√3` 才能在这一维上分辨"
+  },
+  "provenance": {
+    "command": "python solutions/A/a_e0_n0_channel_regression.py --n-f 4 --out experiments/A/A-Q1-E0/n0/channel_regression",
+    "environment": {
+      "numpy": "2.1.3",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "python": "3.13.5"
+    },
+    "generated_at": "2026-11-28T12:49:15Z",
+    "generated_at_source": "system_clock",
+    "implementation_dirty": false,
+    "implementation_sha": "4b9d8f17a014006dbecbeaefbcad5dc3c4ea6a64",
+    "reproduction": "数值字段由 seed/参数决定，可按容差复算；逐字节复现需用 --generated-at 或 SOURCE_DATE_EPOCH 指定同一 generated_at、保持 implementation_dirty=false，并使用相同运行环境（本块已记录）。"
+  },
+  "real_dat_files_read": 0,
+  "real_fixture_blindness": {
+    "channel_direction_re_im": [
+      [
+        0.816496580927726,
+        0.0
+      ],
+      [
+        -0.4082482904638629,
+        0.0
+      ],
+      [
+        -0.4082482904638633,
+        0.0
+      ]
+    ],
+    "conclusion": "实方向 + 共用 T 的旧夹具下，conj 只差全局相位：生产与旧式变异的行残差同为 ~1e-16、方向误差同为 0，因此旧夹具在数学上无法发现该缺陷（不是测试写得不够多，而是缺“复通道相位 + 组均值 T”这一维）",
+    "conjugate_is_equivalent": true,
+    "direction_error_legacy_mutant": 0.0,
+    "direction_error_production": 0.0,
+    "row_rel_residual_legacy_mutant": 8.914815019561104e-16,
+    "row_rel_residual_production": 8.914815019561104e-16
+  },
+  "scope": {
+    "artifacts_regenerated": true,
+    "build_rank2_basis_changed": true,
+    "kernel_changed": false,
+    "note": "只改 build_rank2_basis 的取向量约定；solve_bundle / supp_from_z / pslr_from_p / pnr_from_z / select_d_hat 与门槛函数未动；n0/synthetic 产物因该修复重新生成并另行登记 SHA256。",
+    "numeric_core_untouched": true
+  },
+  "synthetic_only": true,
+  "thresholds": {
+    "coeff_rel_ok_max": 1e-09,
+    "direction_ok_max": 1e-10,
+    "negative_direction_min": 1.0,
+    "negative_row_residual_min": 0.2,
+    "negative_second_coeff_max": 1e-09,
+    "row_residual_ok_max": 1e-10
+  },
+  "verdict": {
+    "direction_recovered": true,
+    "local_replica_matches_production": true,
+    "negative_control_detected": true,
+    "pass": true,
+    "real_fixture_blind_fixture": true,
+    "rows_reconstructed": true,
+    "second_coeff_matches_alpha": true
+  }
+}

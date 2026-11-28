@@ -1,0 +1,701 @@
+{
+  "contract": "E0-C-DIAG-1",
+  "scope": "只读 b63e217 归档交付包；不读 .dat、不重跑、不调参、不读 E0-T",
+  "source": {
+    "results_dir": "experiments/A/A-Q1-E0/e0c/results",
+    "implementation_sha": "4cb44a0d59bfc8999187f40efe57318d70a033b7",
+    "results_commit": "b63e217",
+    "arrays_sha256": "03084cffe041900d6a9aa82b5492e6fb64474d971c37e0560adbd115ce4962ff",
+    "metrics_sha256": "1cce102f1513aff209c6ef095e3f7fea46dc3e5367db5926a040a8fd3ea90dd7"
+  },
+  "gates": {
+    "air_loo_hard_stop_db": 6.0,
+    "air_loo_eligible_db": 10.0,
+    "observed_min_db": 2.9844339994900797,
+    "observed_median_db": 10.300981802494189,
+    "eligibility": "hard_stop"
+  },
+  "default_pair": {
+    "index": 4,
+    "lambdas": [
+      0.001,
+      0.001
+    ]
+  },
+  "per_fold": [
+    {
+      "fold": "data1",
+      "group_key": "空场数据/data1",
+      "supp_db": 4.19032690942141,
+      "supp_min_over_grid_db": 4.0973735419054975,
+      "supp_max_over_grid_db": 4.433184802040256,
+      "supp_lambda_spread_db": 0.3358112601347587,
+      "per_channel_supp_median_db": 7.863561534456491,
+      "per_channel_supp_p10_db": -4.227204116211211,
+      "n_channels_supp_below_0db": 8,
+      "channels_supp_below_0db": [
+        {
+          "id": 47,
+          "row": 6,
+          "col": 8
+        },
+        {
+          "id": 48,
+          "row": 7,
+          "col": 1
+        },
+        {
+          "id": 49,
+          "row": 7,
+          "col": 2
+        },
+        {
+          "id": 50,
+          "row": 7,
+          "col": 3
+        },
+        {
+          "id": 51,
+          "row": 7,
+          "col": 4
+        },
+        {
+          "id": 52,
+          "row": 7,
+          "col": 5
+        },
+        {
+          "id": 53,
+          "row": 7,
+          "col": 6
+        },
+        {
+          "id": 54,
+          "row": 7,
+          "col": 7
+        }
+      ],
+      "excess_residual_mean_db": 4.623666814109605,
+      "excess_residual_std_db": 3.5754214417407475,
+      "residual_share_top_channel": 0.08995613870781444,
+      "corr_log_pcal_log_psup": 0.3834064659127613
+    },
+    {
+      "fold": "data2",
+      "group_key": "空场数据/data2",
+      "supp_db": 2.9844339994900797,
+      "supp_min_over_grid_db": 2.9093637698452826,
+      "supp_max_over_grid_db": 3.1297986482591966,
+      "supp_lambda_spread_db": 0.22043487841391407,
+      "per_channel_supp_median_db": 4.4483203880994955,
+      "per_channel_supp_p10_db": -4.322719272434291,
+      "n_channels_supp_below_0db": 10,
+      "channels_supp_below_0db": [
+        {
+          "id": 16,
+          "row": 3,
+          "col": 1
+        },
+        {
+          "id": 21,
+          "row": 3,
+          "col": 6
+        },
+        {
+          "id": 47,
+          "row": 6,
+          "col": 8
+        },
+        {
+          "id": 48,
+          "row": 7,
+          "col": 1
+        },
+        {
+          "id": 49,
+          "row": 7,
+          "col": 2
+        },
+        {
+          "id": 50,
+          "row": 7,
+          "col": 3
+        },
+        {
+          "id": 51,
+          "row": 7,
+          "col": 4
+        },
+        {
+          "id": 52,
+          "row": 7,
+          "col": 5
+        },
+        {
+          "id": 53,
+          "row": 7,
+          "col": 6
+        },
+        {
+          "id": 54,
+          "row": 7,
+          "col": 7
+        }
+      ],
+      "excess_residual_mean_db": 4.5652594479811075,
+      "excess_residual_std_db": 4.355218209006728,
+      "residual_share_top_channel": 0.12059341493986432,
+      "corr_log_pcal_log_psup": 0.44819373974838206
+    },
+    {
+      "fold": "data3",
+      "group_key": "空场数据/data3",
+      "supp_db": 9.886207484726471,
+      "supp_min_over_grid_db": 9.507887122671328,
+      "supp_max_over_grid_db": 10.308138334446237,
+      "supp_lambda_spread_db": 0.8002512117749099,
+      "per_channel_supp_median_db": 10.872270376546464,
+      "per_channel_supp_p10_db": 6.707164847643691,
+      "n_channels_supp_below_0db": 0,
+      "channels_supp_below_0db": [],
+      "excess_residual_mean_db": 1.445628826558249,
+      "excess_residual_std_db": 2.1323250661948525,
+      "residual_share_top_channel": 0.1336913939135056,
+      "corr_log_pcal_log_psup": 0.7424675144514776
+    },
+    {
+      "fold": "data4",
+      "group_key": "空场数据/data4",
+      "supp_db": 10.203566491599005,
+      "supp_min_over_grid_db": 9.796590707030825,
+      "supp_max_over_grid_db": 10.658973853952496,
+      "supp_lambda_spread_db": 0.8623831469216707,
+      "per_channel_supp_median_db": 11.164414793104001,
+      "per_channel_supp_p10_db": 6.956463865464646,
+      "n_channels_supp_below_0db": 0,
+      "channels_supp_below_0db": [],
+      "excess_residual_mean_db": 1.181300365444594,
+      "excess_residual_std_db": 2.1574938498091694,
+      "residual_share_top_channel": 0.12556730445912798,
+      "corr_log_pcal_log_psup": 0.7398399318675758
+    },
+    {
+      "fold": "data5",
+      "group_key": "空场数据/data5",
+      "supp_db": 12.881729940654505,
+      "supp_min_over_grid_db": 12.38315856140405,
+      "supp_max_over_grid_db": 13.562722230523768,
+      "supp_lambda_spread_db": 1.1795636691197178,
+      "per_channel_supp_median_db": 14.313690250660748,
+      "per_channel_supp_p10_db": 7.292452512748342,
+      "n_channels_supp_below_0db": 0,
+      "channels_supp_below_0db": [],
+      "excess_residual_mean_db": -1.8361246243889955,
+      "excess_residual_std_db": 1.8951255054540832,
+      "residual_share_top_channel": 0.08443397614412654,
+      "corr_log_pcal_log_psup": 0.5470306807418792
+    },
+    {
+      "fold": "data6",
+      "group_key": "空场数据/data6",
+      "supp_db": 13.096603459453034,
+      "supp_min_over_grid_db": 12.600049935802266,
+      "supp_max_over_grid_db": 13.80439323432238,
+      "supp_lambda_spread_db": 1.2043432985201132,
+      "per_channel_supp_median_db": 14.75172573192918,
+      "per_channel_supp_p10_db": 7.3957497840166875,
+      "n_channels_supp_below_0db": 0,
+      "channels_supp_below_0db": [],
+      "excess_residual_mean_db": -2.0293647263954075,
+      "excess_residual_std_db": 2.1191122006205254,
+      "residual_share_top_channel": 0.08220279017245914,
+      "corr_log_pcal_log_psup": 0.5364262866869424
+    },
+    {
+      "fold": "data7",
+      "group_key": "空场数据/data7",
+      "supp_db": 12.6489575801014,
+      "supp_min_over_grid_db": 12.304830355672259,
+      "supp_max_over_grid_db": 13.24392009524159,
+      "supp_lambda_spread_db": 0.9390897395693312,
+      "per_channel_supp_median_db": 13.812066105905604,
+      "per_channel_supp_p10_db": 7.403041897186866,
+      "n_channels_supp_below_0db": 0,
+      "channels_supp_below_0db": [],
+      "excess_residual_mean_db": -1.339760554794367,
+      "excess_residual_std_db": 1.893166084267469,
+      "residual_share_top_channel": 0.10367458171512632,
+      "corr_log_pcal_log_psup": 0.5326703657168144
+    },
+    {
+      "fold": "data8",
+      "group_key": "空场数据/data8",
+      "supp_db": 12.488048065461083,
+      "supp_min_over_grid_db": 12.186020566644274,
+      "supp_max_over_grid_db": 13.031534922819713,
+      "supp_lambda_spread_db": 0.845514356175439,
+      "per_channel_supp_median_db": 13.51967142418891,
+      "per_channel_supp_p10_db": 7.516844370116145,
+      "n_channels_supp_below_0db": 0,
+      "channels_supp_below_0db": [],
+      "excess_residual_mean_db": -1.2082975080270089,
+      "excess_residual_std_db": 1.5541330453039026,
+      "residual_share_top_channel": 0.11315695046814939,
+      "corr_log_pcal_log_psup": 0.5698348496831198
+    },
+    {
+      "fold": "data9",
+      "group_key": "空场数据/data9",
+      "supp_db": 10.398397113389372,
+      "supp_min_over_grid_db": 10.221725519769445,
+      "supp_max_over_grid_db": 10.66537426793866,
+      "supp_lambda_spread_db": 0.44364874816921507,
+      "per_channel_supp_median_db": 12.449358923683704,
+      "per_channel_supp_p10_db": 7.08808216156143,
+      "n_channels_supp_below_0db": 0,
+      "channels_supp_below_0db": [],
+      "excess_residual_mean_db": 0.23792935341702648,
+      "excess_residual_std_db": 1.1300558097866404,
+      "residual_share_top_channel": 0.1686575622912493,
+      "corr_log_pcal_log_psup": 0.7031830693459498
+    },
+    {
+      "fold": "data10",
+      "group_key": "空场数据/data10",
+      "supp_db": 9.773415492490399,
+      "supp_min_over_grid_db": 9.621995976813743,
+      "supp_max_over_grid_db": 9.97437914148578,
+      "supp_lambda_spread_db": 0.35238316467203745,
+      "per_channel_supp_median_db": 12.117149404883083,
+      "per_channel_supp_p10_db": 6.527649546190479,
+      "n_channels_supp_below_0db": 0,
+      "channels_supp_below_0db": [],
+      "excess_residual_mean_db": 0.5728598732728983,
+      "excess_residual_std_db": 1.524794667766241,
+      "residual_share_top_channel": 0.1832114413398793,
+      "corr_log_pcal_log_psup": 0.7275345625970966
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "established": true,
+      "statement": "90 个 Supp_air-LOO 可由交付的 p_cal/p_sup 逐对重算，最大偏差 3.553e-15 dB。"
+    },
+    {
+      "id": "F2",
+      "established": true,
+      "statement": "低抑制折固定为 data1, data2；9 对 λ 下它们最高只有 4.4332 / 3.1298 dB，任何 λ 都到不了 6.0 dB 硬停线，更到不了 10.0 dB 可冻结线。"
+    },
+    {
+      "id": "F3",
+      "established": true,
+      "statement": "低抑制折的残余超出量呈宽带抬高（组内均值 4.62 / 4.57 dB），并叠加在两组固定的通道簇上；通道簇 16–23 与 47–54 合计占残余功率 75.3%。"
+    },
+    {
+      "id": "F4",
+      "established": true,
+      "statement": "对齐偏移按 0.1 ns 容差分成 5 个采集簇（每簇 2/2/2/2/2 组），低抑制折恰好落在偏移≈0 的那一簇；同簇两组的残余超出量形状相关系数为 0.68–0.99。"
+    },
+    {
+      "id": "F5",
+      "established": true,
+      "statement": "低抑制折的残差/信号功率相关系数仅 0.38/0.45，低于其余组的 0.53–0.74，故残差不是纯标量复增益失配（否则两者应近似正比）。"
+    },
+    {
+      "id": "F6",
+      "established": false,
+      "statement": "机制假设（未证实，需新预登记的诊断才能判定）：低抑制折的共同偏差更像“采集批次级、通道簇化的相对频响/相位差异”，而不是噪声或 λ 选参问题。可检验入口是 model_q1.md §4.1 第 3 条要求但尚未执行的行板间异步抖动核查。"
+    }
+  ],
+  "checks": [
+    {
+      "id": "D1",
+      "name": "90 个 Supp_air-LOO 可由 p_cal/p_sup 逐对重算",
+      "ok": true,
+      "detail": {
+        "max_abs_delta_db": 3.552713678800501e-15,
+        "n_values": 90
+      }
+    },
+    {
+      "id": "D2",
+      "name": "任何一对 λ 都无法把 min(Supp) 抬到 6.0 dB 硬停线",
+      "ok": true,
+      "detail": {
+        "grid_min_db_range": [
+          2.9093637698452826,
+          3.1297986482591966
+        ],
+        "hard_stop_db": 6.0,
+        "eligible_db": 10.0,
+        "argmin_fold_all_pairs": [
+          "data2"
+        ]
+      }
+    },
+    {
+      "id": "D3",
+      "name": "低抑制折集中在固定的两组，且对 λ 不敏感（钝感）",
+      "ok": true,
+      "detail": {
+        "low_folds": [
+          "data1",
+          "data2"
+        ],
+        "low_fold_lambda_spread_db": {
+          "data1": 0.3358112601347587,
+          "data2": 0.22043487841391407
+        },
+        "other_fold_lambda_spread_db_range": [
+          0.44364874816921507,
+          1.2043432985201132
+        ]
+      }
+    },
+    {
+      "id": "D4",
+      "name": "残余功率在通道上高度集中（两个通道簇）",
+      "ok": true,
+      "detail": {
+        "top10_channels_share": [
+          {
+            "id": 19,
+            "row": 3,
+            "col": 4,
+            "share": 0.11453087249259519
+          },
+          {
+            "id": 20,
+            "row": 3,
+            "col": 5,
+            "share": 0.09175410799674065
+          },
+          {
+            "id": 50,
+            "row": 7,
+            "col": 3,
+            "share": 0.06876425976839762
+          },
+          {
+            "id": 51,
+            "row": 7,
+            "col": 4,
+            "share": 0.06764795475357376
+          },
+          {
+            "id": 49,
+            "row": 7,
+            "col": 2,
+            "share": 0.060338613422700235
+          },
+          {
+            "id": 52,
+            "row": 7,
+            "col": 5,
+            "share": 0.059786081080998796
+          },
+          {
+            "id": 18,
+            "row": 3,
+            "col": 3,
+            "share": 0.05337485743116705
+          },
+          {
+            "id": 53,
+            "row": 7,
+            "col": 6,
+            "share": 0.04440912708645851
+          },
+          {
+            "id": 48,
+            "row": 7,
+            "col": 1,
+            "share": 0.041366386230216816
+          },
+          {
+            "id": 21,
+            "row": 3,
+            "col": 6,
+            "share": 0.035844496800806945
+          }
+        ],
+        "rows_16_23_and_47_54_share": 0.7529173180609784,
+        "tx_idx": 27,
+        "ref_idx": 28,
+        "tx_row_col": [
+          4,
+          4
+        ],
+        "ref_row_col": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "id": "D5",
+      "name": "相邻两组（同偏移簇）的残余超出量形状高度相关",
+      "ok": true,
+      "detail": {
+        "adjacent_pairs": [
+          [
+            "data1",
+            "data2",
+            0.6794976977068456
+          ],
+          [
+            "data3",
+            "data4",
+            0.9924317105238395
+          ],
+          [
+            "data5",
+            "data6",
+            0.9873253261994089
+          ],
+          [
+            "data7",
+            "data8",
+            0.9830677384825901
+          ],
+          [
+            "data9",
+            "data10",
+            0.9658382006847509
+          ]
+        ],
+        "corr_matrix": [
+          [
+            1.0,
+            0.6795,
+            -0.0918,
+            -0.0806,
+            0.3951,
+            0.384,
+            0.3403,
+            0.3235,
+            -0.4972,
+            -0.583
+          ],
+          [
+            0.6795,
+            1.0,
+            -0.5227,
+            -0.5294,
+            -0.1551,
+            -0.1001,
+            -0.1273,
+            -0.0872,
+            -0.1228,
+            -0.1532
+          ],
+          [
+            -0.0918,
+            -0.5227,
+            1.0,
+            0.9924,
+            0.1004,
+            0.035,
+            0.0422,
+            -0.0338,
+            -0.2817,
+            -0.1878
+          ],
+          [
+            -0.0806,
+            -0.5294,
+            0.9924,
+            1.0,
+            0.1734,
+            0.1155,
+            0.1176,
+            0.0506,
+            -0.2531,
+            -0.1794
+          ],
+          [
+            0.3951,
+            -0.1551,
+            0.1004,
+            0.1734,
+            1.0,
+            0.9873,
+            0.9106,
+            0.8882,
+            -0.3217,
+            -0.5052
+          ],
+          [
+            0.384,
+            -0.1001,
+            0.035,
+            0.1155,
+            0.9873,
+            1.0,
+            0.9334,
+            0.9222,
+            -0.2848,
+            -0.4789
+          ],
+          [
+            0.3403,
+            -0.1273,
+            0.0422,
+            0.1176,
+            0.9106,
+            0.9334,
+            1.0,
+            0.9831,
+            -0.3144,
+            -0.5192
+          ],
+          [
+            0.3235,
+            -0.0872,
+            -0.0338,
+            0.0506,
+            0.8882,
+            0.9222,
+            0.9831,
+            1.0,
+            -0.1845,
+            -0.4022
+          ],
+          [
+            -0.4972,
+            -0.1228,
+            -0.2817,
+            -0.2531,
+            -0.3217,
+            -0.2848,
+            -0.3144,
+            -0.1845,
+            1.0,
+            0.9658
+          ],
+          [
+            -0.583,
+            -0.1532,
+            -0.1878,
+            -0.1794,
+            -0.5052,
+            -0.4789,
+            -0.5192,
+            -0.4022,
+            0.9658,
+            1.0
+          ]
+        ],
+        "note": "同一对齐偏移簇的两组形状相关 ≥0.9 的有 4/5 对；data1/data2 为最低的 0.68，仍明显高于跨簇相关（中位 -0.11）"
+      }
+    },
+    {
+      "id": "D6",
+      "name": "对齐偏移呈成对分簇（同簇内偏移差 < 0.1 ns）",
+      "ok": true,
+      "detail": {
+        "shifts_ns": {
+          "data1": 0.0,
+          "data2": 0.0147,
+          "data3": 211.973,
+          "data4": 211.9728,
+          "data5": 723.2643,
+          "data6": 723.2635,
+          "data7": 340.1388,
+          "data8": 340.1375,
+          "data9": 625.3843,
+          "data10": 625.3837
+        },
+        "clusters": [
+          {
+            "folds": [
+              "data1",
+              "data2"
+            ],
+            "shift_ns_range": [
+              0.0,
+              0.0147
+            ]
+          },
+          {
+            "folds": [
+              "data4",
+              "data3"
+            ],
+            "shift_ns_range": [
+              211.9728,
+              211.973
+            ]
+          },
+          {
+            "folds": [
+              "data8",
+              "data7"
+            ],
+            "shift_ns_range": [
+              340.1375,
+              340.1388
+            ]
+          },
+          {
+            "folds": [
+              "data10",
+              "data9"
+            ],
+            "shift_ns_range": [
+              625.3837,
+              625.3843
+            ]
+          },
+          {
+            "folds": [
+              "data6",
+              "data5"
+            ],
+            "shift_ns_range": [
+              723.2635,
+              723.2643
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "D7",
+      "name": "低抑制折的残差与信号功率弱相关（不是纯乘性增益失配）",
+      "ok": true,
+      "detail": {
+        "corr_bad": {
+          "data1": 0.3834064659127613,
+          "data2": 0.44819373974838206
+        },
+        "corr_good_range": [
+          0.5326703657168144,
+          0.7398399318675758
+        ]
+      }
+    },
+    {
+      "id": "D8",
+      "name": "各组校准后总功率差异 < 1 dB（不存在整组增益异常）",
+      "ok": true,
+      "detail": {
+        "total_cal_power_db_rel": {
+          "data1": -0.208,
+          "data2": -0.433,
+          "data3": 0.0,
+          "data4": -0.009,
+          "data5": -0.098,
+          "data6": -0.107,
+          "data7": -0.115,
+          "data8": -0.128,
+          "data9": -0.115,
+          "data10": -0.124
+        },
+        "spread_db": 0.43291149365285264
+      }
+    }
+  ],
+  "checks_all_ok": true
+}

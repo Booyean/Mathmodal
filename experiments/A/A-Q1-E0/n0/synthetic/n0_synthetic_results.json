@@ -1,0 +1,1323 @@
+{
+ "baseline_p3_anchor": {
+  "墙体数据/data1-42cm": {
+   "abs_err_cm": 6.18,
+   "d_hat_m": 0.4818,
+   "pnr_db": 34.293809,
+   "pslr_db": 2.6643
+  },
+  "金属板数据/data1-69cm": {
+   "abs_err_cm": 4.37,
+   "d_hat_m": 0.7337,
+   "pnr_db": 35.4293,
+   "pslr_db": 4.1726
+  }
+ },
+ "basis": {
+  "p1_folds": [
+   {
+    "fold": 0,
+    "held_out": [
+     "空场数据/data1",
+     "空场数据/data2"
+    ],
+    "near_parallel": false,
+    "rank_effective": 2,
+    "sigma2_over_sigma1_median": 0.12272424979373595,
+    "template_pool": [
+     "空场数据/data3",
+     "空场数据/data4",
+     "空场数据/data5",
+     "空场数据/data6",
+     "空场数据/data7",
+     "空场数据/data8",
+     "空场数据/data9",
+     "空场数据/data10"
+    ]
+   },
+   {
+    "fold": 1,
+    "held_out": [
+     "空场数据/data3",
+     "空场数据/data4"
+    ],
+    "near_parallel": false,
+    "rank_effective": 2,
+    "sigma2_over_sigma1_median": 0.12140155450271264,
+    "template_pool": [
+     "空场数据/data1",
+     "空场数据/data2",
+     "空场数据/data5",
+     "空场数据/data6",
+     "空场数据/data7",
+     "空场数据/data8",
+     "空场数据/data9",
+     "空场数据/data10"
+    ]
+   },
+   {
+    "fold": 2,
+    "held_out": [
+     "空场数据/data5",
+     "空场数据/data6"
+    ],
+    "near_parallel": false,
+    "rank_effective": 2,
+    "sigma2_over_sigma1_median": 0.12725572026002907,
+    "template_pool": [
+     "空场数据/data1",
+     "空场数据/data2",
+     "空场数据/data3",
+     "空场数据/data4",
+     "空场数据/data7",
+     "空场数据/data8",
+     "空场数据/data9",
+     "空场数据/data10"
+    ]
+   },
+   {
+    "fold": 3,
+    "held_out": [
+     "空场数据/data7",
+     "空场数据/data8"
+    ],
+    "near_parallel": false,
+    "rank_effective": 2,
+    "sigma2_over_sigma1_median": 0.11351380384871876,
+    "template_pool": [
+     "空场数据/data1",
+     "空场数据/data2",
+     "空场数据/data3",
+     "空场数据/data4",
+     "空场数据/data5",
+     "空场数据/data6",
+     "空场数据/data9",
+     "空场数据/data10"
+    ]
+   },
+   {
+    "fold": 4,
+    "held_out": [
+     "空场数据/data9",
+     "空场数据/data10"
+    ],
+    "near_parallel": false,
+    "rank_effective": 2,
+    "sigma2_over_sigma1_median": 0.11293471825768703,
+    "template_pool": [
+     "空场数据/data1",
+     "空场数据/data2",
+     "空场数据/data3",
+     "空场数据/data4",
+     "空场数据/data5",
+     "空场数据/data6",
+     "空场数据/data7",
+     "空场数据/data8"
+    ]
+   }
+  ],
+  "sigma1_median": 4.436673912566759,
+  "sigma2_over_sigma1_median": 0.11031353724479691
+ },
+ "c8_prime": {
+  "coverage": {
+   "arms": [
+    "c0",
+    "c1",
+    "c2"
+   ],
+   "coeff_note": "系数差仅作诊断，不参与 C8' 判定（Supp 为门槛量）",
+   "max_delta_coeff": 9.820925191391734e-15,
+   "metric": "supp_db（充分统计量路径 vs 数组路径的 Supp 差，两条路径解同一臂模型）",
+   "p1_values": 30,
+   "p2_folds_per_arm": 10,
+   "p2_values": 30,
+   "target_values": 6,
+   "total_values": 66
+  },
+  "lambda_fixed": [
+   0.001,
+   0.001
+  ],
+  "max_delta_db": 9.670486633694964e-12,
+  "note": "固定 λ 的逐值复算；P1 五折 + P2 十折 + 目标侧全覆盖；不做 9 对 λ 选择/并列裁决",
+  "pass": true
+ },
+ "c9b": {
+  "failed": [],
+  "items": {
+   "墙体数据/data1-42cm": {
+    "abs_err_cm": 0.10000000000002784,
+    "abs_err_ok": true,
+    "pnr_db": 78.33855371650944,
+    "pnr_ok": true,
+    "pslr_db": 9.387731583747817,
+    "pslr_ok": true
+   },
+   "金属板数据/data1-69cm": {
+    "abs_err_cm": 4.440892098500626e-14,
+    "abs_err_ok": true,
+    "pnr_db": 78.23380943160431,
+    "pnr_ok": true,
+    "pslr_db": 9.207321366809452,
+    "pslr_ok": true
+   }
+  },
+  "pass": true
+ },
+ "citable": false,
+ "contract": "N0-SYN-1",
+ "contrasts": {
+  "c1_over_c0_p1_db": 2.823899509884596,
+  "c2_over_c0_p1_db": 16.927739509546356,
+  "c2_over_c1_p1_db": 14.103839999661762,
+  "c2_over_c1_p2_db": 15.475716213771276
+ },
+ "decision_version": "A-Q1-N0-DEC-2",
+ "fold_lock": {
+  "baseline_shifts_s": [
+   0.0,
+   1.475e-11,
+   2.11973e-07,
+   2.1197275e-07,
+   7.2326425e-07,
+   7.232635e-07,
+   3.4013875e-07,
+   3.401375e-07,
+   6.2538425e-07,
+   6.2538375e-07
+  ],
+  "cluster_index": [
+   [
+    0,
+    1
+   ],
+   [
+    2,
+    3
+   ],
+   [
+    4,
+    5
+   ],
+   [
+    6,
+    7
+   ],
+   [
+    8,
+    9
+   ]
+  ],
+  "max_dev_ns": 0.0,
+  "shifts_s": [
+   0.0,
+   1.475e-11,
+   2.11973e-07,
+   2.1197275e-07,
+   7.2326425e-07,
+   7.232635e-07,
+   3.4013875e-07,
+   3.401375e-07,
+   6.2538425e-07,
+   6.2538375e-07
+  ],
+  "tol_ns": 0.1,
+  "within_cluster_dev_ns": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "fold_plan": {
+  "clusters": [
+   [
+    "空场数据/data1",
+    "空场数据/data2"
+   ],
+   [
+    "空场数据/data3",
+    "空场数据/data4"
+   ],
+   [
+    "空场数据/data5",
+    "空场数据/data6"
+   ],
+   [
+    "空场数据/data7",
+    "空场数据/data8"
+   ],
+   [
+    "空场数据/data9",
+    "空场数据/data10"
+   ]
+  ],
+  "p1_folds": [
+   {
+    "fold": 0,
+    "held_out": [
+     "空场数据/data1",
+     "空场数据/data2"
+    ],
+    "template_pool": [
+     "空场数据/data3",
+     "空场数据/data4",
+     "空场数据/data5",
+     "空场数据/data6",
+     "空场数据/data7",
+     "空场数据/data8",
+     "空场数据/data9",
+     "空场数据/data10"
+    ]
+   },
+   {
+    "fold": 1,
+    "held_out": [
+     "空场数据/data3",
+     "空场数据/data4"
+    ],
+    "template_pool": [
+     "空场数据/data1",
+     "空场数据/data2",
+     "空场数据/data5",
+     "空场数据/data6",
+     "空场数据/data7",
+     "空场数据/data8",
+     "空场数据/data9",
+     "空场数据/data10"
+    ]
+   },
+   {
+    "fold": 2,
+    "held_out": [
+     "空场数据/data5",
+     "空场数据/data6"
+    ],
+    "template_pool": [
+     "空场数据/data1",
+     "空场数据/data2",
+     "空场数据/data3",
+     "空场数据/data4",
+     "空场数据/data7",
+     "空场数据/data8",
+     "空场数据/data9",
+     "空场数据/data10"
+    ]
+   },
+   {
+    "fold": 3,
+    "held_out": [
+     "空场数据/data7",
+     "空场数据/data8"
+    ],
+    "template_pool": [
+     "空场数据/data1",
+     "空场数据/data2",
+     "空场数据/data3",
+     "空场数据/data4",
+     "空场数据/data5",
+     "空场数据/data6",
+     "空场数据/data9",
+     "空场数据/data10"
+    ]
+   },
+   {
+    "fold": 4,
+    "held_out": [
+     "空场数据/data9",
+     "空场数据/data10"
+    ],
+    "template_pool": [
+     "空场数据/data1",
+     "空场数据/data2",
+     "空场数据/data3",
+     "空场数据/data4",
+     "空场数据/data5",
+     "空场数据/data6",
+     "空场数据/data7",
+     "空场数据/data8"
+    ]
+   }
+  ],
+  "p1_pool_sizes": [
+   8,
+   8,
+   8,
+   8,
+   8
+  ],
+  "p2_loo_pool_size": 9
+ },
+ "l1": {
+  "decision_version": "A-Q1-N0-DEC-2",
+  "l1": "pass",
+  "lower_tier": "met",
+  "p1_min_db": 26.11519608268416,
+  "p1_tier": "met",
+  "p2_median_db": 29.97067353104186,
+  "p2_min_db": 28.395716070064104,
+  "p2_tier": "met",
+  "p3_items": [
+   {
+    "abs_err_delta_cm": 0.0,
+    "abs_err_ok": true,
+    "arm": "c1",
+    "group": "墙体数据/data1-42cm",
+    "pnr_delta_db": 3.733445460290824,
+    "pnr_ok": true,
+    "pslr_delta_db": 0.05280863259958224,
+    "pslr_ok": true
+   },
+   {
+    "abs_err_delta_cm": 0.0,
+    "abs_err_ok": true,
+    "arm": "c2",
+    "group": "墙体数据/data1-42cm",
+    "pnr_delta_db": 5.732750111481607,
+    "pnr_ok": true,
+    "pslr_delta_db": 0.048785979134533974,
+    "pslr_ok": true
+   },
+   {
+    "abs_err_delta_cm": 0.0,
+    "abs_err_ok": true,
+    "arm": "c1",
+    "group": "金属板数据/data1-69cm",
+    "pnr_delta_db": 0.6259982164582425,
+    "pnr_ok": true,
+    "pslr_delta_db": -0.00038167228981933476,
+    "pslr_ok": true
+   },
+   {
+    "abs_err_delta_cm": 0.0,
+    "abs_err_ok": true,
+    "arm": "c2",
+    "group": "金属板数据/data1-69cm",
+    "pnr_delta_db": 6.75976433895228,
+    "pnr_ok": true,
+    "pslr_delta_db": 0.0076947101719557764,
+    "pslr_ok": true
+   }
+  ],
+  "p3_pass": true,
+  "p4_pass": true,
+  "p5a_pass": true,
+  "s_code": "PASS"
+ },
+ "l2": {
+  "c9b": {
+   "failed": [],
+   "items": {
+    "墙体数据/data1-42cm": {
+     "abs_err_cm": 0.10000000000002784,
+     "abs_err_ok": true,
+     "pnr_db": 78.33855371650944,
+     "pnr_ok": true,
+     "pslr_db": 9.387731583747817,
+     "pslr_ok": true
+    },
+    "金属板数据/data1-69cm": {
+     "abs_err_cm": 4.440892098500626e-14,
+     "abs_err_ok": true,
+     "pnr_db": 78.23380943160431,
+     "pnr_ok": true,
+     "pslr_db": 9.207321366809452,
+     "pslr_ok": true
+    }
+   },
+   "pass": true
+  },
+  "c9b_pass": true,
+  "freeze_status": "not_eligible_for_freeze",
+  "frozen_present": false,
+  "gray_targets": [],
+  "l1": "pass",
+  "l2": "fail",
+  "matrix_position": "L1 PASS / L2 FAIL（S8：抑制方法达标、整轮不可冻结）",
+  "reasons": [
+   "freeze.status='not_eligible_for_freeze' ≠ eligible",
+   "e0c_frozen.json 不存在"
+  ],
+  "s_code": "S8"
+ },
+ "n0": {
+  "arms": [
+   "c0",
+   "c1",
+   "c2"
+  ],
+  "eta_wall": 0.25,
+  "fit_window_ns": 1.0,
+  "grid_search": false,
+  "lambda_fixed": [
+   0.001,
+   0.001
+  ],
+  "near_zero": {
+   "events": [],
+   "full_pool_ortho_residual_max": 0.9940804477751121,
+   "full_pool_ortho_residual_median": 0.9940578712015623,
+   "gram_cond_max": 1000000000000.0,
+   "min_second_mode_energy": 1e-06,
+   "ortho_rel_threshold": 1e-09
+  },
+  "phase_anchor": "ref_channel",
+  "rank_effective_full_pool": 2,
+  "rank_requested": 2,
+  "ref_pos": 27
+ },
+ "p1": {
+  "c0": {
+   "median_db": 12.3478047354827,
+   "min_db": 9.187456573137803,
+   "tier": "not_met",
+   "values": [
+    {
+     "c8_delta_supp_db": 3.197442310920451e-14,
+     "fold": 0,
+     "group": "空场数据/data1",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 12.129895967157356
+    },
+    {
+     "c8_delta_supp_db": 5.3290705182007514e-14,
+     "fold": 0,
+     "group": "空场数据/data2",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 12.087949954375715
+    },
+    {
+     "c8_delta_supp_db": 1.2434497875801753e-14,
+     "fold": 1,
+     "group": "空场数据/data3",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 9.187456573137803
+    },
+    {
+     "c8_delta_supp_db": 2.6645352591003757e-14,
+     "fold": 1,
+     "group": "空场数据/data4",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 9.426561010560437
+    },
+    {
+     "c8_delta_supp_db": 9.769962616701378e-14,
+     "fold": 2,
+     "group": "空场数据/data5",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 12.682321420808018
+    },
+    {
+     "c8_delta_supp_db": 1.474376176702208e-13,
+     "fold": 2,
+     "group": "空场数据/data6",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 12.565713503808043
+    },
+    {
+     "c8_delta_supp_db": 3.552713678800501e-14,
+     "fold": 3,
+     "group": "空场数据/data7",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 13.2409805050353
+    },
+    {
+     "c8_delta_supp_db": 1.1901590823981678e-13,
+     "fold": 3,
+     "group": "空场数据/data8",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 13.22618612476624
+    },
+    {
+     "c8_delta_supp_db": 5.684341886080802e-14,
+     "fold": 4,
+     "group": "空场数据/data9",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 11.68916792655962
+    },
+    {
+     "c8_delta_supp_db": 8.704148513061227e-14,
+     "fold": 4,
+     "group": "空场数据/data10",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 13.056980985869085
+    }
+   ]
+  },
+  "c1": {
+   "median_db": 13.480718508383898,
+   "min_db": 12.011356083022399,
+   "tier": "met",
+   "values": [
+    {
+     "c8_delta_supp_db": 2.4868995751603507e-14,
+     "fold": 0,
+     "group": "空场数据/data1",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 14.971098342807716
+    },
+    {
+     "c8_delta_supp_db": 1.0480505352461478e-13,
+     "fold": 0,
+     "group": "空场数据/data2",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 14.97109834283692
+    },
+    {
+     "c8_delta_supp_db": 1.9539925233402755e-14,
+     "fold": 1,
+     "group": "空场数据/data3",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 12.011356083058695
+    },
+    {
+     "c8_delta_supp_db": 3.907985046680551e-14,
+     "fold": 1,
+     "group": "空场数据/data4",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 12.011356083022399
+    },
+    {
+     "c8_delta_supp_db": 1.0835776720341528e-13,
+     "fold": 2,
+     "group": "空场数据/data5",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 12.746178968455373
+    },
+    {
+     "c8_delta_supp_db": 1.5631940186722204e-13,
+     "fold": 2,
+     "group": "空场数据/data6",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 12.746178968468612
+    },
+    {
+     "c8_delta_supp_db": 8.348877145181177e-14,
+     "fold": 3,
+     "group": "空场数据/data7",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 13.480718508372044
+    },
+    {
+     "c8_delta_supp_db": 1.1191048088221578e-13,
+     "fold": 3,
+     "group": "空场数据/data8",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 13.480718508395753
+    },
+    {
+     "c8_delta_supp_db": 1.2079226507921703e-13,
+     "fold": 4,
+     "group": "空场数据/data9",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 14.406615144318838
+    },
+    {
+     "c8_delta_supp_db": 1.1901590823981678e-13,
+     "fold": 4,
+     "group": "空场数据/data10",
+     "regularized": false,
+     "second_mode_used": false,
+     "supp_db": 14.406615144323723
+    }
+   ]
+  },
+  "c2": {
+   "median_db": 26.997865833975883,
+   "min_db": 26.11519608268416,
+   "tier": "met",
+   "values": [
+    {
+     "c8_delta_supp_db": 1.595168441781425e-12,
+     "fold": 0,
+     "group": "空场数据/data1",
+     "regularized": false,
+     "second_mode_used": true,
+     "supp_db": 28.003335010868042
+    },
+    {
+     "c8_delta_supp_db": 2.348343741687131e-12,
+     "fold": 0,
+     "group": "空场数据/data2",
+     "regularized": false,
+     "second_mode_used": true,
+     "supp_db": 28.00333501087179
+    },
+    {
+     "c8_delta_supp_db": 1.1901590823981678e-12,
+     "fold": 1,
+     "group": "空场数据/data3",
+     "regularized": false,
+     "second_mode_used": true,
+     "supp_db": 26.99786583400847
+    },
+    {
+     "c8_delta_supp_db": 2.291500322826323e-12,
+     "fold": 1,
+     "group": "空场数据/data4",
+     "regularized": false,
+     "second_mode_used": true,
+     "supp_db": 26.997865833943298
+    },
+    {
+     "c8_delta_supp_db": 2.369660023759934e-12,
+     "fold": 2,
+     "group": "空场数据/data5",
+     "regularized": false,
+     "second_mode_used": true,
+     "supp_db": 27.478222653446043
+    },
+    {
+     "c8_delta_supp_db": 4.835243316847482e-12,
+     "fold": 2,
+     "group": "空场数据/data6",
+     "regularized": false,
+     "second_mode_used": true,
+     "supp_db": 27.478222653373624
+    },
+    {
+     "c8_delta_supp_db": 8.419931418757187e-13,
+     "fold": 3,
+     "group": "空场数据/data7",
+     "regularized": false,
+     "second_mode_used": true,
+     "supp_db": 26.115196082750064
+    },
+    {
+     "c8_delta_supp_db": 1.6413537196058314e-12,
+     "fold": 3,
+     "group": "空场数据/data8",
+     "regularized": false,
+     "second_mode_used": true,
+     "supp_db": 26.11519608268416
+    },
+    {
+     "c8_delta_supp_db": 1.8829382497642655e-12,
+     "fold": 4,
+     "group": "空场数据/data9",
+     "regularized": false,
+     "second_mode_used": true,
+     "supp_db": 26.985193867788904
+    },
+    {
+     "c8_delta_supp_db": 1.900701818158268e-12,
+     "fold": 4,
+     "group": "空场数据/data10",
+     "regularized": false,
+     "second_mode_used": true,
+     "supp_db": 26.985193867800135
+    }
+   ]
+  }
+ },
+ "p2": {
+  "c0": {
+   "median_db": 12.709164031594412,
+   "min_db": 9.252269149963228,
+   "tier": "not_met",
+   "values": [
+    {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 6.572520305780927e-14,
+     "group": "空场数据/data1",
+     "supp_db": 12.157692422811044
+    },
+    {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 6.927791673660977e-14,
+     "group": "空场数据/data2",
+     "supp_db": 12.119528325815148
+    },
+    {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 3.907985046680551e-14,
+     "group": "空场数据/data3",
+     "supp_db": 9.252269149963228
+    },
+    {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 5.5067062021407764e-14,
+     "group": "空场数据/data4",
+     "supp_db": 9.489598035479586
+    },
+    {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 5.329070518200751e-15,
+     "group": "空场数据/data5",
+     "supp_db": 13.721831047248367
+    },
+    {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 1.4210854715202004e-14,
+     "group": "空场数据/data6",
+     "supp_db": 13.561756863433157
+    },
+    {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 1.9539925233402755e-13,
+     "group": "空场数据/data7",
+     "supp_db": 14.202265011383663
+    },
+    {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 1.3500311979441904e-13,
+     "group": "空场数据/data8",
+     "supp_db": 14.268638229332248
+    },
+    {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 1.4921397450962104e-13,
+     "group": "空场数据/data9",
+     "supp_db": 11.863214256862758
+    },
+    {
+     "c8_delta_coeff": 0.0,
+     "c8_delta_supp_db": 2.3803181647963356e-13,
+     "group": "空场数据/data10",
+     "supp_db": 13.260635640377778
+    }
+   ]
+  },
+  "c1": {
+   "median_db": 14.49022913478831,
+   "min_db": 12.919999856292828,
+   "tier": "met",
+   "values": [
+    {
+     "c8_delta_coeff": 1.5840143722667704e-15,
+     "c8_delta_supp_db": 1.3855583347321954e-13,
+     "group": "空场数据/data1",
+     "supp_db": 16.088629754427494
+    },
+    {
+     "c8_delta_coeff": 1.1270951119217139e-15,
+     "c8_delta_supp_db": 1.7763568394002505e-13,
+     "group": "空场数据/data2",
+     "supp_db": 16.010903259257073
+    },
+    {
+     "c8_delta_coeff": 6.804363002006077e-16,
+     "c8_delta_supp_db": 7.638334409421077e-14,
+     "group": "空场数据/data3",
+     "supp_db": 13.021617712524428
+    },
+    {
+     "c8_delta_coeff": 7.947987303456224e-16,
+     "c8_delta_supp_db": 1.1546319456101628e-13,
+     "group": "空场数据/data4",
+     "supp_db": 12.919999856292828
+    },
+    {
+     "c8_delta_coeff": 1.2214867846108463e-15,
+     "c8_delta_supp_db": 2.1316282072803006e-14,
+     "group": "空场数据/data5",
+     "supp_db": 13.768083585420356
+    },
+    {
+     "c8_delta_coeff": 2.445012586343469e-15,
+     "c8_delta_supp_db": 7.105427357601002e-15,
+     "group": "空场数据/data6",
+     "supp_db": 13.76230496790046
+    },
+    {
+     "c8_delta_coeff": 1.5561852268676503e-15,
+     "c8_delta_supp_db": 2.1316282072803006e-13,
+     "group": "空场数据/data7",
+     "supp_db": 14.471363469173916
+    },
+    {
+     "c8_delta_coeff": 3.469446951953614e-18,
+     "c8_delta_supp_db": 1.0125233984581428e-13,
+     "group": "空场数据/data8",
+     "supp_db": 14.509094800402703
+    },
+    {
+     "c8_delta_coeff": 2.4876491105670564e-15,
+     "c8_delta_supp_db": 3.2862601528904634e-13,
+     "group": "空场数据/data9",
+     "supp_db": 15.455814006226511
+    },
+    {
+     "c8_delta_coeff": 8.989550626504553e-16,
+     "c8_delta_supp_db": 4.227729277772596e-13,
+     "group": "空场数据/data10",
+     "supp_db": 15.400459553531219
+    }
+   ]
+  },
+  "c2": {
+   "median_db": 29.97067353104186,
+   "min_db": 28.395716070064104,
+   "tier": "met",
+   "values": [
+    {
+     "c8_delta_coeff": 5.274435786004485e-15,
+     "c8_delta_supp_db": 3.396394276933279e-12,
+     "group": "空场数据/data1",
+     "supp_db": 30.319624958887076
+    },
+    {
+     "c8_delta_coeff": 9.820925191391734e-15,
+     "c8_delta_supp_db": 4.508393658397836e-12,
+     "group": "空场数据/data2",
+     "supp_db": 30.10827105697264
+    },
+    {
+     "c8_delta_coeff": 8.79251776862914e-15,
+     "c8_delta_supp_db": 1.9682033780554775e-12,
+     "group": "空场数据/data3",
+     "supp_db": 30.326414651729706
+    },
+    {
+     "c8_delta_coeff": 5.0353234783744615e-15,
+     "c8_delta_supp_db": 6.501466032204917e-12,
+     "group": "空场数据/data4",
+     "supp_db": 29.83307600511108
+    },
+    {
+     "c8_delta_coeff": 6.772790562663012e-15,
+     "c8_delta_supp_db": 1.4459544672718039e-12,
+     "group": "空场数据/data5",
+     "supp_db": 30.27676169009957
+    },
+    {
+     "c8_delta_coeff": 2.2205436253018787e-15,
+     "c8_delta_supp_db": 5.755396159656812e-13,
+     "group": "空场数据/data6",
+     "supp_db": 30.251312648513043
+    },
+    {
+     "c8_delta_coeff": 4.668220486087868e-15,
+     "c8_delta_supp_db": 4.948930154569098e-12,
+     "group": "空场数据/data7",
+     "supp_db": 28.395716070064104
+    },
+    {
+     "c8_delta_coeff": 7.277679177773948e-15,
+     "c8_delta_supp_db": 2.398081733190338e-12,
+     "group": "空场数据/data8",
+     "supp_db": 28.522324148723506
+    },
+    {
+     "c8_delta_coeff": 4.7467714928543955e-15,
+     "c8_delta_supp_db": 8.061107337198337e-12,
+     "group": "空场数据/data9",
+     "supp_db": 29.173633618176233
+    },
+    {
+     "c8_delta_coeff": 7.464134339039856e-15,
+     "c8_delta_supp_db": 7.762679388179095e-12,
+     "group": "空场数据/data10",
+     "supp_db": 29.030151678632844
+    }
+   ]
+  }
+ },
+ "p3": {
+  "items": [
+   {
+    "abs_err_delta_cm": 0.0,
+    "abs_err_ok": true,
+    "arm": "c1",
+    "group": "墙体数据/data1-42cm",
+    "pnr_delta_db": 3.733445460290824,
+    "pnr_ok": true,
+    "pslr_delta_db": 0.05280863259958224,
+    "pslr_ok": true
+   },
+   {
+    "abs_err_delta_cm": 0.0,
+    "abs_err_ok": true,
+    "arm": "c2",
+    "group": "墙体数据/data1-42cm",
+    "pnr_delta_db": 5.732750111481607,
+    "pnr_ok": true,
+    "pslr_delta_db": 0.048785979134533974,
+    "pslr_ok": true
+   },
+   {
+    "abs_err_delta_cm": 0.0,
+    "abs_err_ok": true,
+    "arm": "c1",
+    "group": "金属板数据/data1-69cm",
+    "pnr_delta_db": 0.6259982164582425,
+    "pnr_ok": true,
+    "pslr_delta_db": -0.00038167228981933476,
+    "pslr_ok": true
+   },
+   {
+    "abs_err_delta_cm": 0.0,
+    "abs_err_ok": true,
+    "arm": "c2",
+    "group": "金属板数据/data1-69cm",
+    "pnr_delta_db": 6.75976433895228,
+    "pnr_ok": true,
+    "pslr_delta_db": 0.0076947101719557764,
+    "pslr_ok": true
+   }
+  ],
+  "pass": true
+ },
+ "p4": {
+  "items": [
+   {
+    "peak_ok": true,
+    "peak_retention_db": -0.016551085305782472,
+    "range_shift_mm": 0.8999999999966257,
+    "shift_ok": true
+   }
+  ],
+  "pass": true
+ },
+ "p5a": {
+  "items": {
+   "p5a_1_interfaces": {
+    "arms_fixed": true,
+    "fit_window_ns": true,
+    "fit_window_ns_value": 1.0,
+    "lambda_fixed": true,
+    "lambda_fixed_value": [
+     0.001,
+     0.001
+    ],
+    "no_grid_search": true,
+    "rank_fixed": true
+   },
+   "p5a_2_self_consistency": {
+    "c8_max_delta_db": 9.670486633694964e-12,
+    "c8_pass": true,
+    "c8_total_values": 66,
+    "fold_count": 5,
+    "p1_values": 30,
+    "p2_values": 30
+   },
+   "p5a_3_freeze_integrity": {
+    "freeze_status": "not_eligible_for_freeze",
+    "frozen_written": false,
+    "note": "合成夹具不产生任何冻结证据；L2 必 FAIL（S8）"
+   }
+  },
+  "pass": true
+ },
+ "policy": {
+  "citable": false,
+  "may_be_used_for_e0t": false,
+  "may_be_used_for_freeze": false,
+  "may_enter_paper_numbers": false,
+  "may_enter_results_table": false,
+  "note": "合成夹具只验证代码路径与判定链条，不构成 N0 方法结论；真实 N0 需 B-02 放行后按同一契约跑 96 个 .dat。",
+  "synthetic": true,
+  "usage": "synthetic_prototype_only_no_real_conclusion"
+ },
+ "proposal_head": "4904bc8",
+ "provenance": {
+  "command": "python solutions/A/a_e0_n0.py --mode synthetic --seed 20261128 --out experiments/A/A-Q1-E0/n0/synthetic --profile-step-m 0.001 --p4-step-m 0.0001 --p4-half-m 0.03 --overwrite",
+  "environment": {
+   "numpy": "2.1.3",
+   "platform": "Windows-11-10.0.26200-SP0",
+   "python": "3.13.5"
+  },
+  "generated_at": "2026-11-28T12:48:38Z",
+  "generated_at_source": "system_clock",
+  "implementation_dirty": false,
+  "implementation_sha": "6b08846f3c95c13eb9a570d61e98ebbbf4933f38",
+  "reproduction": "数值字段由 seed/参数决定，可按容差复算；逐字节复现需用 --generated-at 或 SOURCE_DATE_EPOCH 指定同一 generated_at、保持 implementation_dirty=false，并使用相同运行环境（本块已记录）。"
+ },
+ "scope": {
+  "attachment3_touched": false,
+  "e0t_touched": false,
+  "holdout_touched": false,
+  "mode": "synthetic",
+  "note": "`opened_files`/`real_dat_reads` 只统计实验数据文件（`.dat`/附件）；`config`、归档登记等只读元数据不在该计数内",
+  "opened_files": 0,
+  "real_dat_reads": 0
+ },
+ "synthetic": true,
+ "synthetic_params": {
+  "amp_jitter": 0.05,
+  "calibration": "E0S.calibrate_air(lambda_cal=1e-3, lambda_inv=1e-3)",
+  "cluster_scale": 0.3,
+  "forward_model": "E0S.synth_group_spectrum",
+  "noise_rel_db": -60.0,
+  "noise_sigma": 0.0010072929949258092,
+  "phase_jitter_rad": 0.15,
+  "second_scale": 0.05
+ },
+ "targets": {
+  "墙体数据/data1-42cm": {
+   "arms": {
+    "c0": {
+     "abs_err_before_cm": 2.7755575615628914e-14,
+     "abs_err_cm": 0.10000000000002784,
+     "bg_proxy": 95018591.4470915,
+     "c8": {
+      "delta_coeff": 0.0,
+      "delta_supp_db": 6.217248937900877e-14
+     },
+     "coefficients": {
+      "a": [
+       1.0,
+       0.0
+      ],
+      "b": [
+       0.0,
+       0.0
+      ]
+     },
+     "d_hat_before_m": 0.42000000000000026,
+     "d_hat_m": 0.42100000000000026,
+     "peak_retention_db": -0.014969374489867343,
+     "peak_rule": "wall_first_peak",
+     "pnr_db": 72.60580360502783,
+     "profile": {
+      "d_max_m": 2.0,
+      "d_min_m": 0.15,
+      "d_step_m": 0.001,
+      "n": 1851,
+      "p4_half_m": 0.03,
+      "p4_step_m": 0.0001
+     },
+     "pslr_before_db": 0.6952172868318697,
+     "pslr_db": 9.338945604613283,
+     "range_shift_mm": 0.5999999999966588,
+     "range_shift_vs_before_mm": 1.0000000000000009,
+     "regularized": false,
+     "second_mode_energy_fraction": 0.0,
+     "second_mode_used": false,
+     "supp_dw_win_db": 9.91864522980494
+    },
+    "c1": {
+     "abs_err_before_cm": 2.7755575615628914e-14,
+     "abs_err_cm": 0.10000000000002784,
+     "bg_proxy": 40294722.12777316,
+     "c8": {
+      "delta_coeff": 9.305364597889227e-16,
+      "delta_supp_db": 1.6697754290362354e-13
+     },
+     "coefficients": {
+      "a": [
+       0.944808250224107,
+       0.2555095576578104
+      ],
+      "b": [
+       0.0,
+       0.0
+      ]
+     },
+     "d_hat_before_m": 0.42000000000000026,
+     "d_hat_m": 0.42100000000000026,
+     "peak_retention_db": -0.012620848127879804,
+     "peak_rule": "wall_first_peak",
+     "pnr_db": 76.33924906531865,
+     "profile": {
+      "d_max_m": 2.0,
+      "d_min_m": 0.15,
+      "d_step_m": 0.001,
+      "n": 1851,
+      "p4_half_m": 0.03,
+      "p4_step_m": 0.0001
+     },
+     "pslr_before_db": 0.6952172868318697,
+     "pslr_db": 9.391754237212865,
+     "range_shift_mm": 0.5999999999966588,
+     "range_shift_vs_before_mm": 1.0000000000000009,
+     "regularized": false,
+     "second_mode_energy_fraction": 0.0,
+     "second_mode_used": false,
+     "supp_dw_win_db": 14.827071989370111
+    },
+    "c2": {
+     "abs_err_before_cm": 2.7755575615628914e-14,
+     "abs_err_cm": 0.10000000000002784,
+     "bg_proxy": 25362557.75004994,
+     "c8": {
+      "delta_coeff": 3.4488466675883937e-15,
+      "delta_supp_db": 5.222489107836736e-13
+     },
+     "coefficients": {
+      "a": [
+       0.9448082502265643,
+       0.2555095576517487
+      ],
+      "b": [
+       0.8156791196980963,
+       -0.7742175971387535
+      ]
+     },
+     "d_hat_before_m": 0.42000000000000026,
+     "d_hat_m": 0.42100000000000026,
+     "peak_retention_db": -0.016551085305782472,
+     "peak_rule": "wall_first_peak",
+     "pnr_db": 78.33855371650944,
+     "profile": {
+      "d_max_m": 2.0,
+      "d_min_m": 0.15,
+      "d_step_m": 0.001,
+      "n": 1851,
+      "p4_half_m": 0.03,
+      "p4_step_m": 0.0001
+     },
+     "pslr_before_db": 0.6952172868318697,
+     "pslr_db": 9.387731583747817,
+     "range_shift_mm": 0.8999999999966257,
+     "range_shift_vs_before_mm": 1.0000000000000009,
+     "regularized": false,
+     "second_mode_energy_fraction": 0.5897723358381705,
+     "second_mode_used": true,
+     "supp_dw_win_db": 18.6968225478247
+    }
+   },
+   "case_id": "N0-SYN/Wall-42cm",
+   "d_true_cm": 42.0,
+   "target_type": "wall"
+  },
+  "金属板数据/data1-69cm": {
+   "arms": {
+    "c0": {
+     "abs_err_before_cm": 54.0,
+     "abs_err_cm": 4.440892098500626e-14,
+     "bg_proxy": 54548674.23111016,
+     "c8": {
+      "delta_coeff": 0.0,
+      "delta_supp_db": 6.750155989720952e-14
+     },
+     "coefficients": {
+      "a": [
+       1.0,
+       0.0
+      ],
+      "b": [
+       0.0,
+       0.0
+      ]
+     },
+     "d_hat_before_m": 0.15,
+     "d_hat_m": 0.6900000000000005,
+     "peak_retention_db": -0.0031369065005252736,
+     "peak_rule": "global_argmax",
+     "pnr_db": 71.47404509265203,
+     "profile": {
+      "d_max_m": 2.0,
+      "d_min_m": 0.15,
+      "d_step_m": 0.001,
+      "n": 1851,
+      "p4_half_m": 0.03,
+      "p4_step_m": 0.0001
+     },
+     "pslr_before_db": 2.689609150771288,
+     "pslr_db": 9.199626656637497,
+     "range_shift_mm": -0.4000000000032866,
+     "range_shift_vs_before_mm": 540.0000000000005,
+     "regularized": false,
+     "second_mode_energy_fraction": 0.0,
+     "second_mode_used": false,
+     "supp_dw_win_db": 13.03363718957159
+    },
+    "c1": {
+     "abs_err_before_cm": 54.0,
+     "abs_err_cm": 4.440892098500626e-14,
+     "bg_proxy": 47219634.14094296,
+     "c8": {
+      "delta_coeff": 1.1144649932300827e-15,
+      "delta_supp_db": 7.638334409421077e-14
+     },
+     "coefficients": {
+      "a": [
+       1.0326931370691401,
+       0.09124094649951552
+      ],
+      "b": [
+       0.0,
+       0.0
+      ]
+     },
+     "d_hat_before_m": 0.15,
+     "d_hat_m": 0.6900000000000005,
+     "peak_retention_db": -0.0036086318415438435,
+     "peak_rule": "global_argmax",
+     "pnr_db": 72.10004330911028,
+     "profile": {
+      "d_max_m": 2.0,
+      "d_min_m": 0.15,
+      "d_step_m": 0.001,
+      "n": 1851,
+      "p4_half_m": 0.03,
+      "p4_step_m": 0.0001
+     },
+     "pslr_before_db": 2.689609150771288,
+     "pslr_db": 9.199244984347677,
+     "range_shift_mm": -0.4000000000032866,
+     "range_shift_vs_before_mm": 540.0000000000005,
+     "regularized": false,
+     "second_mode_energy_fraction": 0.0,
+     "second_mode_used": false,
+     "supp_dw_win_db": 13.834896868037008
+    },
+    "c2": {
+     "abs_err_before_cm": 54.0,
+     "abs_err_cm": 4.440892098500626e-14,
+     "bg_proxy": 11503402.74248567,
+     "c8": {
+      "delta_coeff": 2.861122294462807e-15,
+      "delta_supp_db": 9.670486633694964e-12
+     },
+     "coefficients": {
+      "a": [
+       1.0326931370598353,
+       0.09124094650340774
+      ],
+      "b": [
+       -1.7333563767455367,
+       -0.052239537286893685
+      ]
+     },
+     "d_hat_before_m": 0.15,
+     "d_hat_m": 0.6900000000000005,
+     "peak_retention_db": -0.002680555208422984,
+     "peak_rule": "global_argmax",
+     "pnr_db": 78.23380943160431,
+     "profile": {
+      "d_max_m": 2.0,
+      "d_min_m": 0.15,
+      "d_step_m": 0.001,
+      "n": 1851,
+      "p4_half_m": 0.03,
+      "p4_step_m": 0.0001
+     },
+     "pslr_before_db": 2.689609150771288,
+     "pslr_db": 9.207321366809452,
+     "range_shift_mm": -0.5000000000032756,
+     "range_shift_vs_before_mm": 540.0000000000005,
+     "regularized": false,
+     "second_mode_energy_fraction": 0.9859310557708182,
+     "second_mode_used": true,
+     "supp_dw_win_db": 32.35228178753963
+    }
+   },
+   "case_id": "N0-SYN/Metal-69cm",
+   "d_true_cm": 69.0,
+   "target_type": "metal"
+  }
+ }
+}
