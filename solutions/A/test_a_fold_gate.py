@@ -12,8 +12,14 @@
 
 预期值来源：
   * 纯时延/单音的解析式（本文件内独立计算，不复用 ``a_fold_gate`` 的统计量）
-  * ``solutions/A/fold_gate_contract.md`` D1-1 §2–§3 的定义
+  * ``solutions/A/fold_gate_contract.md`` D1-2 §2–§3 的定义
   * 空场 ``data1`` 的 D0 事实：P=4、sync=[114..117]、8 行齐全
+
+D1-2 追加回归（§D1-2）：
+  * F1：少数极性/载波翻转包不因 ``rho`` 并列被选为锚包；1 对 3 时 24 种
+    包顺序的接受集与折叠输出不变；1 对 1 无多数时只保留一侧、不抵消。
+  * F2：任一通道 NaN/Inf 整包拒绝并记录通道；参考通道非有限保留原原因码；
+    全包非有限抛 ``FoldGateError``；输出保证全有限。
 
 用法：
   python solutions/A/test_a_fold_gate.py            # 合成 + 真实 data1
@@ -22,6 +28,7 @@
 
 from __future__ import annotations
 
+import itertools
 import sys
 import traceback
 from pathlib import Path
@@ -149,6 +156,12 @@ def make_group(
 def fold(packets: np.ndarray, params: Optional[FG.GateParams] = None, **kw: Any) -> FG.FoldedGroup:
     return FG.fold_group(make_group(packets, **{k: v for k, v in kw.items() if k == "channel_valid"}),
                          params=params)
+
+
+def fold_quiet(packets: np.ndarray, **kw: Any) -> FG.FoldedGroup:
+    """F2 负例会把 NaN/Inf 送入 ``rfft``；屏蔽由此产生的预期浮点警告，判定仍按结果。"""
+    with np.errstate(all="ignore"):
+        return FG.fold_group(make_group(packets, **kw))
 
 
 # ---------------------------------------------------------------- 合成例
@@ -287,6 +300,110 @@ def synthetic_tests() -> None:
     check("T12 自定义频带 bin", [400, 1600], res12.meta["band_bins"])
 
 
+# ---------------------------------------------------------------- D1-2 回归
+def d1_2_tests() -> None:
+    """D1-2（F1/F2）回归：锚包极性/包顺序依赖、非有限值输入/输出防护。"""
+    print("\n== D1-2 回归：F1 锚包极性 / F2 非有限值 ==")
+    s = flat_signal()
+    base = all_channels(np.tile(s, (4, 1)))          # (64, 16000)
+    flipped = (-base).astype(np.int16)
+
+    # ---- F1：少数极性翻转包不得因 rho 并列成为锚包 ----
+    res = FG.fold_group(make_group(np.stack([flipped, base, base, base])))
+    check("D1-2 F1a 锚包不在翻转包", True, res.meta["anchor_index"] in (1, 2, 3))
+    check("D1-2 F1b 接受 3 个正常包", [False, True, True, True], res.accepted.tolist())
+    check("D1-2 F1c 翻转包仅相位拒绝", ["inter_packet_phase_offset"], res.packet_log[0]["reject_reasons"])
+    check("D1-2 F1d 折叠 = 正常波形", 0.0,
+          float(np.max(np.abs(res.signals_folded - s.astype(np.float64)))), tol=0.0)
+    check("D1-2 F1e 翻转包 anchor=False", False, res.packet_log[0]["anchor"])
+
+    # 翻转包放在任意位置：接受数、折叠输出都不随包顺序改变
+    for pos in range(4):
+        stack = [flipped if i == pos else base for i in range(4)]
+        r = FG.fold_group(make_group(np.stack(stack)))
+        check("D1-2 F1f 翻转@%d 接受数" % pos, 3, r.n_accepted)
+        check("D1-2 F1g 翻转@%d 输出不变" % pos, 0.0,
+              float(np.max(np.abs(r.signals_folded - s.astype(np.float64)))), tol=0.0)
+
+    # 2 翻转 vs 3 正常：锚包必须落在多数正常簇
+    res2 = FG.fold_group(make_group(np.stack([flipped, base, flipped, base, base])))
+    check("D1-2 F1h 多数簇 3/5 接受", [False, True, False, True, True], res2.accepted.tolist())
+    check("D1-2 F1i 锚包在正常簇", True, res2.meta["anchor_index"] in (1, 3, 4))
+
+    # 1 翻转 vs 3 正常：24 种包顺序下接受集与折叠输出完全一致
+    s_bcast = np.broadcast_to(s.astype(np.float64), (D0.N_CHANNELS, NP))
+    ok = True
+    for perm in itertools.permutations(range(4)):
+        stack = [flipped if i == perm[0] else base for i in range(4)]
+        r = FG.fold_group(make_group(np.stack(stack)))
+        ok = ok and r.n_accepted == 3 and bool(
+            np.array_equal(r.signals_folded, s_bcast)
+        )
+    check("D1-2 F1j 24 种包顺序接受/输出不变", True, ok)
+
+    # 1 对 1 极性冲突：无多数可依，只能保留一侧；不得两侧抵消，也不得凭空造数
+    r_pair = FG.fold_group(make_group(np.stack([flipped, base])))
+    out = r_pair.signals_folded
+    check("D1-2 F1k 1v1 只保留一侧", 1, r_pair.n_accepted)
+    check("D1-2 F1l 1v1 输出为真实波形（±s）", True,
+          bool(np.array_equal(out, s_bcast) or np.array_equal(out, -s_bcast)))
+
+    # ---- F2：任一通道 NaN/Inf 整包拒绝，输出保证全有限 ----
+    bad = np.stack([base, base]).astype(np.float64)
+    bad[0, 5, :] = np.nan
+    res3 = fold_quiet(bad)
+    check("D1-2 F2a NaN 包被拒", [False, True], res3.accepted.tolist())
+    check("D1-2 F2b 原因", ["packet_nonfinite_samples"], res3.packet_log[0]["reject_reasons"])
+    check("D1-2 F2c 非有限通道记录", [5], res3.packet_log[0]["nonfinite_channels"])
+    check("D1-2 F2d 包 finite 标志", False, res3.packet_log[0]["packet_finite"])
+    check("D1-2 F2e 输出全有限", True, bool(np.isfinite(res3.signals_folded).all()))
+    check("D1-2 F2f 输出 = 好包", 0.0,
+          float(np.max(np.abs(res3.signals_folded - s.astype(np.float64)))), tol=0.0)
+
+    bad_inf = np.stack([base, base]).astype(np.float64)
+    bad_inf[1, 63, 10] = np.inf
+    res4 = fold_quiet(bad_inf)
+    check("D1-2 F2g Inf 包被拒", [True, False], res4.accepted.tolist())
+    check("D1-2 F2h 原因", ["packet_nonfinite_samples"], res4.packet_log[1]["reject_reasons"])
+    check("D1-2 F2i 非有限通道记录", [63], res4.packet_log[1]["nonfinite_channels"])
+    check("D1-2 F2j 正常包无记录", ([], True),
+          (res4.packet_log[0]["nonfinite_channels"], res4.packet_log[0]["packet_finite"]))
+
+    # 参考通道非有限：保留原原因码，且该包不进入折叠
+    bad_ref = np.stack([base, base]).astype(np.float64)
+    bad_ref[0, D0.REF_IDX, 7] = np.nan
+    res5 = fold_quiet(bad_ref)
+    check("D1-2 F2k 参考 NaN 包被拒", [False, True], res5.accepted.tolist())
+    check("D1-2 F2l 参考原因优先", ["reference_channel_nonfinite"], res5.packet_log[0]["reject_reasons"])
+
+    # 全部包非有限：抛错，不返回伪造信号
+    all_bad = np.stack([base, base]).astype(np.float64)
+    all_bad[:, 5, 0] = np.nan
+    check_raises("D1-2 F2m 全包非有限 -> 全拒", FG.FoldGateError,
+                 lambda: fold_quiet(all_bad))
+    try:
+        fold_quiet(all_bad)
+    except FG.FoldGateError as exc:
+        check("D1-2 F2n 全拒原因", True,
+              all("packet_nonfinite_samples" in lg["reject_reasons"] for lg in exc.packet_log))
+
+    # 多个非有限通道：升序完整记录；即使该通道 channel_valid=False 也整包拒绝
+    multi = np.stack([base, base]).astype(np.float64)
+    multi[0, 9, 3] = np.nan
+    multi[0, 2, 0] = -np.inf
+    cv = np.ones(64, dtype=bool)
+    cv[9] = False
+    res6 = fold_quiet(multi, channel_valid=cv)
+    check("D1-2 F2o 多通道非有限升序记录", [2, 9], res6.packet_log[0]["nonfinite_channels"])
+    check("D1-2 F2p invalid 通道非有限也整包拒", [False, True], res6.accepted.tolist())
+
+    # 统计量辅助函数对非有限输入不再返回 NaN（防御性单测）
+    ap = np.array([1.0 + 0j, np.nan + 0j, 2.0 + 0j])
+    aa = np.array([1.0 + 0j, 1.0 + 0j, 2.0 + 0j])
+    check("D1-2 F2q _rho 非有限输入 -> 0", 0.0, FG._rho(ap, aa))
+    check("D1-2 F2r _gain_db 非有限 -> None", None, FG._gain_db(float("nan"), 1.0))
+
+
 # ---------------------------------------------------------------- 真实 data1
 def real_tests(root: Path) -> None:
     ref = D0.find_group(root, "附件2-测距数据/空场数据/data1")
@@ -323,6 +440,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print("真实数据根: %s" % root)
     try:
         synthetic_tests()
+        d1_2_tests()
         if want_real:
             if (root / "附件" / "附件2-测距数据" / "空场数据" / "data1").is_dir():
                 try:
