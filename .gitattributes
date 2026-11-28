@@ -12,3 +12,13 @@
 experiments/A/A-Q2Q3-SYN/results/*.json text eol=lf
 experiments/A/A-Q2Q3-SYN/results/SHA256SUMS.txt text eol=lf
 experiments/A/A-Q2Q3-SYN/results/*.npz binary
+
+# E0-C 冻结归档（b63e217）与 results-r2 台账的口径：
+# 冻结时 `SHA256SUMS.txt` 按 Windows 工作树 CRLF 字节登记，而 git blob 是 LF；
+# 这里显式钉 `eol=crlf`，只影响检出（Linux/macOS 也得到 CRLF 工作树），
+# 不重写 git blob、不改变冻结字节、不更新任何台账。详见 runbook §9。
+/experiments/A/A-Q1-E0/e0c/results/*.json text eol=crlf
+/experiments/A/A-Q1-E0/e0c/results/*.log text eol=crlf
+/experiments/A/A-Q1-E0/e0c/results/*.txt text eol=crlf
+/experiments/A/A-Q1-E0/e0c/results-r2/** text eol=crlf
+/experiments/A/A-Q1-E0/e0c/results-r2/**/*.npz binary

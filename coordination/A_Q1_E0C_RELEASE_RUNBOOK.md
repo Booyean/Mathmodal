@@ -109,6 +109,11 @@ python checks/A/e0_c_accept/accept_e0c.py `
 条件产物：`e0c_frozen.json`（仅全部门槛可冻结时写出，含 `(λ_cal, λ_inv, η_wall)` 与实现 SHA）、
 `repeat_runs/run-2/e0c_frozen.json`。
 
+溯源旁产物（每次运行各一份，**必须随结果包保留**）：`worker_meta.json` 与
+`repeat_runs/run-2/worker_meta.json`，记录该次进程的 `pid`、`started_at`/`finished_at`、
+结果/数组/指标摘要。`e0c_repeat.json` 是它们的汇总；缺少这两份时，C12 的“两次独立进程”
+只能由汇总自述，不能追溯到原始运行。
+
 ## 5. 守卫矩阵（本轮实测退出码）
 
 | 误操作 | 期望 | 实测 |
@@ -153,6 +158,7 @@ python checks/A/e0_c_accept/accept_e0c.py `
 证据口径：本 PR 只保留上表摘要，**不复制** `dryrun.json`/`preflight.json` 等含机器绝对路径的
 运行日志（全量日志在 PR #42 的 `data/a-q1-e0c-release-dryrun`）。需要复核时，在任意干净
 worktree 重跑 `python solutions/A/e0c_release_dryrun.py` 即可复现同一 11 项检查。
+实测轮（B-02）的 `preflight/dryrun` 与 3 个未共享证据文件另见 §9 的频道证据包。
 
 本轮另修了预演脚本自身的一处状态解析缺陷：`git status --porcelain` 首行的前导状态位空格被 `strip()` 吃掉，
 使 ` D <evidence>` 被误判为代码改动（D1 假 FAIL）；已改为 `strip=False` 并加两条例行负例（自检 18/18）。
@@ -160,6 +166,70 @@ worktree 重跑 `python solutions/A/e0c_release_dryrun.py` 即可复现同一 11
 ## 8. 未决项（不写成通过）
 
 1. **放行未签发**：`B-02` 未放行，`--mode execute` 一次都没有跑过；本 runbook 只证明“可以开跑”。
+   （2026-11-28 更新：已按 `055f0075…` 完成双跑并归档，见 §9；`E0-T` 仍未放行。）
 2. **C12 两进程证据形态**只在合成夹具上被官方检查器接受过（`e0c_official_precheck.py`，C12 PASS、C4 因合成文件名 FAIL）；真实数据上的 C12 仍待放行后产生。
 3. **`inputs[96]` 的真实 SHA** 只能在真实运行里写入；预演的 `check` 已核对白名单与清单总 SHA，但不写结果。
 4. **逐位复跑**：同机同环境要求指标一致、数组按容差；跨机不宣称数组逐位（E0-S 已记录该边界）。
+
+---
+
+## 9. 实测轮（B-02）证据归档与结果台账的 CRLF 口径
+
+### 9.1 实测轮归档
+
+2026-11-28 按 `B-02`（放行编号 `055f0075-f8eb-401d-8938-fd0b12bbf8f1`）在 `c7b841e`
+干净 worktree 完成 E0-C 双跑，写入 `results-r2/`（14 文件）。验收 `FAIL`，唯一失败项 **C9**
+（墙体 PSLR `2.664330 dB < 3.0 dB`；空场 LOO min `2.984434 dB < 6.0 dB`），结论维持
+`hard_stop`，`E0-T` 仍未放行。该目录**不提交本仓库**，证据包归档在频道：
+
+| 归档件 | 内容 |
+|---|---|
+| `r2_evidence_bundle.zip` | 3 个此前未共享文件、本轮 `preflight`/`dryrun`/console、独立重算脚本与报告、全量清单 |
+| `r2_MANIFEST_14_ORIGINAL.txt` | `results-r2` 14 文件全量 SHA256（聚合摘要 `5d04470f5ec1…`） |
+| `r2_worker_meta_run1.json` / `r2_worker_meta_run2.json` | 两次进程的 PID/时间窗/摘要原始来源（`e1a4d1b9…` / `299e3a7a…`） |
+| `r2_run2_e0c_results.json` | 第 2 次独立进程的结果文件（`0a76eed0…`） |
+
+补齐后 `results-r2` **14/14 可核**（原 11/14）：顶层台账 7/7、run-2 台账 4/4、两次数组
+`03084cff…` 与冻结归档逐字节相同，独立复算确认 C9。复核：
+
+```powershell
+python verify_bundle.py --results-dir <results-r2>
+python recompute_c9.py  --results-dir <results-r2> --out recompute_report.json
+```
+
+### 9.2 为什么同一文件会出现两个 SHA256
+
+`e0c/results/*.json|log` 与 `results-r2` 的台账，登记的是 **Windows 工作树（CRLF）字节**；
+git blob 是 **LF**。两种摘要都正确，但不可混用：
+
+| 文件 | 工作树 CRLF（台账值） | git blob（LF） |
+|---|---|---|
+| `e0c/results/e0c_results.json` | `7d3fbcd582de…`（84,591 B） | `9404b126a2bb…`（82,021 B） |
+| `e0c/results/e0c_air_loo.json` | `dc31ffdd9d04…`（13,056 B） | `d31993c5537a…`（12,529 B） |
+| `e0c/results/run.log` | `7582d77080cb…`（1,003 B） | `bef1648bdf6d…`（987 B） |
+| `e0c/results/e0c_arrays.npz` | `03084cffe041…`（二进制） | 同（二进制，无 EOL 转换） |
+
+`results-r2` 的 `e0c_results.json`、`e0c_air_loo.json`、`run.log`、`worker_meta.json`、
+`SHA256SUMS.txt` 同样是 CRLF 台账值；`acceptance.json` 是 LF。
+
+### 9.3 核验规则（写死，避免假 FAIL）
+
+1. 在 **`core.autocrlf=true`**（Windows 默认）或 `.gitattributes` 的 `eol=crlf` 检出下，
+   直接对工作树文件算 SHA256，与 `SHA256SUMS.txt` 一致。
+2. Linux/macOS（`autocrlf=false`）若得到 LF 摘要，先做 LF→CRLF 归一化再对台账，或直接对
+   LF 归一化值（`r2_MANIFEST_14_ORIGINAL_LF.txt`）核验；**不要**拿 raw LF 值对 CRLF 台账。
+3. `.npz` 是二进制，**禁止**任何 EOL 归一化（字节里偶然出现 `0d0a` 不是行尾）。
+4. `.gitattributes` 已对 `e0c/results`（及 `results-r2`）显式钉 `text eol=crlf`：只影响检出，
+   不重写 git blob、不改冻结字节。这样 Linux 干净检出也能复现台账。
+   **不要**用 `git add --renormalize` 去“统一钉 LF”：那会改冻结 blob 并让已登记的台账全部失效。
+
+### 9.4 复核命令
+
+```powershell
+git check-attr text eol -- experiments/A/A-Q1-E0/e0c/results/e0c_air_loo.json
+# 期望: text: set / eol: crlf
+git ls-files --eol -- experiments/A/A-Q1-E0/e0c/results
+# 期望: i/lf  w/crlf  attr/text eol=crlf
+```
+
+> 本节只补口径与归档，**不修改** `e0c/results`、`results-r2` 的任何字节，也不改任何阈值或结论。
