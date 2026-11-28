@@ -1,8 +1,8 @@
 # A-Q1-E0-C 放行即跑 Runbook（预演版）
 
 > 契约：`E0C-DRYRUN-1` ｜ 预演脚本：`solutions/A/e0c_release_dryrun.py` ｜ 自检：`solutions/A/test_e0c_release_dryrun.py`（16/16）
-> 基线：`origin/main = 934b0893`；预演提交 `54e3ef90`（分支 `data/a-q1-e0c-release-dryrun`）
-> 预演实测：**11/11 PASS，7.6 s**，`packets_parsed = 0`，未执行 `--mode execute`
+> 基线：`origin/main = 934b0893`；脚本提交 `54e3ef9`；证据运行于 `4de8490`、登记提交 `703b8da`（分支 `data/a-q1-e0c-release-dryrun`）
+> 预演实测：**11/11 PASS，7.0 s**，`packets_parsed = 0`，未执行 `--mode execute`
 
 本文只覆盖 **E0-C 命令链、目录契约与守卫**。它不构成放行，也不替代独立验收：
 真实 `execute` 仍须统筹签发 `--approval-ref`（当前 `B-02` 未放行）。
