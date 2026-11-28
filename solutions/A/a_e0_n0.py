@@ -1303,14 +1303,19 @@ def run_synthetic(
             "rank_fixed": N0_RANK == 2,
             "arms_fixed": tuple(N0_ARMS) == ("c0", "c1", "c2"),
             "no_grid_search": not N0_GRID_SEARCH,
+            # 列出的常量必须真的参与判定（否则就是“声明大于实现”）。
             "lambda_fixed": tuple(LAMBDA_FIXED) == (1e-3, 1e-3),
-            "fit_window_ns": FIT_WINDOW_NS,
+            "fit_window_ns": FIT_WINDOW_NS == 1.0,
+            "fit_window_ns_value": FIT_WINDOW_NS,
+            "lambda_fixed_value": list(LAMBDA_FIXED),
         },
         "p5a_2_self_consistency": {
             "c8_max_delta_db": c8_max_delta,
             "c8_pass": c8_pass,
+            "c8_total_values": len(c8_deltas),
             "fold_count": len(CLUSTERS),
             "p1_values": sum(len(v) for v in p1_per_arm.values()),
+            "p2_values": sum(len(v) for v in p2_per_arm.values()),
         },
         "p5a_3_freeze_integrity": {
             "frozen_written": False,
@@ -1322,8 +1327,12 @@ def run_synthetic(
         p5a_items["p5a_1_interfaces"]["rank_fixed"]
         and p5a_items["p5a_1_interfaces"]["arms_fixed"]
         and p5a_items["p5a_1_interfaces"]["no_grid_search"]
+        and p5a_items["p5a_1_interfaces"]["lambda_fixed"]
+        and p5a_items["p5a_1_interfaces"]["fit_window_ns"]
         and c8_pass
         and p5a_items["p5a_2_self_consistency"]["fold_count"] == 5
+        and p5a_items["p5a_2_self_consistency"]["p1_values"] == 30
+        and p5a_items["p5a_2_self_consistency"]["p2_values"] == 30
     )
 
     # ---- L1 / L2
@@ -1435,6 +1444,10 @@ def run_synthetic(
             "holdout_touched": False,
             "attachment3_touched": False,
             "mode": "synthetic",
+            "note": (
+                "`opened_files`/`real_dat_reads` 只统计实验数据文件（`.dat`/附件）；"
+                "`config`、归档登记等只读元数据不在该计数内"
+            ),
         },
     }
     return doc
@@ -1591,7 +1604,7 @@ def render_markdown(doc: Dict[str, Any]) -> str:
     lines.append("| 拟合窗 | 直射波 `±%.1f ns` |" % doc["n0"]["fit_window_ns"])
     lines.append("| 跨频相位锚 | `%s`（ref_pos=%d） |" % (doc["n0"]["phase_anchor"], doc["n0"]["ref_pos"]))
     lines.append("| 真实 `.dat` 读取 | `%d` |" % doc["scope"]["real_dat_reads"])
-    lines.append("| 打开文件数 | `%d` |" % doc["scope"]["opened_files"])
+    lines.append("| 打开的数据文件数 | `%d` |" % doc["scope"]["opened_files"])
     prov = doc.get("provenance") or {}
     if prov:
         sha = prov.get("implementation_sha", "unknown")

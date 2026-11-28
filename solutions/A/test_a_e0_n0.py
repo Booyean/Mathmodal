@@ -477,6 +477,7 @@ class FixtureTests(unittest.TestCase):
     def test_scope_and_policy(self):
         self.assertEqual(self.doc["scope"]["real_dat_reads"], 0)
         self.assertEqual(self.doc["scope"]["opened_files"], 0)
+        self.assertIn("只统计实验数据文件", self.doc["scope"]["note"])
         self.assertFalse(self.doc["scope"]["e0t_touched"])
         for key in (
             "citable",
@@ -508,6 +509,16 @@ class FixtureTests(unittest.TestCase):
         for group, res in self.doc["targets"].items():
             self.assertTrue(res["arms"]["c2"]["second_mode_used"], group)
             self.assertGreater(res["arms"]["c2"]["second_mode_energy_fraction"], 0.1)
+
+    def test_p5a_gates_its_own_constants(self):
+        items = self.doc["p5a"]["items"]["p5a_1_interfaces"]
+        # 列出的常量必须是参与判定的布尔项，而不是只打印数值（F5）。
+        self.assertIs(items["lambda_fixed"], True)
+        self.assertIs(items["fit_window_ns"], True)
+        self.assertEqual(items["fit_window_ns_value"], 1.0)
+        self.assertEqual(items["lambda_fixed_value"], [1e-3, 1e-3])
+        self.assertEqual(self.doc["p5a"]["items"]["p5a_2_self_consistency"]["p2_values"], 30)
+        self.assertIs(self.doc["p5a"]["pass"], True)
 
     def test_p4_retention_and_p3(self):
         self.assertTrue(self.doc["p3"]["pass"])
