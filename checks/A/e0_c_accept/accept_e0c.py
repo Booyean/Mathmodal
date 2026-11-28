@@ -1349,13 +1349,20 @@ class Checker:
             verdict = "INSUFFICIENT"
         else:
             verdict = "PASS"
+        # 锚点摘要用 git-blob 语义（CRLF→LF），否则 Windows 检出（core.autocrlf）
+        # 会把同一提交算成不同摘要；raw 值仅作工作树字节留痕。
+        contract_exists = os.path.exists(self.repeat_contract_path)
         report = {"prereg_id": self.prereg.get("prereg_id"),
                   "prereg_path": self.prereg_path,
-                  "prereg_sha256": sha256_file(self.prereg_path),
+                  "prereg_sha256": sha256_git_text(self.prereg_path),
+                  "prereg_sha256_raw": sha256_file(self.prereg_path),
                   "repeat_contract_id": self.repeat_contract.get("id"),
                   "repeat_contract_sha256": (
+                      sha256_git_text(self.repeat_contract_path)
+                      if contract_exists else None),
+                  "repeat_contract_sha256_raw": (
                       sha256_file(self.repeat_contract_path)
-                      if os.path.exists(self.repeat_contract_path) else None),
+                      if contract_exists else None),
                   "results_dir": os.path.abspath(self.dir),
                   "verdict": verdict,
                   "failed_checks": fails,
