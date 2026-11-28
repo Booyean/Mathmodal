@@ -20,6 +20,7 @@ INSUFFICIENT。夹具数值全部由简单解析构造，期望指标可手算�
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import math
@@ -360,17 +361,63 @@ def build_fixture(out_dir: str, e0s_path: str, oracle_path: str,
     arrays_sha = sha256_file(npz_path)
     results["arrays_sha256"] = arrays_sha
     results["repeat_run"]["arrays_sha256"] = arrays_sha
-    files = ["e0c_results.json", "e0c_arrays.npz", "e0c_air_loo.json", "run.log"]
-    if write_frozen:
-        files.insert(3, "e0c_frozen.json")
     with open(results_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(results, f, ensure_ascii=False, indent=1)
         f.write("\n")
 
+    # 第二次独立运行的合成产物（repeat/）：独立文件 + 不同 PID/时间窗。
+    # 数组逐字节相同是允许的（单线程确定性），独立性由进程证据与独立文件承载。
+    rep_dir = os.path.join(out_dir, "repeat")
+    os.makedirs(rep_dir, exist_ok=True)
+    rep_npz = os.path.join(rep_dir, "e0c_arrays.npz")
+    _write_npz(rep_npz, arrays)
+    rep_results = copy.deepcopy(results)
+    rep_results["arrays_sha256"] = sha256_file(rep_npz)
+    rep_results["repeat_run"] = {
+        "arrays_sha256": rep_results["arrays_sha256"],
+        "metrics_sha256": results["metrics_sha256"],
+        "note": "fixture second run; synthetic provenance",
+    }
+    rep_results_path = os.path.join(rep_dir, "e0c_results.json")
+    with open(rep_results_path, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(rep_results, f, ensure_ascii=False, indent=1)
+        f.write("\n")
+
+    repeat_manifest = {
+        "contract": "E0-C-C12-REPEAT-1",
+        "note": "synthetic fixture; two independent runs, identical deterministic arrays",
+        "runs": [
+            {"run_id": "fixture-run-a", "pid": 41001,
+             "started_at": "2026-11-28T00:00:00Z",
+             "finished_at": "2026-11-28T00:02:03.4Z",
+             "results_file": "e0c_results.json",
+             "results_sha256": sha256_file(results_path),
+             "arrays_file": "e0c_arrays.npz",
+             "arrays_sha256": arrays_sha,
+             "wall_time_s": 123.4},
+            {"run_id": "fixture-run-b", "pid": 41002,
+             "started_at": "2026-11-28T00:05:00Z",
+             "finished_at": "2026-11-28T00:07:01.9Z",
+             "results_file": "repeat/e0c_results.json",
+             "results_sha256": sha256_file(rep_results_path),
+             "arrays_file": "repeat/e0c_arrays.npz",
+             "arrays_sha256": sha256_file(rep_npz),
+             "wall_time_s": 121.9},
+        ],
+    }
+    with open(os.path.join(out_dir, "e0c_repeat.json"), "w", encoding="utf-8",
+              newline="\n") as f:
+        json.dump(repeat_manifest, f, ensure_ascii=False, indent=1)
+        f.write("\n")
+
+    files = ["e0c_results.json", "e0c_arrays.npz", "e0c_air_loo.json", "run.log",
+             "e0c_repeat.json", "repeat/e0c_results.json", "repeat/e0c_arrays.npz"]
+    if write_frozen:
+        files.insert(3, "e0c_frozen.json")
     with open(os.path.join(out_dir, "SHA256SUMS.txt"), "w", encoding="utf-8",
               newline="\n") as f:
         for n in files:
-            f.write(f"{sha256_file(os.path.join(out_dir, n))}  {n}\n")
+            f.write(f"{sha256_file(os.path.join(out_dir, *n.split('/')))}  {n}\n")
 
     return {"groups": groups, "air_loo": air_loo, "results": results,
             "arrays": arrays}

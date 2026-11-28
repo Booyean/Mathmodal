@@ -1,0 +1,46 @@
+{
+ "id": "E0-C-C12-REPEAT-1",
+ "amends": "E0-PREREG-3",
+ "status": "clarification",
+ "date": "2026-11-28",
+ "authority": "codex 2026-11-28 频道裁定：C12 须有两次独立运行证据，同一批数组的重复序列化不算",
+ "applies_to": "C12",
+ "n_runs": 2,
+ "manifest_candidates": [
+  "e0c_results.json#repeat_run.runs",
+  "e0c_repeat.json#runs"
+ ],
+ "required_run_fields": [
+  "run_id",
+  "pid",
+  "started_at",
+  "finished_at",
+  "results_file",
+  "results_sha256",
+  "arrays_file",
+  "arrays_sha256",
+  "wall_time_s"
+ ],
+ "provenance_must_differ": [
+  "run_id",
+  "pid",
+  "started_at",
+  "finished_at",
+  "results_file",
+  "arrays_file"
+ ],
+ "run_windows": "runs[0] 先于 runs[1]，时间窗不得重叠",
+ "files": "相对交付目录的路径；禁止绝对路径与 .. 逃逸；每个文件的实际 SHA256 必须等于记录值",
+ "recompute": "用第二次运行的 npz 独立重算两个目标组的 Supp/PSLR/PNR/d_hat/abs_err，与交付 JSON 逐项比对（dB 1e-6、cm/m 1e-9）",
+ "not_evidence": [
+  "同一批数组的两次序列化",
+  "同一文件的两次哈希",
+  "同一 PID 或同一时间窗的两条记录",
+  "仅声明“两次独立序列化逐字节一致”而没有第二次运行的进程与产物"
+ ],
+ "tolerances": {
+  "db": 1e-06,
+  "cm": 1e-09,
+  "m": 1e-09
+ }
+}

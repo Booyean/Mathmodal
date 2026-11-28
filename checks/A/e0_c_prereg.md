@@ -122,7 +122,7 @@
 | C9 | 目标门控 | `PSLR≥3`、`PNR≥6`、`abs_err` 与 `d_hat/d_true` 自洽；`status` 与灰区/硬停分类一致 | 硬停 |
 | C10 | 指标独立重算 | 从 `z_before/z_after/d_m/P_after` 重算 `Supp_dw-win/BG_proxy/PNR/PSLR/d_hat/abs_err`，与 JSON 差：dB `≤1e-6`、长度 `≤1e-9 m` | 失败 |
 | C11 | 冻结完整性 | 仅全部可冻结才写 frozen；`freeze.status` 由原始指标重算；`η_wall∈{0.15,0.25,0.35}`；冻结 λ/η/实现 SHA 与选定值一致 | 拒收 |
-| C12 | 确定性证据 | `metrics_sha256`/`repeat_run` 与按 `groups` 规范化重算的摘要一致，且绑定实际 npz 哈希 | 拒收 |
+| C12 | 确定性证据 | `metrics_sha256`/`repeat_run` 与按 `groups` 规范化重算的摘要一致，且绑定实际 npz 哈希；另须两次**独立运行**证据（`E0-C-C12-REPEAT-1`：两次进程、各自数组与结果文件、独立时间窗，用第二次 npz 独立重算目标组指标） | 拒收 |
 | C13 | 资源 | `≤600 s`、`≤4096 MiB`、`single_process=true`、四个线程变量为 `1` | 超限即停 |
 | C14 | 证据完整 | 必需文件存在且非空；`SHA256SUMS.txt` 覆盖且摘要匹配；`run.log` 非空 | 依据不足/拒收 |
 | C15 | 真值隔离 | `d_true_usage=="evaluation_only"`；数组名无真值字段；源码 `d_true` 仅提示人工复核 | 拒收 |
@@ -155,15 +155,17 @@
 |---|---|
 | `checks/A/e0_c_prereg.json` | 冻结常量（锚点、门槛、容差、数组契约、C1–C15） |
 | `checks/A/e0_c_data_oracle.json` | 96 个白名单 `.dat` 的 `rel_path/size/sha256` |
+| `checks/A/e0_c_repeat_contract.json` | C12 独立运行证据契约 `E0-C-C12-REPEAT-1` 的机器可读常量 |
+| `checks/A/e0_c_repeat_contract.md` | 同上，供 `dsh` 实现与人工复核的证据形态说明 |
 | `checks/A/e0_c_accept/accept_e0c.py` | 纯标准库验收检查器（内置 `.npz` 解析，不依赖 numpy） |
-| `checks/A/e0_c_accept/make_fixture.py` | 合成夹具生成器（解析构造，无真实数据） |
-| `checks/A/e0_c_accept/test_accept_e0c.py` | 21 项自检：3 项正向（合规夹具 PASS、手算常数、灰区不冻结一致）+ 18 项负向（各类篡改/缺失必须被抓到） |
+| `checks/A/e0_c_accept/make_fixture.py` | 合成夹具生成器（解析构造，无真实数据；含第二次独立运行的合成产物） |
+| `checks/A/e0_c_accept/test_accept_e0c.py` | 27 项自检：3 项正向（合规夹具 PASS、手算常数、灰区不冻结一致）+ 24 项负向（各类篡改/缺失必须被抓到，含 C12 的 6 类独立运行证据负例） |
 
 复跑：
 
 ```powershell
 python checks/A/e0_c_accept/test_accept_e0c.py
-# 结果：Ran 21 tests — OK（21/21）
+# 结果：Ran 27 tests — OK（27/27）
 
 python checks/A/e0_c_accept/accept_e0c.py `
   --results-dir experiments/A/A-Q1-E0/e0c/results `
@@ -171,7 +173,7 @@ python checks/A/e0_c_accept/accept_e0c.py `
 # 退出码：0=PASS / 1=FAIL / 2=INSUFFICIENT / 3=用法错误
 ```
 
-**手算常数（夹具）**：`Supp=30 dB`、`PNR=40 dB`、墙体 `PSLR=10 dB`、金属 `PSLR=13.010299956639813 dB`、`d_hat=0.420/0.690 m`、`abs_err=0`。负向共 18 类：`d_hat` 偏移 2 cm、`Supp` 改 0.5 dB、注入 NaN、`valid_rx=62`、掺入 `墙体数据/data20-73cm`、锚点改 1 位、灰区仍冻结、删日志、删 `repeat_run`、真值泄漏、输入哈希改 1 位、实现自引用、删 `array_map`（须 INSUFFICIENT）、LOO 选择篡改、非法 `η_wall`、超预算、E0-S 未通过、混入 N0——均被对应检查捕获。
+**手算常数（夹具）**：`Supp=30 dB`、`PNR=40 dB`、墙体 `PSLR=10 dB`、金属 `PSLR=13.010299956639813 dB`、`d_hat=0.420/0.690 m`、`abs_err=0`。负向共 24 类：`d_hat` 偏移 2 cm、`Supp` 改 0.5 dB、注入 NaN、`valid_rx=62`、掺入 `墙体数据/data20-73cm`、锚点改 1 位、灰区仍冻结、删日志、删 `repeat_run`、真值泄漏、输入哈希改 1 位、实现自引用、删 `array_map`（须 INSUFFICIENT）、LOO 选择篡改、非法 `η_wall`、超预算、E0-S 未通过、混入 N0，以及 C12 的 6 类：只有重复序列化、两次运行指向同一数组文件、同一 PID/时间窗、第二次 npz 缺失、第二次运行指标不一致、第二次运行数组被篡改——均被对应检查捕获。
 
 ## 8. 待决与依赖
 
@@ -185,3 +187,22 @@ python checks/A/e0_c_accept/accept_e0c.py `
 - 本预登记**未读取任何真实 `.dat` 采样**：oracle 只使用 R0 清单中的 `size/sha256` 元数据；锚点只使用 Git blob。
 - **未运行 E0-C 求解器、未产生任何真实测距/抑制/冻结结论**；夹具数值仅为合成构造，不得引用为实验证据。
 - 检查器通过夹具自检只证明“检查器非空转”，**不证明** E0-C 会通过，也不构成对 `E0-C`/`E0-T` 的放行意见。
+
+## 10. 修订单：C12 独立运行证据（`E0-C-C12-REPEAT-1`）
+
+- **依据**：统筹 `codex` 2026-11-28 频道裁定——C12 必须有两次**独立运行**的证据；
+  只有说明文字或同一批数组的两次序列化不算。
+- **范围**：只澄清 C12 的证据形态与复算方式；C1–C15 的门槛、容差、失败动作不变，
+  `checks/A/e0_c_prereg.json` 的冻结常量不动（本修订单单独哈希，见报告
+  `repeat_contract_sha256`）。
+- **契约**：`checks/A/e0_c_repeat_contract.json` / `.md`；摘要：
+  1. 两次运行的记录（`repeat_run.runs` 或 `e0c_repeat.json#runs`），各带
+     `run_id/pid/started_at/finished_at/results_file/results_sha256/arrays_file/arrays_sha256/wall_time_s`；
+  2. 两套文件都必须在交付目录内、实际 SHA256 与记录一致；
+  3. 进程 PID、时间窗、文件路径互不相同，时间窗不重叠；复用同一文件直接判重复序列化；
+  4. 第二次运行的完整结果 JSON 必须与第一次一致（12 组、指标摘要、`arrays_sha256` 绑定自身 npz）；
+  5. 检查器用第二次运行的 npz **独立重算**两个目标组指标，与交付 JSON 逐项比对；
+  6. 数组逐字节相同可接受（单线程确定性），不接受“没有第二次运行产物”的重复序列化。
+- **对已交付结果的影响**：`b63e217` 的 `repeat_run` 只有
+  `arrays_sha256_second_serialization`（与 `arrays_sha256` 相同），按本修订单 C12 判
+  FAIL（`duplicate_serialization_detected=true`），须由 `dsh` 补第二次独立运行的产物。

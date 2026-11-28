@@ -10,7 +10,9 @@
 2. **负向（每类篡改必须被对应检查抓到）**：指标篡改、NaN、有效通道不足、
    越界加组、锚点不符、灰区仍冻结、丢文件、缺确定性证据、真值泄漏、输入哈希、
    实现自引用、数组映射缺失（应给 INSUFFICIENT 而不是 PASS）、LOO 选择篡改、
-   非法 eta_wall、超预算、E0-S 未通过、混入 N0。
+   非法 eta_wall、超预算、E0-S 未通过、混入 N0；C12 独立运行证据的 6 类负例：
+   只有重复序列化、两次运行指向同一数组文件、同一 PID/时间窗、第二次 npz 缺失、
+   第二次运行指标不一致、第二次运行数组被篡改。
 
 运行：
     python checks/A/e0_c_accept/test_accept_e0c.py
@@ -59,10 +61,14 @@ def _write_sums(dirp):
     names = ["e0c_results.json", "e0c_arrays.npz", "e0c_air_loo.json", "run.log"]
     if os.path.exists(os.path.join(dirp, "e0c_frozen.json")):
         names.insert(3, "e0c_frozen.json")
+    for n in ("e0c_repeat.json", "repeat/e0c_results.json",
+              "repeat/e0c_arrays.npz"):
+        if os.path.exists(os.path.join(dirp, *n.split("/"))):
+            names.append(n)
     with open(os.path.join(dirp, "SHA256SUMS.txt"), "w", encoding="utf-8",
               newline="\n") as f:
         for n in names:
-            f.write(f"{mf.sha256_file(os.path.join(dirp, n))}  {n}\n")
+            f.write(f"{mf.sha256_file(os.path.join(dirp, *n.split('/')))}  {n}\n")
 
 
 def _refresh(dirp):
@@ -77,6 +83,13 @@ def _refresh(dirp):
     r["arrays_sha256"] = sha
     rr["arrays_sha256"] = sha
     _save(dirp, "e0c_results.json", r)
+    man_path = os.path.join(dirp, "e0c_repeat.json")
+    if os.path.exists(man_path):
+        man = _load(dirp, "e0c_repeat.json")
+        man["runs"][0]["results_sha256"] = mf.sha256_file(
+            os.path.join(dirp, "e0c_results.json"))
+        man["runs"][0]["arrays_sha256"] = sha
+        _save(dirp, "e0c_repeat.json", man)
     _write_sums(dirp)
 
 
@@ -302,6 +315,87 @@ class E0CAcceptTests(unittest.TestCase):
         _refresh(self.dir)
         rep = self.run_checker()
         self.assert_only_fails(rep, "C5")
+
+    # -- 负向：C12 独立运行证据（E0-C-C12-REPEAT-1） ------------------------ #
+    def _c12(self, rep):
+        return next(c for c in rep["checks"] if c["id"] == "C12")
+
+    def test_22_duplicate_serialization_block_is_caught(self):
+        os.remove(os.path.join(self.dir, "e0c_repeat.json"))
+        r = _load(self.dir, "e0c_results.json")
+        sha = mf.sha256_file(os.path.join(self.dir, "e0c_arrays.npz"))
+        r["repeat_run"] = {
+            "arrays_sha256": sha,
+            "arrays_sha256_second_serialization": sha,
+            "metrics_sha256": r["metrics_sha256"],
+            "note": "两次独立序列化逐字节一致",
+        }
+        _save(self.dir, "e0c_results.json", r)
+        _write_sums(self.dir)
+        rep = self.run_checker()
+        self.assert_only_fails(rep, "C12")
+        self.assertTrue(self._c12(rep)["detail"]["duplicate_serialization_detected"])
+
+    def test_23_same_arrays_file_for_both_runs_is_caught(self):
+        man = _load(self.dir, "e0c_repeat.json")
+        man["runs"][1]["arrays_file"] = "e0c_arrays.npz"
+        man["runs"][1]["arrays_sha256"] = mf.sha256_file(
+            os.path.join(self.dir, "e0c_arrays.npz"))
+        _save(self.dir, "e0c_repeat.json", man)
+        _write_sums(self.dir)
+        rep = self.run_checker()
+        self.assert_only_fails(rep, "C12")
+        self.assertTrue(self._c12(rep)["detail"]["duplicate_serialization_detected"])
+
+    def test_24_same_provenance_is_caught(self):
+        man = _load(self.dir, "e0c_repeat.json")
+        for f in ("run_id", "pid", "started_at", "finished_at"):
+            man["runs"][1][f] = man["runs"][0][f]
+        _save(self.dir, "e0c_repeat.json", man)
+        _write_sums(self.dir)
+        rep = self.run_checker()
+        self.assert_only_fails(rep, "C12")
+        self.assertTrue(self._c12(rep)["detail"]["duplicate_serialization_detected"])
+
+    def test_25_missing_second_npz_is_caught(self):
+        os.remove(os.path.join(self.dir, "repeat", "e0c_arrays.npz"))
+        _write_sums(self.dir)
+        rep = self.run_checker()
+        self.assert_only_fails(rep, "C12")
+
+    def test_26_second_run_metric_mismatch_is_caught(self):
+        rep2 = _load(os.path.join(self.dir, "repeat"), "e0c_results.json")
+        rep2["groups"][-2]["pslr_db"] += 0.5
+        _save(os.path.join(self.dir, "repeat"), "e0c_results.json", rep2)
+        man = _load(self.dir, "e0c_repeat.json")
+        man["runs"][1]["results_sha256"] = mf.sha256_file(
+            os.path.join(self.dir, "repeat", "e0c_results.json"))
+        _save(self.dir, "e0c_repeat.json", man)
+        _write_sums(self.dir)
+        rep = self.run_checker()
+        self.assert_only_fails(rep, "C12")
+
+    def test_27_second_run_arrays_tampered_is_caught(self):
+        arrays = copy.deepcopy(self.base_arrays)
+        key = "wall_data1_42cm__P_after"
+        k = int(round((1.5 - mf.D_START_M) / mf.D_STEP_M))
+        arrays[key][2][k] = 0.5  # 抬高旁瓣 → 从第二次运行的 npz 重算的 PSLR 变了
+        rep_npz = os.path.join(self.dir, "repeat", "e0c_arrays.npz")
+        mf._write_npz(rep_npz, arrays)
+        man = _load(self.dir, "e0c_repeat.json")
+        man["runs"][1]["arrays_sha256"] = mf.sha256_file(rep_npz)
+        _save(self.dir, "e0c_repeat.json", man)
+        rep2 = _load(os.path.join(self.dir, "repeat"), "e0c_results.json")
+        rep2["arrays_sha256"] = mf.sha256_file(rep_npz)
+        _save(os.path.join(self.dir, "repeat"), "e0c_results.json", rep2)
+        man["runs"][1]["results_sha256"] = mf.sha256_file(
+            os.path.join(self.dir, "repeat", "e0c_results.json"))
+        _save(self.dir, "e0c_repeat.json", man)
+        _write_sums(self.dir)
+        rep = self.run_checker()
+        self.assert_only_fails(rep, "C12")
+        c12 = self._c12(rep)
+        self.assertIn("recomputed_from_second_run", c12["detail"])
 
 
 if __name__ == "__main__":
