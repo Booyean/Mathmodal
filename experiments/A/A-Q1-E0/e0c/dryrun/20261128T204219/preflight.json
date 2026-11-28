@@ -1,9 +1,9 @@
 {
   "contract_version": "E0C-PREFLIGHT-2",
   "scope": "metadata_only_no_signal_parse",
-  "generated_at": "2026-11-28T20:07:50+08:00",
-  "repo": "D:\\数模\\Mathmodal",
-  "data_root": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题",
+  "generated_at": "2026-11-28T20:42:21+08:00",
+  "repo": "D:\\数模\\tmp\\q1-reg-wt",
+  "data_root": "D:\\数模\\tmp\\q1-reg-wt\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题",
   "manifest": "recon/manifests/a_dat_manifest.csv",
   "anchors": {
     "config_sha256_lf": "8fb6821fa3335ef748e16ad2f5b5b8fc818c13cbe9d3315377faf48d5e40e06a",
@@ -276,7 +276,7 @@
       ],
       "guarded_files": 96,
       "rejections": [],
-      "data_root_real": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题"
+      "data_root_real": "D:\\数模\\tmp\\q1-reg-wt\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题"
     }
   },
   "checks": [
@@ -554,7 +554,7 @@
       "group": "data",
       "passed": true,
       "detail": "数据根目录存在",
-      "root": "D:\\数模\\Mathmodal\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题"
+      "root": "D:\\数模\\tmp\\q1-reg-wt\\竞赛题目\\A 题：单发多收下的雷达信号处理及成像问题"
     },
     {
       "id": "data.inventory",
@@ -589,7 +589,7 @@
     "failed": 0,
     "failed_ids": [],
     "blocking_ids": [],
-    "elapsed_s": 0.31
+    "elapsed_s": 0.291
   },
   "preconditions_pass": true,
   "execution_ready": true,
