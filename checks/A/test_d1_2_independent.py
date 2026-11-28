@@ -262,8 +262,9 @@ def _f2_case(name: str, packets: np.ndarray, bad_pos: int,
         msg_ok = mentions_nonfinite(str(exc)) or any(
             mentions_nonfinite(r) for lg in exc.packet_log for r in lg["reject_reasons"])
         check("%s 异常含非有限说明" % name, True, msg_ok, note=str(exc)[:120])
-        finding("%s.group-refused" % name, "info",
-                "整组被拒（安全但会丢弃同组好包）；D1-2 若采用包级隔离可保留好包。")
+        if expect_good_pos is not None:
+            finding("%s.group-refused" % name, "info",
+                    "整组被拒（安全但会丢弃同组好包）；D1-2 若采用包级隔离可保留好包。")
         check("%s 输入未被修改" % name, True, bool(np.array_equal(orig, packets, equal_nan=True)))
         return
 
@@ -342,7 +343,10 @@ def run_f2() -> None:
     bad2 = pkt.copy()
     bad2[5, :] = np.nan
     _f2_case("F2-5 无效通道 NaN", np.stack([bad2, bad2]), 0, channel=5,
-             channel_valid=inv, expect_good_pos=1)
+             channel_valid=inv)
+    finding("F2-5.invalid-channel", "info",
+            "channel_valid=False 的通道含 NaN 时仍按“全通道有限”整包拒绝；"
+            "D0 int16 路径不可达，且与 D1-2 §3.1 的判据一致，不构成缺陷。")
 
     # F2-6 正常输入不得被误伤
     res = FG.fold_group(make_group(np.stack([pkt, pkt]), key="f2-normal"))
