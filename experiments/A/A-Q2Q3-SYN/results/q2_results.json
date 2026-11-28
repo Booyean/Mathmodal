@@ -3,7 +3,7 @@
   "input_mode": "synthetic_only",
   "real_dat_files_read": 0,
   "citable": false,
-  "implementation_sha": "3a6db98",
+  "implementation_sha": "5b5a10258a9e2625917f2f278dc9eb6ea7b16c05",
   "main_commit": "934b089",
   "q1_frozen_config_path": "synthetic://q1-frozen-baseline",
   "q1_frozen_config_sha256": "4a70304a305b87d9fc3a17c023dab5e5e6f7abeb9403ab2bb024ec27f6559939",
@@ -56,9 +56,90 @@
     "orphan_skipped": {
       "status": "not_covered_by_synthetic_fixture",
       "count": 0
+    },
+    "provenance": {
+      "real_dat_files_read": {
+        "source_path": "synthetic_scene#anomaly_inputs",
+        "field": "anomaly_inputs.real_dat_files_read",
+        "derivation": "passthrough of scene metadata; hard-constrained to 0 for the synthetic fixture"
+      },
+      "packet_mismatch_groups": {
+        "source_path": "synthetic_scene#j_p_common",
+        "field": "j_p_common[*] paired with j_group_ids[*]",
+        "derivation": "groups whose P_common is below max(j_p_common); group_index is 1-based"
+      },
+      "orphan_skipped": {
+        "source_path": "synthetic_scene#anomaly_inputs",
+        "field": "anomaly_inputs.orphan_files",
+        "derivation": "passthrough when supplied; otherwise explicit not_covered_by_synthetic_fixture status"
+      }
     }
   },
-  "arrays_sha256": "b46db4539dba9a3386940c10365af8243d092600e4605fa33cb9e1d3e8d35033",
+  "arrays_sha256": "f0ac2b112dba713961200cc6ca40db43f82811671748d12c080bacf05cabf84f",
+  "arrays_sha256_scope": {
+    "algorithm": "sha256",
+    "aggregate_definition": "sha256 over canonical JSON (UTF-8, separators=(',',':'), sort_keys=True) of {array_name: per_array_sha256}, one entry per covered array",
+    "per_array_definition": "sha256(dtype_string + repr(shape) + C-contiguous raw value bytes)",
+    "covers": "all arrays stored in this bundle's NPZ; no array is excluded or subsampled",
+    "covered_arrays": [
+      "image_after_gain_coh",
+      "image_after_gain_env",
+      "image_before_gain_coh",
+      "image_row3_coh",
+      "image_row5_coh",
+      "j_group_ids",
+      "j_p_common",
+      "tau_curve_s",
+      "w_comp_curve",
+      "x_grid_m",
+      "x_scan_m",
+      "y_grid_m"
+    ],
+    "array_count": 12,
+    "includes": [
+      "array name",
+      "dtype",
+      "shape",
+      "raw array values"
+    ],
+    "excludes": [
+      "scalar JSON fields in the companion results JSON",
+      "the companion results JSON itself",
+      "SHA256SUMS.txt",
+      "NPZ ZIP container headers and compression metadata"
+    ],
+    "dtype_byte_order": "native byte order of the generating machine (little-endian on x86_64)",
+    "cross_run_policy": "intra-run integrity digest; SVD/LAPACK last-bit differences can change it between runs. Cross-run or cross-implementation equivalence must be asserted numerically at rtol=1e-9, not by this digest.",
+    "file_level_ledger": "SHA256SUMS.txt is the byte-level ledger over the JSON+NPZ files of one run; it is run-specific and is not expected to match across environments."
+  },
+  "provenance": {
+    "implementation_sha": "5b5a10258a9e2625917f2f278dc9eb6ea7b16c05",
+    "implementation_sha_kind": "generation_code_commit",
+    "git_dirty": false,
+    "git_branch": "model/a-q2q3-synthetic-baseline",
+    "generated_at": "2026-11-28T13:04:05Z",
+    "command": "python solutions/A/run_q2_q3_synthetic.py --preset standard --out experiments/A/A-Q2Q3-SYN/results --generated-at 2026-11-28T13:04:05Z",
+    "generator_script": "solutions/A/run_q2_q3_synthetic.py",
+    "preset": "standard",
+    "contract_path": "solutions/A/q2_q3_output_contract.json",
+    "contract_sha256": "3a66d0a4020da2f0d31b3b99798769273def04256180afe380b51d2b82d26913",
+    "environment": {
+      "python": "3.13.5",
+      "numpy": "2.1.3",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "byte_order": "little"
+    },
+    "input_fixture": {
+      "input_mode": "synthetic_only",
+      "real_dat_files_read": 0,
+      "seed": 20261128,
+      "scene_builders": [
+        "a_q2q3_common.build_synthetic_wall_scene_63rx",
+        "a_q2q3_common.build_synthetic_metal_scene_63rx"
+      ]
+    },
+    "applies_to_phase": "Q2"
+  },
   "finite": true,
   "status": "synthetic_baseline_only",
   "grid_spec": {
@@ -107,53 +188,53 @@
       0.2
     ],
     "delta_far_near_db": [
-      -12.603027634680055,
-      -9.270088872673137,
-      -6.26476447633986,
-      -7.05220186508882,
-      -7.446429465989174,
-      -8.648891607856196
+      -12.603027634680057,
+      -9.270088872673131,
+      -6.264764476339858,
+      -7.052201865088818,
+      -7.446429465989171,
+      -8.648891607856193
     ],
     "c_far_med_db": [
-      31.03140210422671,
+      31.031402104226697,
       32.49339336498577,
       34.468583020004104,
-      33.15160269165237,
-      32.72586204053653,
+      33.15160269165238,
+      32.725862040536526,
       31.72138549678564
     ],
     "selected_alpha_per_ns": 0.08
   },
   "metrics_before_gain": {
-    "delta_ba_db": -25.676655400783215,
-    "pbr_b_db": 23.82166258619424,
-    "pslr_b_db": 11.684132585444411,
+    "delta_ba_db": -25.67665540078321,
+    "pbr_b_db": 23.821662586194225,
+    "pslr_b_db": 11.68413258544441,
     "b_coverage_pct": 100.0,
-    "delta_far_near_db": -25.676655400783215,
-    "c_far_med_db": 23.82166258619424
+    "delta_far_near_db": -25.67665540078321,
+    "c_far_med_db": 23.821662586194225
   },
   "metrics_after_gain_coh": {
-    "delta_ba_db": -6.26476447633986,
+    "delta_ba_db": -6.264764476339858,
     "pbr_b_db": 34.468583020004104,
-    "pslr_b_db": 14.091776829327374,
+    "pslr_b_db": 14.091776829327376,
     "b_coverage_pct": 100.0,
-    "delta_far_near_db": -6.26476447633986,
+    "delta_far_near_db": -6.264764476339858,
     "c_far_med_db": 34.468583020004104
   },
   "metrics_after_gain_env": {
-    "delta_ba_db": -7.496218391875358,
-    "pbr_b_db": 15.518799295111421,
-    "pslr_b_db": 6.990816536951248,
+    "delta_ba_db": -7.496218391875352,
+    "pbr_b_db": 15.518799295111423,
+    "pslr_b_db": 6.9908165369512485,
     "b_coverage_pct": 100.0
   },
   "wall_a_apparent": {
     "x_min_m": 0.2,
     "x_max_m": 1.12,
-    "y_start_m": 0.3836148119658,
-    "y_end_m": 0.5926698632253158,
-    "slope_dy_dx": 0.22723375136903895,
-    "tilt_deg": 12.802142576054678,
-    "fit_r2": 0.9632692070235155
+    "y_start_m": 0.38361481196580005,
+    "y_end_m": 0.592669863225316,
+    "slope_dy_dx": 0.22723375136903912,
+    "tilt_deg": 12.802142576054687,
+    "fit_r2": 0.9632692070235154
   },
   "wall_b_apparent": {
     "air_x_ranges_m": [
@@ -167,7 +248,7 @@
       ]
     ],
     "air_y_mean_m": 2.005258719540489,
-    "air_tilt_deg": -0.004968341923938062,
+    "air_tilt_deg": -0.00496834192394354,
     "behind_a_x_range_m": [
       0.28,
       1.04
@@ -179,7 +260,7 @@
   "row_consistency": {
     "row_3_wall_b_y_m": 2.0048494896728792,
     "row_4_wall_b_y_m": 2.005258719540489,
-    "row_5_wall_b_y_m": 2.0049065543318054,
+    "row_5_wall_b_y_m": 2.004906554331806,
     "max_row_diff_cm": 0.040922986760971725
   }
 }
