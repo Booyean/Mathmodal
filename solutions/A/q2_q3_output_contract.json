@@ -14,6 +14,13 @@
   "unit_conventions": {
     "machine_scalars_and_axes": "SI (m, s, rad/deg, linear_energy, power_ratio_10log10_db)",
     "paper_table_presentation": "cm (value_cm = value_m * 100.0), deg, dB, %",
+    "npz_energy_storage": "all image_*, slice_*, proj_*, shadow_profile_x_y arrays MUST store non-negative linear normalized energy (float64); convert to dB only during figure rendering",
+    "plot_db_normalization": {
+      "formula": "10 * log10(max(I, 1e-12 * I_ref) / I_ref)",
+      "q2_i_ref": "max(q2_arrays.npz::image_after_gain_coh)",
+      "q3_3d_i_ref": "max(image_3d_coh of corresponding scene)",
+      "fig_3_2_shadow_profile_i_ref": "shadow_diagnostics[].i_unocc_med (0 dB equals unoccluded rear-wall median energy, aligning directly with ShadowRatio <= -6.0 dB)"
+    },
     "symbol_aliases": {
       "C_B/A": "Delta_B/A -> delta_ba_db",
       "C_B/bg": "PBR_B -> pbr_b_db"
@@ -41,7 +48,7 @@
       "metrics_after_gain_env": {"type": "dict[float]", "unit": "dB and %", "keys": ["delta_ba_db", "pbr_b_db", "pslr_b_db", "b_coverage_pct"]},
       "wall_a_apparent": {"type": "dict[float]", "unit": "m and deg", "keys": ["x_min_m", "x_max_m", "y_start_m", "y_end_m", "slope_dy_dx", "tilt_deg", "fit_r2"]},
       "wall_b_apparent": {"type": "dict", "unit": "m, deg, dimensionless", "keys": ["air_x_ranges_m", "air_y_mean_m", "air_tilt_deg", "behind_a_x_range_m", "behind_a_y_mean_m", "delta_y_app_m", "eps_r_diag"]},
-      "row_consistency": {"type": "dict[float]", "unit": "m and cm", "keys": ["row_3_wall_b_y_m", "row_5_wall_b_y_m", "max_row_diff_cm"]}
+      "row_consistency": {"type": "dict[float]", "unit": "m and cm", "keys": ["row_3_wall_b_y_m", "row_4_wall_b_y_m", "row_5_wall_b_y_m", "max_row_diff_cm"]}
     },
     "npz_arrays": {
       "x_grid_m": {"shape": ["N_x"], "dtype": "float64", "unit": "m"},
@@ -52,8 +59,8 @@
       "image_before_gain_coh": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
       "image_after_gain_coh": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
       "image_after_gain_env": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
-      "image_row3_coh": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy", "optional": true},
-      "image_row5_coh": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy", "optional": true}
+      "image_row3_coh": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy", "required": true},
+      "image_row5_coh": {"shape": ["N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy", "required": true}
     }
   },
   "q3_wall_contract": {
@@ -89,25 +96,27 @@
       "nms_params": {"type": "dict[float]", "unit": "m and dB", "keys": ["radius_x_m", "radius_y_m", "min_peak_above_med_db", "contour_drop_db"]},
       "metal_objects": {"type": "list[dict]", "unit": "m and dB", "item_keys": ["object_id", "inferred_class", "peak_xyz_m", "centroid_10db_xyz_m", "bbox_10db_m", "delta_z_10db_m", "peak_above_med_db"]},
       "shadow_diagnostics": {"type": "list[dict]", "unit": "m, energy, dB, bool", "item_keys": ["object_id", "y_shadow_start_m", "y_wall_band_m", "i_shadow_bar", "i_unocc_med", "shadow_ratio_db", "shadow_confirmed"]},
-      "resolution_limits": {"type": "dict[float]", "unit": "m", "keys": ["dy_res_m", "dx_res_m", "dz_res_at_08m_m", "dz_res_at_20m_m"]}
+      "resolution_limits": {"type": "dict[float]", "unit": "m", "keys": ["dy_res_m", "dx_res_m", "dz_res_at_08m_m", "dz_res_at_20m_m"]},
+      "shadow_profile_axis_spec": {"type": "dict", "unit": "index, key, ratio", "keys": ["y_wall_band_idx_start", "y_wall_band_idx_end", "ref_energy_key", "db_floor_ratio"], "defaults": {"ref_energy_key": "i_unocc_med", "db_floor_ratio": 1e-12}}
     },
     "npz_arrays": {
       "x_grid_m": {"shape": ["N_x"], "dtype": "float64", "unit": "m"},
       "y_grid_m": {"shape": ["N_y"], "dtype": "float64", "unit": "m"},
       "z_grid_m": {"shape": ["N_z"], "dtype": "float64", "unit": "m"},
+      "y_wall_band_m": {"shape": ["N_y_wall"], "dtype": "float64", "unit": "m", "required": true, "matches_slice_of": "y_grid_m"},
       "image_3d_coh": {"shape": ["N_z", "N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
       "image_3d_env": {"shape": ["N_z", "N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
       "image_3d_shadow_gain": {"shape": ["N_z", "N_y", "N_x"], "dtype": "float64", "unit": "normalized_energy"},
-      "shadow_profile_x_y": {"shape": ["N_y_wall", "N_x"], "dtype": "float64", "unit": "normalized_energy"}
+      "shadow_profile_x_y": {"shape": ["N_y_wall", "N_x"], "dtype": "float64", "unit": "normalized_energy", "y_axis_key": "y_wall_band_m", "x_axis_key": "x_grid_m", "db_ref_key": "i_unocc_med"}
     }
   },
   "paper_slots": {
     "Fig 2-1": {"section": "6.4", "status": "[待补]", "source_contract": "q2_contract", "required_fields": ["x_grid_m", "y_grid_m", "image_before_gain_coh", "image_after_gain_coh", "wall_a_apparent", "wall_b_apparent"]},
-    "Fig 2-2": {"section": "6.4", "status": "[待补]", "source_contract": "q2_contract", "required_fields": ["tau_curve_s", "w_comp_curve", "gain_selection", "row_consistency"]},
+    "Fig 2-2": {"section": "6.4", "status": "[待补]", "source_contract": "q2_contract", "required_fields": ["x_grid_m", "y_grid_m", "image_after_gain_coh", "image_row3_coh", "image_row5_coh", "row_consistency", "tau_curve_s", "w_comp_curve", "gain_selection"]},
     "Table 2-1": {"section": "6.4", "status": "[待补]", "source_contract": "q2_contract", "required_fields": ["metrics_before_gain", "metrics_after_gain_coh", "metrics_after_gain_env", "wall_a_apparent", "wall_b_apparent"]},
     "Fig 3-1": {"section": "7.2-7.4", "status": "[待补]", "source_contract": "q3_wall_contract", "required_fields": ["x_grid_m", "y_grid_m", "z_grid_m", "image_3d_coh", "slice_xy_z4", "proj_xy_max", "proj_xz_max", "proj_yz_max"]},
     "Table 3-1": {"section": "7.4", "status": "[待补]", "source_contract": "q3_wall_contract", "required_fields": ["wall_a_3d", "wall_b_3d", "q2_q3_reconciliation"]},
-    "Fig 3-2": {"section": "7.3-7.4", "status": "[待补]", "source_contract": "q3_metal_contract", "required_fields": ["x_grid_m", "y_grid_m", "z_grid_m", "image_3d_coh", "shadow_profile_x_y", "metal_objects", "shadow_diagnostics"]},
+    "Fig 3-2": {"section": "7.3-7.4", "status": "[待补]", "source_contract": "q3_metal_contract", "required_fields": ["x_grid_m", "y_grid_m", "z_grid_m", "y_wall_band_m", "image_3d_coh", "shadow_profile_x_y", "shadow_profile_axis_spec", "metal_objects", "shadow_diagnostics"]},
     "Table 3-2": {"section": "7.4", "status": "[待补]", "source_contract": "q3_metal_contract", "required_fields": ["metal_objects", "shadow_diagnostics", "anomaly_isolation"]}
   }
 }

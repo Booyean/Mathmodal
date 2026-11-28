@@ -46,12 +46,38 @@ class TestQ2Q3OutputContract(unittest.TestCase):
         self.assertIn("delta_ba_db", q2["metrics_after_gain_coh"]["keys"])
         self.assertIn("eps_r_diag", q2["wall_b_apparent"]["keys"])
 
+        q2_npz = self.data["q2_contract"]["npz_arrays"]
+        for row_key in ("image_after_gain_coh", "image_row3_coh", "image_row5_coh"):
+            self.assertIn(row_key, self.data["paper_slots"]["Fig 2-2"]["required_fields"])
+            self.assertFalse(q2_npz[row_key].get("optional", False), f"{row_key} must be mandatory for Fig 2-2")
+        self.assertIn("row_4_wall_b_y_m", q2["row_consistency"]["keys"])
+
         q3w = self.data["q3_wall_contract"]["json_fields"]
         self.assertIn("passed_le_2cm", q3w["q2_q3_reconciliation"]["keys"])
 
         q3m = self.data["q3_metal_contract"]["json_fields"]
+        q3m_npz = self.data["q3_metal_contract"]["npz_arrays"]
         self.assertIn("shadow_ratio_db", q3m["shadow_diagnostics"]["item_keys"])
         self.assertIn("centroid_10db_xyz_m", q3m["metal_objects"]["item_keys"])
+
+        # Fig 3-2 vertical axis mapping + linear-to-dB reference contract
+        self.assertEqual(q3m_npz["y_wall_band_m"]["shape"], ["N_y_wall"])
+        self.assertEqual(q3m_npz["shadow_profile_x_y"]["shape"], ["N_y_wall", "N_x"])
+        self.assertEqual(q3m_npz["shadow_profile_x_y"]["y_axis_key"], "y_wall_band_m")
+        self.assertEqual(q3m_npz["shadow_profile_x_y"]["x_axis_key"], "x_grid_m")
+        self.assertEqual(q3m_npz["shadow_profile_x_y"]["db_ref_key"], "i_unocc_med")
+        self.assertIn("y_wall_band_m", self.data["paper_slots"]["Fig 3-2"]["required_fields"])
+        self.assertIn("shadow_profile_axis_spec", self.data["paper_slots"]["Fig 3-2"]["required_fields"])
+        self.assertEqual(q3m["shadow_profile_axis_spec"]["defaults"]["ref_energy_key"], "i_unocc_med")
+
+        # All NPZ energy arrays store linear normalized energy with locked dB plotting reference
+        db_norm = self.data["unit_conventions"]["plot_db_normalization"]
+        self.assertIn("10 * log10", db_norm["formula"])
+        self.assertIn("i_unocc_med", db_norm["fig_3_2_shadow_profile_i_ref"])
+        for c_name in ("q2_contract", "q3_wall_contract", "q3_metal_contract"):
+            for arr_key, meta in self.data[c_name]["npz_arrays"].items():
+                if arr_key.startswith(("image_", "slice_", "proj_", "shadow_profile_")):
+                    self.assertEqual(meta["unit"], "normalized_energy", f"{c_name}.{arr_key} must store linear normalized_energy")
 
     def test_no_unverified_real_dat_results_claimed(self) -> None:
         self.assertEqual(self.data["status"], "contract_only_empirical_slots_tbd")

@@ -14,6 +14,10 @@
 
 1. **单位与后缀铁律（消除 `m` / `cm`、`ns` / `s` 混用风险）**：
    - 程序 JSON 标量与 NPZ 坐标轴统一采用国际单位制（SI）：距离后缀 `_m`（`float64`，米），时间 `_s`（秒）或明确标示 `_ns`（纳秒，$10^9\tau$），角度 `_deg`（度），功率比 `_db`（统一按 $10\log_{10}$ 功率比定义），百分比 `_pct`（%）。
+   - **数组线性能量存储与绘图 dB 归一化口径**：全部 NPZ 二维/三维能量数组（`image_*`、`slice_*`、`proj_*`、`shadow_profile_x_y`）均严格以**非负线性归一化聚焦能量（`float64`, `normalized_energy`）**存盘（不在 `.npz` 内预转对数）。绘图转 dB 时统一按 $I_{\text{dB}} = 10\log_{10}\!\big(\max(I, \epsilon_{\text{floor}}) / I_{\text{ref}}\big)$ 计算（保护底限 $\epsilon_{\text{floor}} = 10^{-12}\,I_{\text{ref}}$），其中：
+     - Q2（`Fig 2-1` / `Fig 2-2`）共享参考值锁定为增益后相干剖面全域峰值 $I_{\text{ref,Q2}} = \max(I_{\text{2D}}^{\text{coh}})$；
+     - Q3 体素与投影（`Fig 3-1` / `Fig 3-2` 左）参考值为对应场景相干三维体峰值 $I_{\text{ref,Q3}} = \max(I_{\text{3D}}^{\text{coh}})$；
+     - **`Fig 3-2` 阴影剖面（`shadow_profile_x_y`）**参考值锁定为同后墙带无金属遮挡区能量中位数 `i_unocc_med`（使无遮挡墙面基准对应 $0\text{ dB}$，阴影衰减区与 `ShadowRatio <= -6.0 dB` 阈值直接同尺度对齐）。
    - 论文展示表格（`Table 2-1` / `Table 3-1` / `Table 3-2`）按题面习惯兼标厘米（$\text{cm}$），回填阶段严格执行唯一换算 `value_cm = value_m * 100.0`，不在中间 JSON 混用厘米标量字段。
    - **符号别名对齐说明**（消除 [PAPER_SCAFFOLD.md](PAPER_SCAFFOLD.md) / [RESULTS_AND_FIGURES_CHECKLIST.md](RESULTS_AND_FIGURES_CHECKLIST.md) 早期预留记号与定稿模型记号差异）：
      - `C_B/A`（早先清单写法）$\equiv \Delta_{\text{B/A}}$（[model_q2.md](../../solutions/A/model_q2.md) §3.2 记号）$\leftrightarrow$ JSON 字段 `delta_ba_db`；
@@ -37,19 +41,19 @@
 | `q2_results.json` | `metrics_after_gain_env.{delta_ba_db, pbr_b_db, pslr_b_db, b_coverage_pct}` | `dict` (`float`) | `dB`（覆盖率 `%`） | `M2-Img-EnvBPA` 非相干包络对照指标（检验跨 33 组相干稳定性） | `Table 2-1` |
 | `q2_results.json` | `wall_a_apparent.{x_min_m, x_max_m, y_start_m, y_end_m, slope_dy_dx, tilt_deg, fit_r2}` | `dict` (`float`) | `m`, `m`, 无量纲, `deg`, 无量纲 | 前墙 A 脊线回归表观前表面轨迹 $y_A(x)$ 与倾角 $\theta_A=\arctan(\mathrm{d}y/\mathrm{d}x)$ | `Table 2-1`, `Fig 2-1` |
 | `q2_results.json` | `wall_b_apparent.{air_x_ranges_m, air_y_mean_m, air_tilt_deg, behind_a_x_range_m, behind_a_y_mean_m, delta_y_app_m, eps_r_diag}` | `dict` | `m`, `deg`, `m`, 无量纲 | 分区统计空气直射段与穿墙遮挡段视在深度、错位 $\Delta y_{\text{app}}$ 与可证伪诊断量 $\hat{\varepsilon}_r=(1+\Delta y_{\text{app}}/d_A)^2$ | `Table 2-1`, `Fig 2-1` |
-| `q2_results.json` | `row_consistency.{row_3_wall_b_y_m, row_5_wall_b_y_m, max_row_diff_cm}` | `dict` (`float`) | `m`, `m`, `cm` | 第 4 行与第 3/5 行跨行 3D 坐标校正定位一致性偏差 | `Fig 2-2`, §6.4 |
+| `q2_results.json` | `row_consistency.{row_3_wall_b_y_m, row_4_wall_b_y_m, row_5_wall_b_y_m, max_row_diff_cm}` | `dict` (`float`) | `m`, `cm` | 第 4 行与第 3/5 行跨行 3D 坐标校正后的后墙主峰位置与最大跨行定位偏差 | `Fig 2-2`, §6.4 |
 | `q2_arrays.npz` | `x_grid_m`, `y_grid_m` | `(N_x,)`, `(N_y,)` `float64` | `m` | 网格轴：$[-0.20,1.40]\times[0,2.50]\text{ m}$（`0.01 m` $\to 161\times 251$，或 `0.005 m` $\to 321\times 501$） | `Fig 2-1`, `Fig 2-2` |
 | `q2_arrays.npz` | `x_scan_m`, `j_group_ids`, `j_p_common` | `(33,)`, `(33,)`, `(33,)` | `m`, str, int | 33 组站位 $x_j=-0.20+0.05(j-1)$ 与共同 `sync` 包数（第 3 组 `P=3` 留痕） | §6.1, `Fig 2-1` |
 | `q2_arrays.npz` | `tau_curve_s`, `w_comp_curve` | `(K_tau,)`, `(K_tau,)` `float64` | `s`, 无量纲 | 两步封顶增益曲线 $W_{\text{comp}}(\tau)$（覆盖 $[0, 25]\text{ ns}$） | `Fig 2-2` |
-| `q2_arrays.npz` | `image_before_gain_coh`, `image_after_gain_coh`, `image_after_gain_env` | `(N_y, N_x)` `float64` | 归一化聚焦能量 | 未增益相干、增益相干、增益包络二维剖面能量矩阵（绘图取 $10\log_{10}(I/I_{\text{ref}})$ dB） | `Fig 2-1` |
-| `q2_arrays.npz` | `image_row3_coh`, `image_row5_coh`（可选） | `(N_y, N_x)` `float64` | 归一化聚焦能量 | 第 3 行 / 第 5 行跨高程对照组二维能量矩阵 | `Fig 2-2` |
+| `q2_arrays.npz` | `image_before_gain_coh`, `image_after_gain_coh`, `image_after_gain_env` | `(N_y, N_x)` `float64` | 归一化聚焦能量 | 未增益相干、第 4 行增益相干、增益包络二维线性能量矩阵（绘图按 $I_{\text{ref,Q2}}=\max(I_{\text{2D}}^{\text{coh}})$ 转 dB） | `Fig 2-1`, `Fig 2-2` |
+| `q2_arrays.npz` | `image_row3_coh`, `image_row5_coh`（**必交**） | `(N_y, N_x)` `float64` | 归一化聚焦能量 | 第 3 行 / 第 5 行跨高程 3D 校正对照组二维线性能量矩阵（用于 `Fig 2-2` 跨行一致性实图对照） | `Fig 2-2` |
 
 ### 2.2 Q2 论文图表槽位回填对照表（实测状态全部 `[待补]`）
 
 | 论文图/表编号 | 正文位置 | 所需数据来源字段 / 数组 | 图表呈现维度与单位口径 | 当前状态 |
 |---|---|---|---|---|
-| **`Fig 2-1`** | §6.4 | `x_grid_m`, `y_grid_m`, `image_before_gain_coh`, `image_after_gain_coh`, `wall_a_apparent`, `wall_b_apparent` | 1×2 共享动态范围色标（dB）2D 剖面热图（坐标 $\text{cm}$）+ 代表 $x$ 纵切线 $y$ 向功率截面曲线（叠加墙 A/B 脊线） | **`[待补]`** |
-| **`Fig 2-2`** | §6.4 | `tau_curve_s`, `w_comp_curve`, `gain_selection`, `row_consistency`, `image_row3_coh`, `image_row5_coh` | 左：第 4 行 vs 第 3/5 行跨行一致性剖面/脊线对比（$\text{cm}$）；右：$\alpha_{\text{gain}}$（$\text{ns}^{-1}$）选参拐点曲线（$\Delta_{\text{far/near}}, C_{\text{far/med}}$，dB） | **`[待补]`** |
+| **`Fig 2-1`** | §6.4 | `x_grid_m`, `y_grid_m`, `image_before_gain_coh`, `image_after_gain_coh`, `wall_a_apparent`, `wall_b_apparent` | 1×2 共享动态范围色标（dB，参考 $I_{\text{ref,Q2}}=\max(I_{\text{2D}}^{\text{coh}})$）2D 剖面热图（坐标 $\text{cm}$）+ 代表 $x$ 纵切线 $y$ 向功率截面曲线（叠加墙 A/B 脊线） | **`[待补]`** |
+| **`Fig 2-2`** | §6.4 | `x_grid_m`, `y_grid_m`, `image_after_gain_coh`（第 4 行）, `image_row3_coh`（第 3 行）, `image_row5_coh`（第 5 行）, `row_consistency`, `tau_curve_s`, `w_comp_curve`, `gain_selection` | 左：第 4 行 vs 第 3/5 行跨行一致性剖面热图/脊线对比（$\text{cm}$）；右：$\alpha_{\text{gain}}$（$\text{ns}^{-1}$）选参拐点曲线（$\Delta_{\text{far/near}}, C_{\text{far/med}}$，dB） | **`[待补]`** |
 | **`Table 2-1`** | §6.4 | `metrics_before_gain`, `metrics_after_gain_coh`, `metrics_after_gain_env`, `wall_a_apparent`, `wall_b_apparent` | 对比行：`未增益` / `CohBPA(增益后)` / `EnvBPA(增益后)`；列：`Δ_B/A (dB)`、`PBR_B (dB)`、`PSLR_B (dB)`、覆盖率（%）、前墙 $y_A(x)$ 与倾角（$\text{cm},\ ^\circ$）、后墙 $y_B^{\text{air}}$ / $y_B^{\text{behind-A}}$（$\text{cm}$）及 $\hat{\varepsilon}_r$ 诊断注记 | **`[待补]`** |
 
 ---
@@ -81,17 +85,19 @@
 | `q3_metal_results.json` | `metal_objects[].{object_id, inferred_class, peak_xyz_m[3], centroid_10db_xyz_m[3], bbox_10db_m[6], delta_z_10db_m, peak_above_med_db}` | `list[dict]` | `m`, `dB` | 逐检出目标主峰 $(\hat{x}_p,\hat{y}_p,\hat{z}_p)$、$-10\text{ dB}$ 加权质心 $(\hat{x}_c,\hat{y}_c,\hat{z}_c)$、包围盒与垂向跨度 $\Delta\hat{z}_{10\text{dB}}$（高立柱 vs 低金属铲不硬编码先验坐标） | `Table 3-2`, `Fig 3-2` |
 | `q3_metal_results.json` | `shadow_diagnostics[].{object_id, y_shadow_start_m, y_wall_band_m[2], i_shadow_bar, i_unocc_med, shadow_ratio_db, shadow_confirmed}` | `list[dict]` | `m`, 能量, `dB`, `bool` | 后方区间 $y>\hat{y}_p+0.25\text{ m}$ 阴影均能 $\bar{I}_{\text{shadow}}^{(m)}$ 与无遮挡墙面中位数 $\bar{I}_{\text{unocc}}$ 比值（`ShadowRatio <= -6.0 dB` 确证遮挡；注：`ShadowRatio` 指标由本文定义，[8] 支撑遮挡物理机制） | `Table 3-2`, `Fig 3-2` |
 | `q3_metal_results.json` | `resolution_limits.{dy_res_m, dx_res_m, dz_res_at_08m_m, dz_res_at_20m_m}` | `dict` (`float`) | `m` | 物理分辨边界：$\Delta y\approx 0.1071\text{ m},\ \Delta x\approx 0.0354\text{ m},\ \Delta z(2\text{ m})\approx 0.41\text{ m}$ | §7.4, §8.2 |
+| `q3_metal_results.json` | `shadow_profile_axis_spec.{y_wall_band_idx_start, y_wall_band_idx_end, ref_energy_key, db_floor_ratio}` | `dict` | int, str, float | 锁定 `y_wall_band_m == y_grid_m[idx_start:idx_end]` 精确切片索引、`ref_energy_key="i_unocc_med"` 与截断底限 `1e-12` | `Fig 3-2` |
 | `q3_metal_arrays.npz` | `x_grid_m`, `y_grid_m`, `z_grid_m` | `(N_x,)`, `(N_y,)`, `(N_z,)` `float64` | `m` | $[0.00,1.30]\times[0,2.50]\times[0.20,0.80]\text{ m}$ 三维坐标轴 | `Fig 3-2` |
+| `q3_metal_arrays.npz` | `y_wall_band_m`（**必交**） | `(N_y_wall,)` `float64` | `m` | 阴影剖面纵轴（对应 `y_grid_m[y_wall_band_idx_start:y_wall_band_idx_end]` 连续切片，与 `shadow_profile_x_y` 第一维严格等长） | `Fig 3-2` |
 | `q3_metal_arrays.npz` | `image_3d_coh`, `image_3d_env`, `image_3d_shadow_gain` | `(N_z, N_y, N_x)` `float64` | 归一化聚焦能量 | 主定位 3D 相干能量、包络对照能量及辅助观察后墙阴影的高增益 3D 能量网格 | `Fig 3-2` |
-| `q3_metal_arrays.npz` | `shadow_profile_x_y` | `(N_y_wall, N_x)` `float64` | 归一化聚焦能量 / `dB` | 后墙带沿 $x$ 横向与 $y$ 纵向阴影衰减能量剖面，用于 `Fig 3-2` 右侧遮挡对比图 | `Fig 3-2` |
+| `q3_metal_arrays.npz` | `shadow_profile_x_y` | `(N_y_wall, N_x)` `float64` | 归一化聚焦能量（线性能量存储） | 后墙带沿 `y_wall_band_m` 纵轴与 `x_grid_m` 横轴之线性能量截面；绘图时统一按 $10\log_{10}(\max(I, 10^{-12}\,I_{\text{ref}}) / I_{\text{ref}})$（$I_{\text{ref}} = \bar{I}_{\text{unocc}}$ `i_unocc_med`）转为 dB | `Fig 3-2` |
 
 ### 3.3 Q3 论文图表槽位回填对照表（实测状态全部 `[待补]`）
 
 | 论文图/表编号 | 正文位置 | 所需数据来源字段 / 数组 | 图表呈现维度与单位口径 | 当前状态 |
 |---|---|---|---|---|
-| **`Fig 3-1`** | §7.2–§7.4 | `q3_wall_arrays.npz`: `image_3d_coh`, `proj_xy_max`, `proj_xz_max`, `proj_yz_max`, `slice_xy_z4`；`wall_a_3d`, `wall_b_3d` | 三维 $-10\text{ dB}$ / 阈值等值面立体图 + 三视图正交投影切片（$xOy, xOz, yOz$，单位 $\text{cm}$） | **`[待补]`** |
+| **`Fig 3-1`** | §7.2–§7.4 | `q3_wall_arrays.npz`: `image_3d_coh`, `proj_xy_max`, `proj_xz_max`, `proj_yz_max`, `slice_xy_z4`；`wall_a_3d`, `wall_b_3d` | 三维 $-10\text{ dB}$ / 阈值等值面立体图 + 三视图正交投影切片（$xOy, xOz, yOz$，单位 $\text{cm}$，按 $I_{\text{ref,Q3}}=\max(I_{\text{3D}}^{\text{coh}})$ 转 dB） | **`[待补]`** |
 | **`Table 3-1`** | §7.4 | `wall_a_3d`, `wall_b_3d`, `q2_q3_reconciliation` | 行：`前墙 A`、`后墙 B（空气段 / 遮挡段）`；列：包围盒 $[x,y,z]$（$\text{cm}$）、中心/前界面方程（$\text{cm}, ^\circ$）、与 Q2 $z_4$ 切片偏差（$\text{cm}$）及 `CohBPA3D/EnvBPA3D` 对比度（$\text{dB}$） | **`[待补]`** |
-| **`Fig 3-2`** | §7.3–§7.4 | `q3_metal_arrays.npz`: `image_3d_coh`, `shadow_profile_x_y`；`metal_objects[]`, `shadow_diagnostics[]` | 左：金属柱与金属铲三维聚焦高亮等值面及质心/包围盒标注；右：金属后方墙面横向/深度阴影衰减对比剖面（标注 `ShadowRatio` $\text{dB}$） | **`[待补]`** |
+| **`Fig 3-2`** | §7.3–§7.4 | `q3_metal_arrays.npz`: `x_grid_m`, `y_grid_m`, `z_grid_m`, `y_wall_band_m`, `image_3d_coh`, `shadow_profile_x_y`；`shadow_profile_axis_spec`, `metal_objects[]`, `shadow_diagnostics[]` | 左：金属柱与金属铲三维聚焦高亮等值面（$\text{cm}$，$I_{\text{ref,Q3}}=\max(I_{\text{3D}}^{\text{coh}})$）及质心/包围盒标注；右：沿 `(x_grid_m, y_wall_band_m)` 之金属后方墙面遮挡剖面（以 `i_unocc_med` 作 $0\text{ dB}$ 参考，标注 `ShadowRatio` $\text{dB}$） | **`[待补]`** |
 | **`Table 3-2`** | §7.4 | `metal_objects[]`, `shadow_diagnostics[]`, `anomaly_isolation` | 严格分列“主峰 vs $-10\text{ dB}$ 质心”与“XY（立柱）vs 3D（金属铲）”口径：$(\hat{x},\hat{y},\hat{z})$（$\text{cm}$）、包围盒与 $\Delta\hat{z}_{10\text{dB}}$（$\text{cm}$）、`ShadowRatio`（$\text{dB}$）及第 8 组/孤儿异常核查结论 | **`[待补]`** |
 
 ---
