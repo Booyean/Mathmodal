@@ -7,7 +7,7 @@
  "phase_contract": "E0-N0-PHASE-1",
  "phase_evidence_contract": "E0-N0-PHASE-EVIDENCE-1",
  "prereg_id": "A-Q1-N0-PREREG-1",
- "accept_contract": "E0-N0-ACCEPT-2",
+ "accept_contract": "E0-N0-ACCEPT-3",
  "method_scope": "M0-DW-Subspace/rank-2/in-window-2coef",
  "status": "frozen_for_b02",
  "date_utc": "2026-11-28",
@@ -180,7 +180,7 @@
  "anchors": {
   "main_commit": "c7b841efe67192a73a96894fb5a0243b336a9468",
   "prereg_path": "checks/A/e0_n0_prereg.json",
-  "prereg_sha256_lf": "721eb744e1e5d0ca1b0edbbc32f17c207ac419b193ed51002477d4de065c2ade",
+  "prereg_sha256_lf": "fdd2edabf808da83a7c8a70b33b1e829303f108d2b730f509043919f9b8b1d80",
   "e0_config_path": "experiments/A/A-Q1-E0/config.json",
   "e0_config_sha256_lf": "8fb6821fa3335ef748e16ad2f5b5b8fc818c13cbe9d3315377faf48d5e40e06a",
   "data_oracle_sha256_lf": "f8c7572eaa0a6d54c02b3b84f033d4a91b6e0cca7585f2228918081963595f3c",

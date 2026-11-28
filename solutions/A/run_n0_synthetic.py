@@ -74,8 +74,10 @@ DRYRUN_CONTRACT = "E0-C-DRYRUN-1"
 #: 包内 `registration.prereg_sha256` 记录实际消费的那份 prereg 字节，不预设版本。
 PREREG_ACCEPT_CONTRACTS = ("E0-N0-ACCEPT-2", "E0-N0-ACCEPT-3")
 #: 冻结的 `n0_config.json`（纯 LF 口径；见 coordination/A_Q1_N0_PHASE_EVIDENCE.md §5）。
+#: `86b47241…` = 2026-11-28 对齐 `accept_contract=E0-N0-ACCEPT-3` 与
+#: `anchors.prereg_sha256_lf=fdd2edab…` 之后的字节；旧值 `ec396737…` 为 ACCEPT-2 声明。
 FROZEN_N0_CONFIG_LF_SHA256 = (
-    "ec39673787e5dd05986095bca8f7c6cb41904dc13265e40798157ad9efadd32d"
+    "86b472416f30c7fbfa26b958d577a105e049571a863981b4d8285d7dea2d9470"
 )
 #: 合成夹具固定生成时间，保证两次进程的结果 JSON 有同一来源标签。
 FIXED_GENERATED_AT = "2026-11-28T12:48:38Z"
@@ -372,10 +374,14 @@ def build_preflight(*, repo: str, config_path: str, prereg_path: str,
             pre = _read_json(prereg_path)
         except Exception:
             pre = {}
+    # 契约版本必须两端一致：prereg 的 `accept_contract` 与 n0_config 的声明同值，
+    # 否则“配置声明 ACCEPT-2、包内消费 ACCEPT-3”的漂移会悄悄通过。
     ck("prereg_contract",
        pre.get("id") in PREREG_ACCEPT_CONTRACTS and pre.get("status") == "frozen"
-       and pre.get("n0_contract") == "E0-N0-1",
-       "%s/%s" % (pre.get("id"), pre.get("status")))
+       and pre.get("n0_contract") == "E0-N0-1"
+       and pre.get("accept_contract") == cfg.get("accept_contract"),
+       "%s/%s cfg=%s" % (pre.get("id"), pre.get("status"),
+                         cfg.get("accept_contract")))
     th = pre.get("thresholds") or {}
     method = cfg.get("method") or {}
     ck("prereg_thresholds_match_config",

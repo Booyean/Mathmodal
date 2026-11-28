@@ -40,3 +40,12 @@ experiments/A/A-Q2Q3-SYN/results/*.npz binary
 # N0 预登记契约（ACCEPT-3）：按原始字节保全（含 CRLF），与包内
 # registration.prereg_sha256 的 raw 口径一致；验收器 N12 同时接受 raw/LF。
 /checks/A/e0_n0_prereg.json -text
+
+# N0 合成双进程证据包（ACCEPT-3 + 配置对齐重建）：JSON/日志/台账 LF 检出，NPZ 二进制。
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3_cfg/*.json text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3_cfg/**/*.json text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3_cfg/*.log text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3_cfg/**/*.log text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3_cfg/SHA256SUMS.txt text eol=lf
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3_cfg/*.npz binary
+/experiments/A/A-Q1-E0/n0/synthetic_two_process_accept3_cfg/**/*.npz binary
