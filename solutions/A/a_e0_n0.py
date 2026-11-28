@@ -687,23 +687,45 @@ def suppression_from_stats(
 
 
 def suppression_from_arrays(
-    z_x: np.ndarray, z_t: np.ndarray, z_d: np.ndarray, mask: np.ndarray
+    z_x: np.ndarray,
+    z_t: np.ndarray,
+    z_d: np.ndarray,
+    mask: np.ndarray,
+    arm: str = "c2",
+    rank_effective: int = 2,
 ) -> Dict[str, Any]:
-    """数组路径（``lstsq``）独立重算 (a, b) 与 Supp，用于 C8' 交叉核对。"""
+    """数组路径独立重算 (a, b) 与 Supp，用于 C8' 交叉核对。
+
+    必须与 ``solve_coefficients`` 解**同一个模型**：``c0`` 固定 ``a=1,b=0``；
+    ``c1``（或退化秩 1）只解 ``a``、``b=0``；``c2`` 解两个系数。
+    否则 c0/c1 的“双路径差”只是模型差，不是实现差。
+    """
+    arm = assert_arm(arm)
     w = mask[None, :]
     x = np.where(w, z_x, 0.0).reshape(-1)
     t = np.where(w, z_t, 0.0).reshape(-1)
     d = np.where(w, z_d, 0.0).reshape(-1)
-    design = np.stack([t, d], axis=1)
-    coef, *_ = np.linalg.lstsq(design, x, rcond=None)
-    resid = x - design @ coef
+    if arm == "c0":
+        a = 1.0 + 0.0j
+        b = 0.0 + 0.0j
+        resid = x - t
+    elif arm == "c1" or rank_effective < 2:
+        ttt = float(np.vdot(t, t).real)
+        a = complex(np.vdot(t, x) / ttt) if ttt > 0.0 else 0.0 + 0.0j
+        b = 0.0 + 0.0j
+        resid = x - a * t
+    else:
+        design = np.stack([t, d], axis=1)
+        coef, *_ = np.linalg.lstsq(design, x, rcond=None)
+        a, b = complex(coef[0]), complex(coef[1])
+        resid = x - design @ coef
     e_before = float(np.sum(np.abs(x) ** 2))
     e_after = float(np.sum(np.abs(resid) ** 2))
     if e_after <= 0.0:
         raise N0Stop("S4", "数组路径残余功率非正")
     return {
-        "a": complex(coef[0]),
-        "b": complex(coef[1]),
+        "a": a,
+        "b": b,
         "supp_db": 10.0 * math.log10(e_before / e_after),
     }
 
@@ -756,7 +778,9 @@ def apply_arm(
     stats = _window_stats(z_x, z_t, z_d, mask)
     coeffs = solve_coefficients(stats, arm, rank_effective=rank_effective)
     supp_stats = suppression_from_stats(stats, coeffs)
-    arr = suppression_from_arrays(z_x, z_t, z_d, mask)
+    arr = suppression_from_arrays(
+        z_x, z_t, z_d, mask, arm=arm, rank_effective=rank_effective
+    )
     x_after = x_cal - complex(coeffs["a"]) * t_mean - complex(coeffs["b"]) * d1
     z_after = E0S.z_at_delays(x_after, prepared["tpl"], f_r, prepared["delays"])
     e_before = float(np.sum(np.abs(np.where(mask[None, :], z_x, 0.0)) ** 2))
@@ -1252,8 +1276,9 @@ def run_synthetic(
         "total_values": len(c8_deltas),
         "p2_folds_per_arm": len(p2_per_arm[N0_ARMS[0]]),
         "arms": list(N0_ARMS),
+        "metric": "supp_db（充分统计量路径 vs 数组路径的 Supp 差，两条路径解同一臂模型）",
         "max_delta_coeff": float(max(c8_coeff_deltas)) if c8_coeff_deltas else 0.0,
-        "coeff_note": "系数差仅作诊断（stats 路径含 λ 正则，数组路径不含），不参与 C8' 判定",
+        "coeff_note": "系数差仅作诊断，不参与 C8' 判定（Supp 为门槛量）",
     }
 
     # ---- P3 单侧非退化

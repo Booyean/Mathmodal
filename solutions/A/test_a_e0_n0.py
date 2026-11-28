@@ -352,15 +352,17 @@ class CoefficientTests(unittest.TestCase):
         self.assertEqual(c1["b"], 0.0 + 0j)
         self.assertFalse(c1["second_mode_used"])
 
-    def test_stats_and_array_paths_agree(self):
-        stats, z_x, z_t, z_d, mask = self._known_stats(0.9 + 0.2j, -0.4 + 0.15j)
-        coeffs = N.solve_coefficients(stats, "c2")
-        arr = N.suppression_from_arrays(z_x, z_t, z_d, mask)
-        self.assertLess(abs(complex(coeffs["a"]) - arr["a"]), 1e-6)
-        self.assertLess(abs(complex(coeffs["b"]) - arr["b"]), 1e-6)
-        self.assertLess(
-            abs(N.suppression_from_stats(stats, coeffs) - arr["supp_db"]), 1e-6
-        )
+    def test_stats_and_array_paths_agree_per_arm(self):
+        # 两条路径必须解同一个臂模型：c0 a≡1/b=0、c1 只解 a、c2 解 (a,b)。
+        stats, z_x, z_t, z_d, mask = self._known_stats(0.9 + 0.2j, -0.4 + 0.15j, seed=17)
+        for arm in ("c0", "c1", "c2"):
+            coeffs = N.solve_coefficients(stats, arm)
+            arr = N.suppression_from_arrays(z_x, z_t, z_d, mask, arm=arm)
+            self.assertLessEqual(
+                abs(N.suppression_from_stats(stats, coeffs) - arr["supp_db"]), 1e-9, arm
+            )
+            self.assertLessEqual(abs(complex(coeffs["a"]) - arr["a"]), 1e-9, arm)
+            self.assertLessEqual(abs(complex(coeffs["b"]) - arr["b"]), 1e-9, arm)
 
     def test_rank2_beats_rank1_when_second_mode_present(self):
         stats, *_ = self._known_stats(1.0 + 0j, 0.5 + 0j)
