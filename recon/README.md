@@ -15,7 +15,18 @@
 | A 题 `.dat` 清单哈希 | `86305548ac35e44bf07f15fbbfa2e10c30713d0e64721e7ec81d37939f3cfa06`（881 文件，801,111,612 B） |
 | B 题清单哈希 | `79ce9798af0fe5e0c002f4601c03f1efa3df371bc1a900825250ddedcb5d1dd2`（12 文件） |
 
-清单哈希的算法：把 `sha256 + 两个空格 + 相对路径` 按相对路径排序后以 `\n` 连接（末尾补一个 `\n`），取整体 SHA256。复算方式见 `manifests/a_dat_manifest.csv` 的 `sha256`、`rel_path` 列。
+清单哈希的算法：把 `sha256 + 两个空格 + 相对路径` 按**清单行序**以 `\n` 连接（末尾补一个 `\n`），取整体 SHA256。该行序来自 `scripts/a_inventory.py` 对 **OS 路径字符串**（`\` 分隔）的排序，等价于直接按 `manifests/a_dat_manifest.csv` 的行序读取。
+
+> 注意：按 CSV 的 `rel_path` 列（`/` 分隔）重新排序会得到 **不同** 的摘要 `02fbffdeb705aa81da9832877bd2d86fbf495efd24ef2530d1cbe5f6d04b0140`——`/`(0x2F) 与 `\`(0x5C) 的码位不同，目录与其子文件的相邻顺序会变。复算请直接用行序，勿再排序。
+
+复算（在仓库根目录执行，输出应与上表 `86305548…` 一致）：
+
+```python
+import csv, hashlib
+rows = list(csv.DictReader(open("recon/manifests/a_dat_manifest.csv", encoding="utf-8-sig", newline="")))
+data = "".join(f"{r['sha256']}  {r['rel_path']}\n" for r in rows)
+print(hashlib.sha256(data.encode("utf-8")).hexdigest())  # 86305548ac35e44bf07f15fbbfa2e10c30713d0e64721e7ec81d37939f3cfa06
+```
 
 ## 复跑
 
