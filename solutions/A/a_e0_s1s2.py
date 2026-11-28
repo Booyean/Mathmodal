@@ -764,6 +764,65 @@ def calibrate_air(
     }
 
 
+#: PLAN §3.1 并列裁决容差：目标函数差 < 1e-6 dB 视为并列（V1-20261128-01）。
+TIE_TOL_DB = 1e-6
+
+
+def _nearest_grid_index(grid: Sequence[float], value: float) -> int:
+    """返回 ``value`` 在有序/无序候选网格中的最近索引（等价时取较小值）。"""
+    return min(
+        range(len(grid)),
+        key=lambda k: (abs(float(grid[k]) - float(value)), float(grid[k])),
+    )
+
+
+def rank_lambda_candidates(
+    rows: Sequence[Dict[str, Any]],
+    grid_cal: Sequence[float],
+    grid_inv: Sequence[float],
+    default_cal: float,
+    default_inv: float,
+) -> Dict[str, Any]:
+    """按 PLAN §3.1 对 9 个空场 LOO 候选排序并返回最优点。
+
+    目标差 ``>= 1e-6 dB`` 时按 ``J_air`` 严格降序；差 ``< 1e-6 dB`` 的候选视为
+    并列，依次比较 ``λ_cal + λ_inv`` 更小 → 距默认点的网格索引 Manhattan 距离
+    更近（等价时 Euclidean）→ 字典序更小。旧实现只按精确 ``J_air`` 排序
+    （``V1-20261128-01``），近并列时可能与 PLAN/论文 §5.2.2 口径不一致。
+    """
+    if not rows:
+        raise ValueError("empty lambda candidate grid")
+    ordered = sorted(rows, key=lambda r: -float(r["J_air_db"]))
+    best_j = float(ordered[0]["J_air_db"])
+    tied = [
+        r for r in rows if best_j - float(r["J_air_db"]) < TIE_TOL_DB
+    ]
+    i0 = _nearest_grid_index(grid_cal, default_cal)
+    j0 = _nearest_grid_index(grid_inv, default_inv)
+
+    def _tie_key(row: Dict[str, Any]) -> Tuple[Any, ...]:
+        i = _nearest_grid_index(grid_cal, row["lambda_cal"])
+        j = _nearest_grid_index(grid_inv, row["lambda_inv"])
+        di = abs(i - i0)
+        dj = abs(j - j0)
+        return (
+            float(row["lambda_cal"]) + float(row["lambda_inv"]),
+            di + dj,
+            math.hypot(di, dj),
+            float(row["lambda_cal"]),
+            float(row["lambda_inv"]),
+        )
+
+    best = min(tied, key=_tie_key)
+    return {
+        "best": best,
+        "ordered": ordered,
+        "tied": tied,
+        "near_tie": len(tied) > 1,
+        "tie_tolerance_db": TIE_TOL_DB,
+    }
+
+
 def select_lambdas_air_loo(
     aligned_air: Sequence[np.ndarray],
     ref_pos: int,
@@ -807,20 +866,10 @@ def select_lambdas_air_loo(
                 }
             )
 
-    def _sort_key(row: Dict[str, Any]) -> Tuple[Any, ...]:
-        return (
-            -row["J_air_db"],
-            row["lambda_cal"] + row["lambda_inv"],
-            abs(
-                math.log10(row["lambda_cal"] / default_cal)
-                + math.log10(row["lambda_inv"] / default_inv)
-            ),
-            row["lambda_cal"],
-            row["lambda_inv"],
-        )
-
-    ordered = sorted(rows, key=_sort_key)
-    best = ordered[0]
+    ranked = rank_lambda_candidates(
+        rows, grid_cal, grid_inv, default_cal, default_inv
+    )
+    best = ranked["best"]
     default_row = min(
         rows,
         key=lambda r: abs(r["lambda_cal"] - default_cal)
@@ -851,6 +900,16 @@ def select_lambdas_air_loo(
         "n_air": n_air,
         "folds": n_air,
         "budget_pairs": len(rows),
+        "tie_tolerance_db": ranked["tie_tolerance_db"],
+        "near_tie": bool(ranked["near_tie"]),
+        "tied_candidates": [
+            {
+                "lambda_cal": r["lambda_cal"],
+                "lambda_inv": r["lambda_inv"],
+                "J_air_db": r["J_air_db"],
+            }
+            for r in ranked["tied"]
+        ],
     }
 
 
