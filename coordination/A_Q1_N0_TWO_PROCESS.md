@@ -130,9 +130,20 @@ python solutions/A/test_run_n0_synthetic.py -v
 包内 `verify/probe.json`、`verify/accept.json` 是本轮上述两次外部工具调用的原始报告
 （`verify/probe.log`、`verify/accept.log` 为控制台输出）。
 
+### 5.1 干净检出复核（提交 `f6fdcf5`）
+
+在独立 worktree 检出 `f6fdcf5`（`core.autocrlf=true`，包的 JSON/日志/台账已由
+`.gitattributes` 钉 `eol=lf`、NPZ 钉 `binary`）后复核：
+
+- 台账 **18/18 行**哈希逐字节命中（`selfcheck = SELF_OK`，`_ledger_problems = []`）；
+- `e0c_repeat.json` 两条记录的 `results_sha256`/`arrays_sha256` 与实际文件逐一相等；
+- 探针 **`READY` 721/721**；验收器 **13/14 PASS**（`N13` PASS，仅 `N9` FAIL→`S9`，
+  `insufficient=[]`）；
+- `solutions/A/test_run_n0_synthetic.py` **12/12 OK**（无 skip）。
+
 ## 6. 交付物与台账
 
-`experiments/A/A-Q1-E0/n0/synthetic_two_process/SHA256SUMS.txt` 共 **17 行**，覆盖：
+`experiments/A/A-Q1-E0/n0/synthetic_two_process/SHA256SUMS.txt` 共 **18 行**，覆盖：
 
 | 文件 | SHA256（前 12 位） |
 |---|---|
@@ -150,6 +161,7 @@ python solutions/A/test_run_n0_synthetic.py -v
 | `run.log` / `two_process.json` | `da04efc12b41` / `ce8bfa2da53c` |
 | `verify/probe.json` / `verify/accept.json` | `4561041c5f83` / `9bbc0e58b3c0` |
 | `verify/probe.log` / `verify/accept.log` | `84d76ae1d099` / `7121d75e3286` |
+| `SYNTHETIC.md`（包内警示） | `b39507b77d47` |
 
 入口自检：`solutions/A/test_run_n0_synthetic.py` **12/12 OK**（含 preflight 32 项、
 dryrun 11 项、worker 退出码回填、combine 摘要回填、数组篡改/时间窗重叠/退出码不同
