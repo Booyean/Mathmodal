@@ -203,6 +203,8 @@ python solutions/A/a_e0_c.py --mode execute `
 
 **独立验收器实测（合成，非真实数据）**：官方 `accept_e0c.py` 对合成端到端交付包给出 **`PASS`（C1–C15 全过）**；其中 C4 的 `inputs[]` 用真实数据 oracle 身份替换（合成 `.dat` 不可能携带真实 SHA），其余字段全部由生产链路产生。该结果只证明“接口/口径与检查器兼容”，**不证明**真实 E0-C 会通过门槛。
 
+**`E0C-CL-6` 两进程合成包的生产者预检（2026-11-28，官方检查器实测）**：用 `python solutions/A/e0c_official_precheck.py --checker <main>/checks/A/e0_c_accept/accept_e0c.py` 在 12 组合成 `.dat` 上按生产链路跑**两个独立进程**，再由官方 `accept_e0c.py`（main `0386055`；`E0-PREREG-3` + `E0-C-C12-REPEAT-1`）验收：**C12 PASS**——`manifest_source="e0c_repeat.json#runs"`，两次 `pid` 为 26288 / 7604，时间窗 `09:24:53→09:27:21` 与 `09:27:23→09:29:52`（UTC）不重叠，`runs[0]` 绑定顶层 `e0c_results.json`/`e0c_arrays.npz`、`runs[1]` 绑定 `repeat_runs/run-2/`，用第二次运行的 npz 独立重算两组 `Supp/PSLR/PNR/d_hat/abs_err` 与交付 JSON 一致，`duplicate_serialization_detected=false`；C1–C3、C5–C15 全 PASS，**仅 C4 FAIL**——96 个合成文件总字节与 oracle 相同（`88,073,632 B`），但文件名不是真实白名单（`2026-01-01-00-00-00_16000_*` vs `2026-11-12-20-50-32_16000_*`），属合成夹具性质。该结果只证明**接口与 C12 证据形态**能被官方检查器机械接受，**不证明**真实 E0-C 会通过门槛；独立复验仍归 `my_deepseek`。
+
 ---
 
 ## 3. 通过门槛（可冻结条件）
@@ -286,7 +288,7 @@ python solutions/A/a_e0_c.py --mode execute `
 
 | 编号 | 事项 | 状态 / 需要什么 |
 |---|---|---|
-| B-01 | `solutions/A/a_e0_c.py` 主运行程序 | **已交付（E0C-CL-4/-6）**：`--mode check/execute/execute-worker`、`--approval-ref` 强制、C12 两独立进程运行与 `e0c_repeat.json`、`repeat_runs/run-2/` 证据、E0-PREREG-3 全字段接口、**83 项作者测试**（合成 `.dat` 端到端 + 7 类 C12 反例）。**待补**：CL-6 的两进程合成包尚未跑官方 `accept_e0c.py`（CL-5 的 C1–C15 PASS 属旧 `repeat_run` 结构），列为验证方复验项。真实运行仍待 B-02 |
+| B-01 | `solutions/A/a_e0_c.py` 主运行程序 | **已交付（E0C-CL-4/-6）**：`--mode check/execute/execute-worker`、`--approval-ref` 强制、C12 两独立进程运行与 `e0c_repeat.json`、`repeat_runs/run-2/` 证据、E0-PREREG-3 全字段接口、**83 项作者测试**（合成 `.dat` 端到端 + 7 类 C12 反例）。**已补**：CL-6 的两进程合成包已用官方 `accept_e0c.py`（main `0386055`）预检，**C12 PASS**，仅 C4 因合成文件名非真实白名单而 FAIL（见 §2.5）；独立复验仍归验证方。真实运行仍待 B-02 |
 | B-02 | 真实信号执行放行 | **未获**。需 `codex` 核对本清单白名单、读前路径校验与停止条件后明确放行；放行前 `--mode execute` 一律拒绝 |
 | B-03 | `E0-T` | **禁止**。须 E0-C 全部门槛可冻结并锁配置后单次盲评 |
 | B-04 | 目标组标称距离与真实物理距离的关系 | 未知（O-D0-04）；只按标称标签报告误差，不宣称绝对测距精度 |
@@ -320,7 +322,7 @@ python solutions/A/a_e0_c.py --mode execute `
 | 入口 check | `a_e0_c.py --mode check` 退出码 `0`、`ready_for_execute=true`、`packets_parsed=0`、12 组边界扫描无问题 |
 | 入口测试 | **83 / 83 通过**（合成频谱数学链 + 合法 `.dat` 写读回 + 桩 preflight 的**两个独立进程**完整 E0-C + E0-PREREG-3/C12 交付接口 + `e0c_repeat.json` 两次进程证据 + 7 类 C12 反例 + 门槛/CLI 边界） |
 | C12 证据 | 合成端到端包：`n_runs=2`、两次进程 `pid` 互异、时间窗顺序不重叠、`run_id` 互异、`runs[0]` 绑定顶层 `e0c_results.json`/`e0c_arrays.npz`、`runs[1]` 绑定 `repeat_runs/run-2/`、两次数组逐字节相同、指标 `max|Δ|=0`、分类一致；7 类反例（缺清单、缺 `runs`、重复记录、复用证据、时间窗重叠、SHA 被换、第二次指标不一致）全部被拒绝；任一时刻单进程单线程 |
-| E0-PREREG-3 接口 | `E0C-CL-5` 时官方 `accept_e0c.py` 对生产链路合成端到端包 **`PASS`（C1–C15 全过）**；**`E0C-CL-6` 改了两进程证据结构，尚未重跑官方验收器，属待验证方复验项**（本表不把未复跑写成通过）。C4 的 `inputs[]` 用真实数据 oracle 身份替换（合成 `.dat` 无法携带真实 SHA），非真实数据 |
+| E0-PREREG-3 接口 | `E0C-CL-5` 时官方 `accept_e0c.py` 对生产链路合成端到端包 **`PASS`（C1–C15 全过）**；`E0C-CL-6` 的两进程包已于 2026-11-28 用官方检查器（main `0386055`）预检：**C12 PASS、仅 C4 FAIL**（合成文件名不在真实白名单；96 文件仍为 `88,073,632 B`），详见 §2.5。独立复验仍属验证方；C4 的真实输入身份只能由真实包证明 |
 
 - **本清单不产生任何真实测距数值**：入口已交付但 E0-C 未放行（B-02），`--mode execute` 缺 `--approval-ref` 时拒绝启动。
 - 本清单不修改 `PLAN.md`、`config.json`、`SPLIT.json`、D0/D1-2/E0-S 生产代码或任何原始数据；只新增文档、只读自检工具、读前路径校验与 E0-C 入口/测试。
@@ -337,3 +339,4 @@ python solutions/A/a_e0_c.py --mode execute `
 | E0C-CL-4 | 2026-11-28 | 回应 `V1-20261128-01/-02`（`E0-PREREG-3` 接口冻结）：① 合入 PLAN §3.1 近并列兜底（`1e-6 dB` → λ 和 → 索引距离 → 字典序）；② execute 产物补齐顶层 `groups[12]`、`inputs[96]`、`array_map` + `p_cal/p_sup (9,10,63)`、`arrays_sha256`/`metrics_sha256`/`repeat_run`、`resource.single_process`、`e0c_air_loo.json` 冻结结构；③ 目标指标改为按交付数组（0.05/0.25 ns τ、0.1 mm d）离散重算，写前自检 C10；④ 确定性 npz 两次序列化比对；⑤ 官方 `accept_e0c.py` 对合成端到端包 C1–C15 全过，作者测试 72/72 |
 | E0C-CL-5 | 2026-11-28 | 回应 `PR #33` 的 C12 阻塞（“两次序列化”不是两次独立运行）：① `run_execute` 增加 `run_execute_repeated`，`--mode execute` 默认 `--repeat-runs 2` 顺序做两次**完整独立重算**（重新 preflight、重读 96 个 `.dat`、不共享数组），各自落盘 `repeat_runs/run-K/e0c_arrays.npz` + `run_manifest.json` + `run.log`；② `repeat_run` 改为两次运行记录（`run_id`/`pid`/起止时间/墙钟/摘要/分类/逐案指标），写盘前 `verify_repeat_evidence` 重算证据摘要，`write_outputs` 拒绝重复序列化/复用证据/缺证据；③ `--repeat-runs<2` 用法拒绝；④ 作者测试扩至 **90/90**，含重复序列化、复用 npz 证据、缺 `repeat_run` 三类反例；⑤ 官方 `accept_e0c.py` 对生产链路合成端到端包 **C1–C15 PASS**（总墙钟 301.1 s，C12 通过），真实执行仍待 B-02 |
 | E0C-CL-6 | 2026-11-28 | 对齐验证方冻结契约 **`E0-C-C12-REPEAT-1`**（`checks/A/e0_c_repeat_contract.json`，main `40c637e` 已含）：① 把“同进程两次重算”改为**顺序启动两个独立进程**（新增 `--mode execute-worker`），第 1 次写交付顶层、第 2 次写 `repeat_runs/run-2/`；`pid`/时间窗/`run_id`/结果文件/数组文件五类来源必须互异，同一进程或重叠时间窗不再算证据；② 新增 `e0c_repeat.json#runs[2]`（`run_id`/`pid`/`started_at`/`finished_at`/`wall_time_s`/`results_file`/`results_sha256`/`arrays_file`/`arrays_sha256`），顶层 `repeat_run` 只放摘要 + `runs_file`、**不内嵌 `runs`**（避免 `results_sha256` 自引用）；③ 写盘后 `verify_repeat_manifest` 机械核验：缺清单/缺 `runs`/重复记录/复用证据/时间窗重叠/SHA 被换/第二次运行指标不一致一律拒绝；④ `--repeat-runs` 只接受 `2`；⑤ 作者测试 **83/83**（新增 7 类 C12 反例，其中“缺清单”“缺 `runs`”“第二次指标不一致”为 CL-6 补齐）；⑥ 旧登记 `b63e217` 仍按“单次运行、不满足新 C12”保留，不覆盖 |
+| E0C-CL-7 | 2026-11-28 | 补齐 CL-6 的官方验收器预检项：新增 `solutions/A/e0c_official_precheck.py`（12 组合成 `.dat` + 生产链路两独立进程 + 官方 `accept_e0c.py` 机械验收，不读真实 `.dat`）。实测（main `0386055`）：**C12 PASS**（`pid` 26288/7604、时间窗不重叠、`e0c_repeat.json#runs`、第二次 npz 独立重算一致、`duplicate_serialization_detected=false`），C1–C3、C5–C15 PASS，仅 C4 FAIL（合成文件名非真实白名单，字节数仍为 `88,073,632 B`）。作者测试复跑 **83/83**。此为生产者预检，不代替独立验收；B-02 仍未放行 |
